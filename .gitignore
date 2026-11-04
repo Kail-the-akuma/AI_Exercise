@@ -1,0 +1,55 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+publish/
+*.binlog
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Segredos e configuração local, nunca versionados
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.p12
+
+# Base de dados SQLite, criada em tempo de execucao
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Testes
+[Tt]est[Rr]esult*/
+test-results/
+coverage/
+*.coverage
+*.trx
+
+# Playwright
+playwright-report/
+playwright/.cache/
+.playwright/
+node_modules/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
