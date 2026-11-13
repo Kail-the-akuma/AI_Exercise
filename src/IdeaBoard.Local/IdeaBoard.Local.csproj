@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>IdeaBoard.Local</RootNamespace>
+    <AssemblyName>IdeaBoard.Local</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Never published. It exists so the application can be run and seen locally. -->
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IdeaBoard.App\IdeaBoard.App.csproj" />
+    <ProjectReference Include="..\IdeaBoard.LocalIdentity\IdeaBoard.LocalIdentity.csproj" />
+  </ItemGroup>
+
+</Project>

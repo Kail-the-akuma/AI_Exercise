@@ -1,0 +1,398 @@
+/*
+    The whole stylesheet of the application. There is no interface framework on the
+    client, by decision of the non functional requirements, so this file is the only
+    styling that exists and it is deliberately small.
+
+    Served from /_content/IdeaBoard.App/css/site.css, because the pages live in a Razor
+    class library and not in the host.
+*/
+
+:root
+{
+    --cor-texto: #1c1c1c;
+    --cor-texto-suave: #55585c;
+    --cor-fundo: #ffffff;
+    --cor-fundo-suave: #f4f5f7;
+    --cor-linha: #d8dade;
+    --cor-ligacao: #1a4f8a;
+    --cor-destaque: #16467c;
+    --cor-aviso-fundo: #fff6d6;
+    --cor-aviso-linha: #d8c378;
+    --cor-erro: #9a1b1b;
+    --cor-foco: #0b63c5;
+
+    --espaco: 1rem;
+    --raio: 0.25rem;
+}
+
+*,
+*::before,
+*::after
+{
+    box-sizing: border-box;
+}
+
+html
+{
+    font-size: 100%;
+}
+
+body
+{
+    margin: 0;
+    padding: 0;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+h1,
+h2,
+h3
+{
+    line-height: 1.25;
+    margin: 0 0 var(--espaco) 0;
+}
+
+h1
+{
+    font-size: 1.625rem;
+}
+
+h2
+{
+    font-size: 1.125rem;
+}
+
+p
+{
+    margin: 0 0 var(--espaco) 0;
+}
+
+a
+{
+    color: var(--cor-ligacao);
+}
+
+/*
+    Focus is never removed. The outline is widened instead, because keyboard navigation
+    is the one accessibility requirement that silently disappears when somebody tidies up
+    a stylesheet.
+*/
+:focus-visible
+{
+    outline: 3px solid var(--cor-foco);
+    outline-offset: 2px;
+}
+
+
+/* Header and navigation */
+
+.cabecalho
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espaco);
+    padding: var(--espaco);
+    border-bottom: 1px solid var(--cor-linha);
+    background: var(--cor-fundo-suave);
+}
+
+.marca
+{
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--cor-texto);
+    text-decoration: none;
+}
+
+.navegacao
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espaco);
+    margin-left: auto;
+}
+
+.separadores
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espaco);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.separadores a
+{
+    display: inline-block;
+    padding: 0.25rem 0;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+}
+
+.separadores a:hover
+{
+    text-decoration: underline;
+}
+
+.separadores a[aria-current="page"]
+{
+    color: var(--cor-texto);
+    font-weight: 700;
+    border-bottom-color: var(--cor-destaque);
+}
+
+
+/* Buttons */
+
+.botao
+{
+    display: inline-block;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--cor-linha);
+    border-radius: var(--raio);
+    background: var(--cor-fundo);
+    color: var(--cor-ligacao);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.botao-principal
+{
+    border-color: var(--cor-destaque);
+    background: var(--cor-destaque);
+    color: #ffffff;
+}
+
+.botao-grande
+{
+    padding: 0.75rem 1.25rem;
+    font-size: 1.0625rem;
+}
+
+
+/* Content */
+
+.conteudo
+{
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: calc(var(--espaco) * 1.5) var(--espaco) calc(var(--espaco) * 3) var(--espaco);
+}
+
+
+/* Warnings */
+
+.aviso
+{
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--cor-aviso-linha);
+    border-radius: var(--raio);
+    background: var(--cor-aviso-fundo);
+}
+
+
+/* Empty state */
+
+.estado-vazio
+{
+    padding: calc(var(--espaco) * 2);
+    border: 1px dashed var(--cor-linha);
+    border-radius: var(--raio);
+    text-align: center;
+}
+
+
+/* Idea list */
+
+.lista-ideias
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ideia
+{
+    padding: var(--espaco) 0;
+    border-bottom: 1px solid var(--cor-linha);
+}
+
+.ideia-titulo
+{
+    margin-bottom: 0.25rem;
+    font-size: 1.125rem;
+}
+
+.ideia-titulo a
+{
+    text-decoration: none;
+}
+
+.ideia-titulo a:hover
+{
+    text-decoration: underline;
+}
+
+.ideia-meta
+{
+    margin-bottom: 0.5rem;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+.ideia-autor
+{
+    font-weight: 600;
+}
+
+.ideia-autor::after
+{
+    content: ",";
+}
+
+
+/* Vote button, whose markup the enhancement script depends on */
+
+[data-vote-form]
+{
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+[data-vote-button]
+{
+    padding: 0.375rem 0.875rem;
+    border: 1px solid var(--cor-destaque);
+    border-radius: var(--raio);
+    background: var(--cor-fundo);
+    color: var(--cor-destaque);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 6rem;
+}
+
+[data-vote-button]:hover
+{
+    background: var(--cor-fundo-suave);
+}
+
+[data-vote-count]
+{
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+
+/* Idea detail */
+
+.ideia-detalhe
+{
+    padding-bottom: var(--espaco);
+    border-bottom: 1px solid var(--cor-linha);
+}
+
+/*
+    The description is stored and shown as plain text. Keeping the line breaks is what
+    pre-wrap does, and it is the reason no markup is ever interpreted here.
+*/
+.descricao
+{
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.votantes
+{
+    margin-top: calc(var(--espaco) * 1.5);
+}
+
+.lista-votantes
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lista-votantes li
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid var(--cor-linha);
+}
+
+.votante-nome
+{
+    font-weight: 600;
+}
+
+.lista-votantes time
+{
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+
+/* Submission form */
+
+.formulario
+{
+    max-width: 40rem;
+}
+
+.campo
+{
+    margin-bottom: calc(var(--espaco) * 1.25);
+}
+
+.campo label
+{
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.campo input,
+.campo textarea
+{
+    display: block;
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--cor-linha);
+    border-radius: var(--raio);
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font: inherit;
+}
+
+.campo textarea
+{
+    resize: vertical;
+}
+
+.erro
+{
+    margin: 0.375rem 0 0 0;
+    color: var(--cor-erro);
+    font-weight: 600;
+}
+
+.correlacao
+{
+    padding: 0.125rem 0.375rem;
+    border: 1px solid var(--cor-linha);
+    border-radius: var(--raio);
+    background: var(--cor-fundo-suave);
+    word-break: break-all;
+}

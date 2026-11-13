@@ -1,0 +1,42 @@
+@model IReadOnlyList<IdeaListItem>
+@*
+    The body of both tabs. They differ only in the heading and in the order the ideas
+    arrive in, so the markup lives here once.
+
+    Keeping one copy is not only tidiness. The end to end scenarios select by accessible
+    structure and check both tabs, so two copies could drift apart and the same scenario
+    would quietly be checking different things on each page.
+*@
+@if (Model.Count == 0)
+{
+    <div class="estado-vazio">
+        <p>@UiText.EmptyList</p>
+        <a class="botao botao-principal botao-grande" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+    </div>
+}
+else
+{
+    @* The warning sits once above the list, and before every vote button in document
+       order. Repeating it on each row would read it out dozens of times to somebody
+       using a screen reader, for a rule that is the same for the whole page. *@
+    <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
+
+    <ul class="lista-ideias">
+        @foreach (IdeaListItem idea in Model)
+        {
+            <li class="ideia" id="ideia-@idea.Id">
+                <h2 class="ideia-titulo">
+                    <a asp-page="/Detalhe" asp-route-id="@idea.Id">@idea.Title</a>
+                </h2>
+
+                <p class="ideia-meta">
+                    <span class="ideia-autor">@idea.AuthorDisplayName</span>
+                    <time datetime="@(idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(idea.CreatedAt, displayTimeZone).ToString("d")</time>
+                </p>
+
+                <partial name="_VoteButton"
+                         model="@(new VoteButtonModel { IdeaId = idea.Id, HasVoted = idea.HasVoted, VoteCount = idea.VoteCount })" />
+            </li>
+        }
+    </ul>
+}

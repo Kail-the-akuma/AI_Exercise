@@ -1,0 +1,8 @@
+@page "/"
+@model IndexModel
+@{
+    ViewData["Title"] = UiText.RankingTab;
+}
+<h1>@UiText.RankingTab</h1>
+
+<partial name="_IdeaList" model="Model.Ideas" />
