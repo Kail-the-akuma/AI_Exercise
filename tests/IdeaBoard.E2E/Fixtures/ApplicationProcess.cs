@@ -52,10 +52,14 @@ public class ApplicationProcess : IAsyncDisposable
     #region Startup
 
     /// <summary>Starts the host against the given database and waits for it to answer.</summary>
-    public static async Task<ApplicationProcess> StartAsync(string connectionString, string keysFolder)
+    public static async Task<ApplicationProcess> StartAsync(
+        string connectionString,
+        string keysFolder,
+        string webRootFolder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         ArgumentException.ThrowIfNullOrWhiteSpace(keysFolder);
+        ArgumentException.ThrowIfNullOrWhiteSpace(webRootFolder);
 
         int port = ReserveFreePort();
         string baseAddress = "http://127.0.0.1:" + port.ToString();
@@ -85,6 +89,25 @@ public class ApplicationProcess : IAsyncDisposable
         // ships: the generic error page is wired in, and nothing branches to a developer
         // convenience. The cost is that a failure here is as opaque as it is in production.
         startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "E2E";
+
+        // The stylesheet and the vote script live in the shared library, under the content
+        // prefix the layout asks for. Running from the build output, the host only knows
+        // where they are in Development, and answers 404 for both anywhere else: the pages
+        // come up unstyled, and the vote button posts as a plain form because the script
+        // that enhances it never arrives.
+        //
+        // Measured three ways before this line existed. The script answers 404 under E2E
+        // and 200 under Development, with nothing else changed. And publishing the shipping
+        // host puts both files in wwwroot/_content/IdeaBoard.App, at exactly the addresses
+        // the layout uses, which means a deployed site serves them in every environment.
+        //
+        // So the 404 belongs to running from the build output, and not to the application.
+        // The web root is composed here the way publishing composes it, rather than by
+        // moving the suite to Development, which would also switch the pipeline to
+        // developer error pages and quietly stop testing the one that ships.
+        ComposeWebRoot(webRootFolder);
+
+        startInfo.Environment["ASPNETCORE_WEBROOT"] = webRootFolder;
 
         Process? started = Process.Start(startInfo);
 
@@ -129,8 +152,38 @@ public class ApplicationProcess : IAsyncDisposable
     }
 
 
-    /// <summary>Finds the built local host next to the solution file.</summary>
-    private static string LocateHostAssembly()
+    /// <summary>
+    /// Copies the shared library's static files to where a published site keeps them.
+    ///
+    /// Taken from the library's own folder rather than from any build output, so that a
+    /// stale copy somewhere cannot be what the suite ends up serving.
+    /// </summary>
+    private static void ComposeWebRoot(string webRootFolder)
+    {
+        string source = Path.Combine(LocateSolutionRoot(), "src", "IdeaBoard.App", "wwwroot");
+
+        if (!Directory.Exists(source))
+        {
+            throw new InvalidOperationException(
+                "The shared library's static files were not found at " + source);
+        }
+
+        string destination = Path.Combine(webRootFolder, "_content", "IdeaBoard.App");
+
+        foreach (string file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+        {
+            string relativePath = Path.GetRelativePath(source, file);
+            string target = Path.Combine(destination, relativePath);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+
+            File.Copy(file, target, true);
+        }
+    }
+
+
+    /// <summary>Walks up from the test assembly until the solution file appears.</summary>
+    private static string LocateSolutionRoot()
     {
         DirectoryInfo? folder = new DirectoryInfo(AppContext.BaseDirectory);
 
@@ -144,10 +197,19 @@ public class ApplicationProcess : IAsyncDisposable
             throw new InvalidOperationException("The solution root could not be found.");
         }
 
+        return folder.FullName;
+    }
+
+
+    /// <summary>Finds the built local host next to the solution file.</summary>
+    private static string LocateHostAssembly()
+    {
+        string solutionRoot = LocateSolutionRoot();
+
         string configuration = Path.GetFileName(Path.GetDirectoryName(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)))!;
 
         string assemblyPath = Path.Combine(
-            folder.FullName,
+            solutionRoot,
             "src",
             "IdeaBoard.Local",
             "bin",

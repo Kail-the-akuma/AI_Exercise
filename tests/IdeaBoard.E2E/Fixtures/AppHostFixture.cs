@@ -71,7 +71,10 @@ public class AppHostFixture : IAsyncLifetime
         string keysFolder = Path.Combine(temporaryFolder, "keys");
         Directory.CreateDirectory(keysFolder);
 
-        application = await ApplicationProcess.StartAsync(connectionString, keysFolder);
+        string webRootFolder = Path.Combine(temporaryFolder, "wwwroot");
+        Directory.CreateDirectory(webRootFolder);
+
+        application = await ApplicationProcess.StartAsync(connectionString, keysFolder, webRootFolder);
     }
 
 
