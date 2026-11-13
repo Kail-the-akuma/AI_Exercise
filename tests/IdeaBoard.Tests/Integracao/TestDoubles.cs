@@ -48,6 +48,13 @@ public sealed class FakeCurrentUser : ICurrentUser
         return Task.FromResult(signedIn);
     }
 
+
+    /// <inheritdoc />
+    public Task<User?> TryGetAsync(CancellationToken cancellationToken)
+    {
+        return Task.FromResult<User?>(signedIn);
+    }
+
     #endregion
 }
 
@@ -90,6 +97,80 @@ public sealed class FakeTimeProvider : TimeProvider
     public void SetUtcNow(DateTimeOffset value)
     {
         utcNow = value;
+    }
+
+    #endregion
+}
+
+
+/// <summary>
+/// A directory that answers whatever the test tells it to, and counts how often it was
+/// asked.
+///
+/// The count is not decoration. The rule that a lookup is paid once, on a person's first
+/// request, and never again, is invisible in the result and only observable here.
+/// </summary>
+public sealed class FakeDisplayNameResolver : IDisplayNameResolver
+{
+    #region Fields
+
+    private string? answer;
+
+    #endregion
+
+
+    #region Construction
+
+    /// <summary>Creates a directory that resolves nothing.</summary>
+    public FakeDisplayNameResolver()
+    {
+        answer = null;
+    }
+
+
+    /// <summary>Creates a directory that answers with a given name.</summary>
+    public FakeDisplayNameResolver(string answer)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(answer);
+
+        this.answer = answer;
+    }
+
+    #endregion
+
+
+    #region State
+
+    /// <summary>How many lookups were asked for.</summary>
+    public int Calls { get; private set; }
+
+    /// <summary>The identifier the last lookup was made with.</summary>
+    public string? LastIdentifier { get; private set; }
+
+
+    /// <summary>Changes what the directory answers from now on.</summary>
+    public void AnswerWith(string? displayName)
+    {
+        answer = displayName;
+    }
+
+    #endregion
+
+
+    #region Resolution
+
+    /// <inheritdoc />
+    public Task<DisplayNameResolution> ResolveAsync(string accountIdentifier, CancellationToken cancellationToken)
+    {
+        Calls++;
+        LastIdentifier = accountIdentifier;
+
+        if (string.IsNullOrWhiteSpace(answer))
+        {
+            return Task.FromResult(DisplayNameResolution.NotResolved());
+        }
+
+        return Task.FromResult(DisplayNameResolution.Resolved(answer));
     }
 
     #endregion

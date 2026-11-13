@@ -19,6 +19,7 @@ public class CurrentUser : ICurrentUser
     private readonly IUserProvisioningService userProvisioningService;
 
     private User? resolved;
+    private bool attempted;
 
     #endregion
 
@@ -45,7 +46,28 @@ public class CurrentUser : ICurrentUser
     /// <inheritdoc />
     public async Task<User> GetAsync(CancellationToken cancellationToken)
     {
-        if (resolved is not null)
+        User? person = await TryGetAsync(cancellationToken);
+
+        if (person is not null)
+        {
+            return person;
+        }
+
+        throw new InvalidOperationException(
+            "The signed-in person has no local user row, which means no name could be obtained " +
+            "for them and they have not registered one. Every page that reaches here sits behind " +
+            "the gate that redirects such a person to the registration page, so arriving here " +
+            "means the pipeline was composed without it.");
+    }
+
+
+    /// <inheritdoc />
+    public async Task<User?> TryGetAsync(CancellationToken cancellationToken)
+    {
+        // The attempt is remembered as well as its result. Without that, a request made by
+        // somebody who has no row yet would retry provisioning at every call, and each
+        // retry pays the directory timeout again.
+        if (attempted)
         {
             return resolved;
         }
@@ -68,7 +90,8 @@ public class CurrentUser : ICurrentUser
                 "was composed without an authentication scheme.");
         }
 
-        resolved = await userProvisioningService.EnsureUserAsync(principal, cancellationToken);
+        attempted = true;
+        resolved = await userProvisioningService.TryEnsureUserAsync(principal, cancellationToken);
 
         return resolved;
     }

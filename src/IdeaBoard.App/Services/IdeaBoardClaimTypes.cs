@@ -4,42 +4,72 @@ namespace IdeaBoard.App.Services;
 /// The claim types identity arrives under, defined once and read by everything that
 /// touches a principal.
 ///
-/// Two forms of these claims exist in the wild: the short OpenID Connect names, and the
-/// long schemas.microsoft.com URIs that inbound claim mapping rewrites them into. Which
-/// one reaches the principal depends on a host setting whose default has changed between
-/// versions, so no component is allowed to write a claim type by hand and hope.
+/// Keeping them in one file is not tidiness. Identity moved from Entra ID to Windows
+/// authentication, and every constant here changed with it. Because they were all in one
+/// place, that review was one file rather than a hunt through the application, and nothing
+/// was left pointing at a claim that no longer arrives.
 ///
-/// The short form is the one this application standardises on. The published host turns
-/// inbound claim mapping off explicitly so the short form is what arrives, and the long
-/// form is still read as a fallback, because a silently renamed claim would show up as
-/// every sign-in creating a brand new person.
+/// Windows authentication is what the published host uses. Its claims are the long schemas
+/// URIs, which here are not a legacy form and not something a setting rewrites: they are
+/// what the handler emits. The short OpenID Connect names are still read, because the
+/// hosts that are never published sign in with them, and because a claim silently not
+/// found would show up as every sign-in creating a brand new person.
 /// </summary>
 public static class IdeaBoardClaimTypes
 {
-    #region Canonical forms
+    #region Windows forms
 
-    /// <summary>Entra ID object identifier, the key a person is matched by.</summary>
+    /// <summary>
+    /// Security identifier of the signed-in account, and the key a person is matched by.
+    ///
+    /// It arrives in the request itself and costs no lookup, which is what makes the
+    /// directory a dependency for the display name only and never for identity. The
+    /// application keeps working whole with the directory unreachable, and that is why
+    /// asking somebody for their name is an acceptable answer rather than a pretence.
+    /// </summary>
+    public const string PrimarySid = "http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid";
+
+    /// <summary>
+    /// The name claim Windows authentication emits. It carries the ACCOUNT name, in its
+    /// DOMAIN\someone form, and not a name fit to show anybody. That gap is the whole
+    /// reason a display name has to be resolved or asked for.
+    /// </summary>
+    public const string WindowsAccountName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
+
+    #endregion
+
+
+    #region OpenID Connect forms
+
+    /// <summary>
+    /// Object identifier, read as a subject identifier after the security identifier. The
+    /// hosts that are never published sign in with this, so it stays read.
+    /// </summary>
     public const string ObjectId = "oid";
 
-    /// <summary>Name shown as author and in the list of voters.</summary>
+    /// <summary>Name fit to show, when the sign-in already carries one.</summary>
     public const string DisplayName = "name";
 
-    /// <summary>Stands in for the email, and is what Entra ID issues as the username.</summary>
+    /// <summary>Object identifier in the form inbound claim mapping produces.</summary>
+    public const string MappedObjectId = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+
+    /// <summary>
+    /// Username. Nothing in the application reads this any more: the column it used to
+    /// fill was replaced by the account name, which arrives without a directory lookup.
+    /// It stays defined because the hosts that are never published still emit it, and
+    /// because a claim type belongs in this file even when only they use it.
+    /// </summary>
     public const string Email = "preferred_username";
 
-    /// <summary>
-    /// User principal name. Read as a fallback for the email because preferred_username
-    /// only exists in version 2.0 tokens: against a version 1.0 authority it never
-    /// arrives, and this is what does.
-    /// </summary>
-    public const string Upn = "upn";
+    #endregion
 
-    /// <summary>Email address, the other short form a version 1.0 token may carry.</summary>
-    public const string EmailAddress = "email";
+
+    #region Diagnostics
 
     /// <summary>
-    /// Token version, which the token declares outright. Worth reading rather than
-    /// inferring from which other claims happen to be missing.
+    /// Token version, declared by the sign-in itself. Only ever written to the log, and
+    /// only so that an identity carrying unexpected claims is diagnosable without a
+    /// debugger and without a diagnostic page in the published application.
     /// </summary>
     public const string TokenVersion = "ver";
 
@@ -48,23 +78,6 @@ public static class IdeaBoardClaimTypes
     /// tenant identifier.
     /// </summary>
     public const string Issuer = "iss";
-
-    #endregion
-
-
-    #region Legacy forms
-
-    /// <summary>Object identifier as inbound claim mapping rewrites it.</summary>
-    public const string MappedObjectId = "http://schemas.microsoft.com/identity/claims/objectidentifier";
-
-    /// <summary>Name as inbound claim mapping rewrites it.</summary>
-    public const string MappedDisplayName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
-
-    /// <summary>Email as inbound claim mapping rewrites it.</summary>
-    public const string MappedEmail = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress";
-
-    /// <summary>User principal name, read only as a last resort for the email.</summary>
-    public const string MappedUpn = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";
 
     #endregion
 }

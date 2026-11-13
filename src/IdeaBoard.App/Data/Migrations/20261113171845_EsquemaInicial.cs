@@ -17,9 +17,10 @@ namespace IdeaBoard.App.Data.Migrations
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    entraObjectId = table.Column<string>(type: "TEXT", nullable: false),
+                    subjectId = table.Column<string>(type: "TEXT", nullable: false),
                     displayName = table.Column<string>(type: "TEXT", nullable: false),
-                    email = table.Column<string>(type: "TEXT", nullable: true),
+                    displayNameSource = table.Column<string>(type: "TEXT", nullable: false),
+                    accountName = table.Column<string>(type: "TEXT", nullable: false),
                     firstSeenAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -88,9 +89,9 @@ namespace IdeaBoard.App.Data.Migrations
                 descending: new bool[0]);
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_entraObjectId",
+                name: "IX_User_subjectId",
                 table: "User",
-                column: "entraObjectId",
+                column: "subjectId",
                 unique: true);
 
             migrationBuilder.CreateIndex(

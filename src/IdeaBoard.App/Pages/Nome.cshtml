@@ -1,0 +1,39 @@
+@page "/nome"
+@model NomeModel
+@{
+    ViewData["Title"] = NameRegistrationText.PageTitle;
+    Layout = "_LayoutMinimo";
+
+    ModelStateEntry? nameEntry = ModelState[DisplayNameRules.FieldName];
+
+    string? nameError = null;
+    string? nameDescribedBy = "aviso-visibilidade";
+
+    if (nameEntry is not null && nameEntry.Errors.Count > 0)
+    {
+        nameError = nameEntry.Errors[0].ErrorMessage;
+        nameDescribedBy = "erro-nome aviso-visibilidade";
+    }
+}
+<h1>@NameRegistrationText.PageTitle</h1>
+
+<p class="explicacao">@NameRegistrationText.Explanation</p>
+
+<form method="post" class="formulario">
+    <div class="campo">
+        <label asp-for="DisplayName">@NameRegistrationText.FieldLabel</label>
+        <input asp-for="DisplayName"
+               type="text"
+               maxlength="@DisplayNameRules.MaximumLength"
+               autocomplete="name"
+               aria-describedby="@nameDescribedBy" />
+        @if (nameError is not null)
+        {
+            <p class="erro" id="erro-nome">@nameError</p>
+        }
+    </div>
+
+    <p class="aviso aviso-visibilidade" id="aviso-visibilidade">@NameRegistrationText.VisibilityWarning</p>
+
+    <button type="submit" class="botao botao-principal">@NameRegistrationText.SubmitButton</button>
+</form>

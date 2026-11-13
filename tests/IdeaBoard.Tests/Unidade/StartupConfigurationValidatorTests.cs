@@ -43,10 +43,6 @@ public class StartupConfigurationValidatorTests
     {
         Dictionary<string, string?> settings = new Dictionary<string, string?>(StringComparer.Ordinal);
 
-        settings.Add(ConfigurationKeys.AzureAdInstance, "https://login.microsoftonline.com/");
-        settings.Add(ConfigurationKeys.AzureAdTenantId, "11111111-1111-1111-1111-111111111111");
-        settings.Add(ConfigurationKeys.AzureAdClientId, "22222222-2222-2222-2222-222222222222");
-        settings.Add(ConfigurationKeys.AzureAdCallbackPath, "/signin-oidc");
         settings.Add(ConfigurationKeys.DatabaseConnectionKey, "Data Source=" + BuildPathOutsideContentRoot());
         settings.Add(ConfigurationKeys.DataProtectionKeysPath, Path.Combine(Path.GetTempPath(), "IdeaBoardKeys"));
         settings.Add(ConfigurationKeys.LocalizationTimeZoneId, "Europe/Lisbon");
@@ -112,94 +108,37 @@ public class StartupConfigurationValidatorTests
 
     #region Sign-in keys
 
-    [Theory]
-    [InlineData(ConfigurationKeys.AzureAdInstance)]
-    [InlineData(ConfigurationKeys.AzureAdTenantId)]
-    [InlineData(ConfigurationKeys.AzureAdClientId)]
-    [InlineData(ConfigurationKeys.AzureAdCallbackPath)]
-    public void AMissingSignInKeyStopsStartupAndIsNamed(string key)
-    {
-        Dictionary<string, string?> settings = BuildCompleteSettings();
-        settings.Remove(key);
-
-        ConfigurationValidationResult result = Validate(settings, false);
-
-        Assert.False(result.IsValid);
-        Assert.True(Mentions(result, key), $"No problem named '{key}'.");
-    }
-
-
-    [Theory]
-    [InlineData(ConfigurationKeys.AzureAdInstance, "")]
-    [InlineData(ConfigurationKeys.AzureAdInstance, "   ")]
-    [InlineData(ConfigurationKeys.AzureAdTenantId, "")]
-    [InlineData(ConfigurationKeys.AzureAdTenantId, "  \t ")]
-    [InlineData(ConfigurationKeys.AzureAdClientId, "")]
-    [InlineData(ConfigurationKeys.AzureAdClientId, " ")]
-    [InlineData(ConfigurationKeys.AzureAdCallbackPath, "")]
-    [InlineData(ConfigurationKeys.AzureAdCallbackPath, "    ")]
-    public void ASignInKeyHoldingOnlyWhitespaceCountsAsMissing(string key, string value)
-    {
-        Dictionary<string, string?> settings = BuildCompleteSettings();
-        settings[key] = value;
-
-        ConfigurationValidationResult result = Validate(settings, false);
-
-        Assert.False(result.IsValid);
-        Assert.True(Mentions(result, key), $"No problem named '{key}'.");
-    }
-
-
     /// <summary>
-    /// Whether a client secret is needed is still an open human decision. A validator that
-    /// demanded one would close it in silence, so its absence has to leave startup valid.
+    /// The configuration production will actually have carries no sign-in keys at all, and
+    /// has to be accepted.
+    ///
+    /// This is the test that was missing when the keys were still required. Every test here
+    /// was a negative one, proving the guard refused what was wrong, and all of them passed
+    /// on the day the identity provider changed. What none of them did was start from the
+    /// settings a real server would hold, which is the only thing that would have shown
+    /// that the guard now refuses every correct configuration there is.
+    ///
+    /// Under Windows authentication the sign-in settings live in the site's web.config,
+    /// outside anything this process can read, so a key-based check here could only ever
+    /// refuse the host it was meant to protect.
     /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void AClientSecretIsNotRequired(bool isDevelopment)
+    public void TheConfigurationProductionWillHaveCarriesNoSignInKeysAndIsValid(bool isDevelopment)
     {
         Dictionary<string, string?> settings = BuildCompleteSettings();
+
+        foreach (KeyValuePair<string, string?> entry in settings)
+        {
+            Assert.False(
+                entry.Key.StartsWith("AzureAd", StringComparison.Ordinal),
+                $"The settings a real server holds still carry '{entry.Key}'.");
+        }
 
         ConfigurationValidationResult result = Validate(settings, isDevelopment);
 
-        Assert.True(result.IsValid);
-        Assert.False(Mentions(result, "ClientSecret"), "A client secret was demanded.");
-    }
-
-
-    /// <summary>
-    /// Presence only, never format. The end to end suite starts the application with made
-    /// up sign-in values, and a format check here would stop it from starting at all.
-    /// </summary>
-    [Theory]
-    [InlineData("nao-e-um-guid")]
-    [InlineData("xxx")]
-    [InlineData("common")]
-    [InlineData("0")]
-    public void ATenantIdIsNotCheckedForFormat(string tenantId)
-    {
-        Dictionary<string, string?> settings = BuildCompleteSettings();
-        settings[ConfigurationKeys.AzureAdTenantId] = tenantId;
-
-        ConfigurationValidationResult result = Validate(settings, false);
-
         Assert.Empty(result.Problems);
-        Assert.True(result.IsValid);
-    }
-
-
-    [Theory]
-    [InlineData("nao-e-um-url")]
-    [InlineData("signin")]
-    public void TheOtherSignInValuesAreNotCheckedForFormatEither(string value)
-    {
-        Dictionary<string, string?> settings = BuildCompleteSettings();
-        settings[ConfigurationKeys.AzureAdInstance] = value;
-        settings[ConfigurationKeys.AzureAdCallbackPath] = value;
-
-        ConfigurationValidationResult result = Validate(settings, false);
-
         Assert.True(result.IsValid);
     }
 
@@ -512,10 +451,6 @@ public class StartupConfigurationValidatorTests
 
         string message = result.BuildFailureMessage();
 
-        Assert.Contains(ConfigurationKeys.AzureAdInstance, message, StringComparison.Ordinal);
-        Assert.Contains(ConfigurationKeys.AzureAdTenantId, message, StringComparison.Ordinal);
-        Assert.Contains(ConfigurationKeys.AzureAdClientId, message, StringComparison.Ordinal);
-        Assert.Contains(ConfigurationKeys.AzureAdCallbackPath, message, StringComparison.Ordinal);
         Assert.Contains(ConfigurationKeys.DatabaseConnectionKey, message, StringComparison.Ordinal);
         Assert.Contains(ConfigurationKeys.DataProtectionKeysPath, message, StringComparison.Ordinal);
         Assert.Contains(ConfigurationKeys.LocalizationTimeZoneId, message, StringComparison.Ordinal);
@@ -531,9 +466,9 @@ public class StartupConfigurationValidatorTests
     public void SeveralProblemsAreAllCollectedInsteadOfOnlyTheFirst()
     {
         Dictionary<string, string?> settings = BuildCompleteSettings();
-        settings.Remove(ConfigurationKeys.AzureAdInstance);
         settings.Remove(ConfigurationKeys.DataProtectionKeysPath);
         settings[ConfigurationKeys.LocalizationTimeZoneId] = "Marte/Olimpo";
+        settings[ConfigurationKeys.DirectoryLookupTimeoutSeconds] = "nao-e-um-numero";
 
         ConfigurationValidationResult result = Validate(settings, false);
 

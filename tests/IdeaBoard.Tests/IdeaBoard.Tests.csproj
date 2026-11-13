@@ -23,7 +23,7 @@
       The number is a floor and not the exact count, kept close to the real one. A generous
       floor would let a partial collapse through, which is the thing this exists to catch.
     -->
-    <TestingPlatformCommandLineArguments>--minimum-expected-tests 120</TestingPlatformCommandLineArguments>
+    <TestingPlatformCommandLineArguments>--minimum-expected-tests 176</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup>

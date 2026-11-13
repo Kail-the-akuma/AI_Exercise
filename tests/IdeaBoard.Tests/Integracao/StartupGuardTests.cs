@@ -28,16 +28,26 @@ public class StartupGuardTests
     #region Sign-in configuration
 
     /// <summary>
-    /// Without the sign-in configuration the host refuses to start, and says which keys are
-    /// missing.
+    /// The published host STARTS with the configuration production will actually have,
+    /// which carries no sign-in keys at all.
     ///
-    /// Everything else is valid here, including a database already in write-ahead logging
-    /// mode, so the other guard cannot be what fired. The tracked settings file ships
-    /// AzureAd:TenantId and AzureAd:ClientId as empty placeholders, which is the shape a
-    /// fresh clone has, and the validator treats empty and absent alike.
+    /// This replaces a test that asserted the opposite, and the replacement is the whole
+    /// lesson. The old test proved the guard refused what was wrong, and it kept passing on
+    /// the day the identity provider changed, while the guard it was protecting had quietly
+    /// begun refusing every correct configuration there is. No negative test can notice
+    /// that. Only one that starts from what production really holds can.
+    ///
+    /// Under Windows authentication the sign-in settings live in the site's web.config, in
+    /// the IIS configuration, where this process cannot read them. The capability that was
+    /// lost with the old guard is named in the validator and moved to the manual checks:
+    /// the host can now start with Windows authentication switched off and anonymous
+    /// authentication on, and nothing here will notice.
+    ///
+    /// Everything else is valid, including a database already in write-ahead logging mode,
+    /// so a failure here could not be the other guard.
     /// </summary>
     [Fact]
-    public void StartingWithoutTheSignInConfigurationIsRefusedByName()
+    public void StartingWithoutAnySignInConfigurationIsAccepted()
     {
         using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
 
@@ -52,6 +62,33 @@ public class StartupGuardTests
         environment.Set("AzureAd__ClientId", null);
         environment.Set("AzureAd__CallbackPath", null);
 
+        using IdeaBoardWebFactory factory = new IdeaBoardWebFactory();
+
+        // Creating the client is what builds and starts the host. Reaching the next line
+        // without an exception is the assertion.
+        using HttpClient client = factory.CreateClient();
+
+        Assert.NotNull(client);
+    }
+
+
+    /// <summary>
+    /// A directory timeout that cannot be read stops startup and is named, because somebody
+    /// meant to change the behaviour and did not.
+    /// </summary>
+    [Fact]
+    public void AnUnreadableDirectoryTimeoutIsRefusedByName()
+    {
+        using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
+
+        Assert.Equal("wal", database.EnableWriteAheadLogging());
+
+        using EnvironmentVariableScope environment = new EnvironmentVariableScope();
+        environment.Set("ASPNETCORE_ENVIRONMENT", "Development");
+        environment.Set("ConnectionStrings__IdeaBoard", database.ConnectionString);
+        environment.Set("Localization__TimeZoneId", "Europe/Lisbon");
+        environment.Set("DirectoryLookup__TimeoutSeconds", "depressa");
+
         Exception failure = Assert.ThrowsAny<Exception>(() =>
         {
             using IdeaBoardWebFactory factory = new IdeaBoardWebFactory();
@@ -61,8 +98,7 @@ public class StartupGuardTests
         string message = ExceptionText.Describe(failure);
 
         Assert.Contains(ConfigurationIncompleteSignature, message, StringComparison.Ordinal);
-        Assert.Contains("AzureAd:TenantId", message, StringComparison.Ordinal);
-        Assert.Contains("AzureAd:ClientId", message, StringComparison.Ordinal);
+        Assert.Contains("DirectoryLookup:TimeoutSeconds", message, StringComparison.Ordinal);
 
         // Distinguishable from the other guard, otherwise this test would pass on its failure.
         Assert.DoesNotContain(JournalModeSignature, message, StringComparison.OrdinalIgnoreCase);

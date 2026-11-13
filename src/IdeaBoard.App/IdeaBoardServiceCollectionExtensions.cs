@@ -1,3 +1,4 @@
+using System.Globalization;
 using IdeaBoard.App.Configuration;
 using IdeaBoard.App.Data;
 using IdeaBoard.App.Services;
@@ -39,6 +40,7 @@ public static class IdeaBoardServiceCollectionExtensions
         RefuseToStartOnBadConfiguration(configuration, isDevelopment, environment.ContentRootPath);
 
         AddPresentation(services, configuration);
+        AddDirectoryLookup(services, configuration);
         AddStorage(services, configuration);
         AddDataProtection(services, configuration, isDevelopment);
         AddDomainServices(services);
@@ -93,6 +95,70 @@ public static class IdeaBoardServiceCollectionExtensions
         TimeZoneInfo displayTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
 
         services.AddSingleton(displayTimeZone);
+    }
+
+    #endregion
+
+
+    #region Directory
+
+    /// <summary>
+    /// Registers how somebody's display name gets resolved.
+    ///
+    /// The consumer knows nothing about any of this: it asks for a name and gets one or
+    /// does not. Which implementation answers is decided here, once, from configuration and
+    /// from the platform, which is the same shape the local identity arrangement uses.
+    /// </summary>
+    private static void AddDirectoryLookup(IServiceCollection services, IConfiguration configuration)
+    {
+        DirectoryLookupOptions options = ReadDirectoryLookupOptions(configuration);
+
+        services.AddSingleton(options);
+
+        if (!options.Enabled)
+        {
+            // Switched off on purpose. This is what makes the registration path reachable
+            // in an environment where the directory would otherwise always answer, so that
+            // the first time it runs for real is not the day the directory breaks.
+            services.AddSingleton<IDisplayNameResolver, UnavailableDisplayNameResolver>();
+            return;
+        }
+
+        if (!OperatingSystem.IsWindows())
+        {
+            // The platform check is here rather than inside the resolver, which is what
+            // lets the Windows only type exist in a library that targets plain net10.0.
+            services.AddSingleton<IDisplayNameResolver, UnavailableDisplayNameResolver>();
+            return;
+        }
+
+        services.AddSingleton<IDisplayNameResolver, DirectoryDisplayNameResolver>();
+    }
+
+
+    /// <summary>
+    /// Reads the directory settings, falling back to the documented defaults. The values
+    /// were already checked at startup, so anything present here parses.
+    /// </summary>
+    private static DirectoryLookupOptions ReadDirectoryLookupOptions(IConfiguration configuration)
+    {
+        DirectoryLookupOptions options = new DirectoryLookupOptions();
+
+        string? enabled = configuration[ConfigurationKeys.DirectoryLookupEnabled];
+
+        if (!string.IsNullOrWhiteSpace(enabled))
+        {
+            options.Enabled = bool.Parse(enabled);
+        }
+
+        string? timeoutSeconds = configuration[ConfigurationKeys.DirectoryLookupTimeoutSeconds];
+
+        if (!string.IsNullOrWhiteSpace(timeoutSeconds))
+        {
+            options.TimeoutSeconds = int.Parse(timeoutSeconds, CultureInfo.InvariantCulture);
+        }
+
+        return options;
     }
 
     #endregion
