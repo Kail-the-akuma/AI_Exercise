@@ -1,6 +1,6 @@
 # 04. Requisitos não funcionais e segurança
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 ## Carga esperada
 
@@ -142,12 +142,22 @@ contra duplicação acidental, que é o caso real e frequente.
 |---|---|---|
 | Identificador de objeto do Entra ID | Token de início de sessão | Chave estável da pessoa |
 | Nome apresentado | Token de início de sessão | Mostrado como autor e na lista de votantes |
-| Email | Token de início de sessão | Identificação inequívoca em caso de nomes iguais |
+| Email, quando o token o traz | Token de início de sessão | Identificação inequívoca em caso de nomes iguais |
 | Data do primeiro início de sessão | Relógio do servidor | Diagnóstico |
 | Ideias submetidas e votos | Utilização da aplicação | É o produto |
 
 Nada mais. Sem fotografia, sem departamento, sem hierarquia, sem registo de navegação
 e sem analítica de terceiros.
+
+**O email pode não vir.** A coluna é anulável no esquema real, como se confirma em
+`deploy/migracao.sql`, onde `email` é declarado `TEXT NULL`. Nem todos os registos de
+aplicação emitem a claim, e a aplicação tem de funcionar sem ela.
+
+Guardar uma cadeia vazia numa coluna não anulável seria registar que a pessoa tem um
+email vazio, o que é falso. A ausência fica registada como ausência. O email nunca é
+apresentado na interface, portanto a falta dele não é visível para ninguém, e a
+identificação da pessoa não depende dele, porque a chave é o identificador de objeto do
+Entra ID.
 
 ### Transparência deliberada
 

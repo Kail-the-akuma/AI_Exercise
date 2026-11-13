@@ -1,6 +1,6 @@
 # 05. Plano de entrega
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Sete fases, da zero à seis. Cada uma entrega algo verificável, e nenhuma depende de
 trabalho de uma fase posterior.
@@ -14,26 +14,35 @@ compromisso.
 Nada aqui é código, e quase tudo depende de outras pessoas. É por isso a fase com
 maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 
-| Item | De quem depende | Bloqueia |
-|---|---|---|
-| Nome de produto e identificador de código decididos | Equipa | Fase 1 |
-| Registo de aplicação no Entra ID, com URL de redirect | Equipa de identidade | Fase 1 |
-| Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 |
-| Nome DNS do site decidido, com registo a apontar para o servidor | Infraestrutura | Fase 5 |
-| Certificado HTTPS emitido pela própria equipa | Equipa de desenvolvimento | Fase 5 |
-| Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 |
-| Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento |
-| Repositório git local, com `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 |
+| Item | De quem depende | Bloqueia | Estado |
+|---|---|---|---|
+| Identificador de código decidido | Equipa | Fase 1 | Fechado em `IdeaBoard` |
+| Nome de produto em prosa decidido | Equipa | Lançamento | **Em aberto** |
+| Registo de aplicação no Entra ID, com URL de redirect | Equipa de identidade | Fase 1 | Por fazer |
+| Spike do client secret fechado | Equipa de desenvolvimento | Fase 1 | **Em aberto** |
+| Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 | Por fazer |
+| Nome DNS do site decidido, com registo a apontar para o servidor | Infraestrutura | Fases 1 e 5 | Por fazer |
+| Certificado HTTPS emitido pela própria equipa | Equipa de desenvolvimento | Fase 5 | Por fazer |
+| Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 | Por fazer |
+| Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento | **Em aberto** |
+| Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
-### O nome tem de ficar decidido primeiro
+**Dois itens bloqueiam a Fase 1 e continuam em aberto**, o spike do client secret e o
+nome DNS. O registo de aplicação no Entra ID depende dos dois, porque é o registo que
+carrega o URI de redirecionamento e é o spike que diz se é preciso segredo.
 
-O identificador de código fica em namespaces, nomes de projeto, caminhos de ficheiros,
-no nome do site do IIS e nos caminhos de dados do servidor. Mudá lo depois é uma
-operação transversal e sem valor para ninguém.
+### O identificador de código ficou decidido, o nome de produto não
 
-`IdeaBoard` é o nome de trabalho usado em toda esta documentação, e serve se não
-houver melhor. O nome de produto em prosa é uma decisão separada, pode ser diferente
-do identificador de código, e pode ser tomada mais tarde.
+São duas decisões distintas e só uma está fechada.
+
+O identificador de código é **`IdeaBoard`**, e está ratificado. Fica em namespaces,
+nomes de projeto, caminhos de ficheiros, no nome do site do IIS e nos caminhos de dados
+do servidor. Mudá lo agora seria uma operação transversal e sem valor para ninguém.
+
+O **nome de produto em prosa continua em aberto**, e é uma decisão reservada a quem é
+dono do produto. Pode ser diferente do identificador de código e pode ser tomado até ao
+lançamento. Nenhum documento deve inventar um, nem tratar `IdeaBoard` como se fosse o
+nome de produto.
 
 ### O spike de autenticação
 
@@ -100,7 +109,9 @@ pessoa provada contra SQLite real.
 - Entidades `User`, `Idea` e `Vote`.
 - `IdeaBoardDbContext` com a configuração por Fluent API.
 - Primeira migração, incluindo o índice único em `Vote(ideaId, userId)`.
-- Script SQL idempotente gerado a partir da migração, e o procedimento de o aplicar.
+- Script SQL gerado a partir da migração, e o procedimento de o aplicar. O script não
+  é idempotente, porque o EF Core recusa gerar scripts idempotentes para SQLite. Ver
+  [06](06-Operacao-e-Publicacao.md).
 - Testes de integração a provar que o segundo voto da mesma pessoa na mesma ideia é
   rejeitado pela base de dados.
 

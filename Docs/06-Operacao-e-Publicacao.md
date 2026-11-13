@@ -1,6 +1,6 @@
 # 06. Operação e publicação
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Destina se a quem publica e mantém a aplicação no servidor interno. Os caminhos usam
 o nome de trabalho `IdeaBoard` e têm de ser ajustados ao nome final.
@@ -18,6 +18,27 @@ Registo de aplicação de um só tenant, no tenant corporativo.
 
 Nenhuma permissão do Microsoft Graph é necessária. A aplicação não consulta o Graph em
 momento nenhum, e pedir permissões a mais torna a aprovação mais lenta sem benefício.
+
+### Pedir o URI de desenvolvimento ao mesmo tempo
+
+**Pedir os dois URI no mesmo pedido, e não só o do servidor.** O Entra ID recusa URI de
+redirecionamento em HTTP, com a única exceção de `localhost`, conforme
+[ADR-013](ADR/ADR-013-certificado-no-arranque.md). Sem um URI de `localhost` registado,
+ninguém consegue exercitar o início de sessão real contra o Entra ID a partir de uma
+máquina de desenvolvimento.
+
+Descobrir isso depois custa uma segunda ida à equipa de identidade, e essa espera cai
+dentro da Fase 1.
+
+| Ambiente | URI de redirecionamento |
+|---|---|
+| Servidor | `https://{nome-do-site}/signin-oidc` |
+| Desenvolvimento | `https://localhost:{porta}/signin-oidc` |
+
+**A porta ainda não está fixada**, e fica por decidir. O host que fala com o Entra ID é
+o `IdeaBoard.Web`, que hoje não tem perfil de arranque próprio, ao contrário do
+`IdeaBoard.Local`, que usa identidade local e nunca chama o Entra ID. A porta tem de ser
+fixada antes de o registo ser pedido, porque entra no pedido.
 
 **Client secret**: a confirmar antes de pedir um. Uma aplicação que apenas autentica
 pode não precisar de segredo, e nesse caso basta ter a emissão de token de
@@ -155,8 +176,8 @@ aplicação: muita gente a ler o ranking, uma pessoa de vez em quando a votar.
    qualquer outra coisa, incluindo publicações que não mudam o esquema.
 2. **Parar o site** no IIS, não apenas o pool, para que não entrem pedidos a meio.
 3. **Copiar os ficheiros publicados** para `C:\inetpub\IdeaBoard\`.
-4. **Aplicar as migrações** com o script SQL idempotente gerado a partir das migrações
-   do EF Core.
+4. **Aplicar as migrações** com o script SQL gerado a partir das migrações do EF Core,
+   sempre com `-bail`, pela razão da secção seguinte.
 5. **Arrancar o site.**
 6. **Verificar** com a lista de verificação de [07](07-Plano-de-Verificacao.md).
 
@@ -165,12 +186,46 @@ aplicação: muita gente a ler o ranking, uma pessoa de vez em quando a votar.
 O script é gerado a partir das migrações e versionado junto com elas:
 
 ```
-dotnet ef migrations script --idempotent --output deploy/migracao.sql
+dotnet ef migrations script --project src/IdeaBoard.App --output deploy/migracao.sql
 ```
 
 Aplicado de forma explícita, com supervisão, e nunca automaticamente no arranque da
 aplicação. Uma aplicação que migra sozinha altera o esquema sem backup prévio, sem
 ninguém a olhar, e no pior momento possível, que é durante um reinício não planeado.
+
+#### O script não é idempotente, e não pode ser
+
+Não existe a opção de o tornar idempotente. O EF Core recusa a para SQLite, com esta
+mensagem:
+
+```
+Generating idempotent scripts for migrations is not currently supported for SQLite.
+```
+
+A consequência prática é que o script tem de ser aplicado uma vez e só uma vez, contra
+uma base de dados cujo estado de migração é conhecido. Aplicá lo duas vezes falha, e
+falha a meio.
+
+#### `-bail` faz parte do procedimento, e não é uma opção
+
+O script abre uma transação, mas a transação **não chega por si**. A linha de comandos
+do `sqlite3` continua a executar depois de uma instrução falhar, e o `COMMIT` no fim
+confirma o que correu bem até ali.
+
+Isto foi medido. Um script com `BEGIN TRANSACTION`, um `ALTER TABLE` válido, um
+`CREATE TABLE` que falha, um `INSERT` e um `COMMIT`:
+
+| Execução | Resultado |
+|---|---|
+| `sqlite3 base.db < migracao.sql` | A coluna fica criada e a linha fica inserida. Trabalho parcial commitado |
+| `sqlite3 -bail base.db < migracao.sql` | Nada fica. A base de dados mantém se como estava |
+
+Sem `-bail`, uma migração que falha a meio deixa o esquema num estado que não é nem o
+anterior nem o seguinte, e que nenhum script sabe reparar. O comando é portanto:
+
+```
+sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db" < deploy\migracao.sql
+```
 
 ## Backup e restauro
 
@@ -262,7 +317,9 @@ vez de improvisada.
 2. **Backup antes**, sempre, mesmo para alterar uma letra.
 3. **Uma instrução de cada vez, com `WHERE` pelo identificador.** Nunca uma atualização
    sem filtro, nunca por correspondência de título.
-4. **Dentro de uma transação**, com verificação antes de confirmar.
+4. **Dentro de uma transação explícita**, com verificação antes de confirmar, e com
+   `ROLLBACK` como saída por omissão. Só se escreve `COMMIT` depois de a verificação
+   mostrar exatamente o que se esperava.
 5. **Registar o que foi feito**, com data, quem pediu, quem executou e a instrução
    exata. Um ficheiro de registo na pasta de operação chega.
 6. **Votos nunca são alterados.** Acrescentar, remover ou transferir votos à mão
@@ -270,6 +327,14 @@ vez de improvisada.
    desaparecer, desaparece com os seus votos.
 
 ### Sessão manual
+
+Abrir sempre com `-bail`, pela mesma razão da secção das migrações. Sem ele, uma
+instrução que falha não interrompe a sessão, e o `COMMIT` seguinte confirma o que correu
+bem até ali:
+
+```
+sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db"
+```
 
 A ligação pela linha de comandos do `sqlite3` **não ativa chaves estrangeiras por
 omissão**, ao contrário das ligações abertas pela aplicação. Numa sessão manual, o
@@ -281,6 +346,28 @@ PRAGMA foreign_keys = ON;
 
 Sem isto, um apagamento deixa votos órfãos a apontar para uma ideia que já não existe,
 e o erro só aparece mais tarde, na forma de contagens que não batem certo.
+
+### A forma de uma correção
+
+A verificação acontece **dentro** da transação, antes de confirmar, e a saída por
+omissão é o `ROLLBACK`:
+
+```sql
+PRAGMA foreign_keys = ON;
+BEGIN TRANSACTION;
+
+UPDATE Idea SET title = 'título corrigido' WHERE id = 42;
+
+SELECT id, title FROM Idea WHERE id = 42;
+SELECT changes() AS linhasAfetadas;
+
+-- Confere? COMMIT. Não confere, ou mexeu em mais linhas do que as esperadas? ROLLBACK.
+ROLLBACK;
+```
+
+`changes()` é a salvaguarda que apanha o erro mais caro desta operação, que é um `WHERE`
+que apanha mais linhas do que se pensava. Uma correção a uma ideia afeta uma linha. Se
+o número for outro, o `ROLLBACK` já está escrito.
 
 ## Saída de colaboradores
 

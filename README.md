@@ -9,11 +9,17 @@ Ninguém se compromete a construir o que ganha, e isso é intencional.
 
 ## Estado
 
-Fase de planeamento. Ainda não existe código. O briefing está fechado e a arquitetura
-está decidida e documentada.
+Em construção. O briefing está fechado, a arquitetura está decidida e documentada, e o
+produto mínimo está construído e a correr localmente.
 
-O nome de produto ainda não foi escolhido. `IdeaBoard` é um nome de trabalho usado
-apenas como identificador de código, em namespaces, caminhos e no nome do site do IIS.
+O que falta para a Fase 5, a publicação, está em
+[Docs/05-Plano-de-Entrega.md](Docs/05-Plano-de-Entrega.md).
+
+O **identificador de código está decidido e é `IdeaBoard`**. Fica em namespaces,
+caminhos, nomes de projeto e no nome do site do IIS.
+
+O **nome de produto em prosa continua por escolher**, e é uma decisão separada.
+`IdeaBoard` não é o nome do produto, é o identificador.
 
 ## Resumo técnico
 
@@ -41,20 +47,28 @@ que ele já foi lido.
 | [Docs/05-Plano-de-Entrega.md](Docs/05-Plano-de-Entrega.md) | Fases, pré requisitos e dependências externas |
 | [Docs/06-Operacao-e-Publicacao.md](Docs/06-Operacao-e-Publicacao.md) | Entra ID, IIS, backup, métricas, correções manuais |
 | [Docs/07-Plano-de-Verificacao.md](Docs/07-Plano-de-Verificacao.md) | Estratégia de testes e verificação manual antes do lançamento |
-| [Docs/08-Prompts-dos-Agentes.md](Docs/08-Prompts-dos-Agentes.md) | Os quatro papéis de agente, as suas fronteiras e os prompts de arranque |
+| [Docs/08-Prompts-dos-Agentes.md](Docs/08-Prompts-dos-Agentes.md) | Os cinco papéis de agente, as suas fronteiras e os prompts de arranque |
 | [Docs/ADR/](Docs/ADR/) | Uma decisão por ficheiro, com alternativas e consequências |
 
 ## Decisões ainda em aberto
 
-Registadas aqui para não desaparecerem. Nenhuma delas bloqueia o arranque da Fase 1,
-com exceção da primeira.
+Registadas aqui para não desaparecerem. **Duas delas bloqueiam a Fase 1**, o spike do
+client secret e o nome DNS, e estão assinaladas como tal.
 
-- **Nome de produto e identificador de código.** Tem de ficar decidido antes de criar
-  a solução, porque depois fica espalhado por namespaces e caminhos.
-- **Valores alvo dos critérios de sucesso.** O briefing pede que sejam fixados pela
-  equipa antes do lançamento.
+- **Nome de produto em prosa.** O identificador de código já está fechado em
+  `IdeaBoard`, e esta é a outra metade da decisão, que continua por tomar. Pode ser
+  diferente do identificador e pode ser decidido até ao lançamento.
 - **Necessidade de client secret no registo do Entra ID.** A confirmar num spike
   curto, conforme [ADR-003](Docs/ADR/ADR-003-autenticacao-entra-id.md).
+  **Bloqueia a Fase 1.**
+- **Nome DNS do site.** Entra no URI de redirecionamento do registo do Entra ID e, mais
+  tarde, no certificado. **Bloqueia a Fase 1 e a Fase 5.**
+- **Chave de idempotência da submissão.** O voto é idempotente, a submissão não é, e a
+  chave que a tornaria idempotente aproxima se da deteção de duplicados, que o briefing
+  exclui. As alternativas estão em
+  [Docs/02](Docs/02-Especificacao-Funcional.md).
+- **Valores alvo dos critérios de sucesso.** O briefing pede que sejam fixados pela
+  equipa antes do lançamento.
 - **Prazo da substituição do certificado.** A aplicação arranca com um certificado
   emitido pela própria equipa, conforme
   [ADR-013](Docs/ADR/ADR-013-certificado-no-arranque.md). O prazo para o trocar por um
