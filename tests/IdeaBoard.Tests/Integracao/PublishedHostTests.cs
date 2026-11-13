@@ -233,9 +233,7 @@ public class PublishedHostTests
 
         Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
 
-        Assert.DoesNotContain(UiText.SubmitIdeaButton, body, StringComparison.Ordinal);
-        Assert.DoesNotContain(UiText.RankingTab, body, StringComparison.Ordinal);
-        Assert.DoesNotContain(UiText.EmptyList, body, StringComparison.Ordinal);
+        AssertCarriesNoPageContent(body);
 
         Assert.True(
             Array.IndexOf(challengeStatusCodes, response.StatusCode) >= 0,
@@ -252,6 +250,43 @@ public class PublishedHostTests
                 response.Headers.Location.ToString());
         }
     }
+
+    /// <summary>
+    /// Asserts the response carries none of the application's own words, checking the body
+    /// both as it arrived and with HTML entities decoded.
+    ///
+    /// BOTH FORMS, and this is the correction of a dead assertion rather than belt and
+    /// braces. Razor encodes every non ASCII character as a numeric entity, so the empty
+    /// list message travels as "Ainda n&#xE3;o h&#xE1; ideias", and a literal comparison
+    /// against the raw body can never match it. In a NEGATIVE assertion that does not fail,
+    /// it passes: the check would have reported success even if the page had been served in
+    /// full. Two of the three strings here happen to be pure ASCII and were doing the work
+    /// of all three.
+    ///
+    /// Checking both forms is also stronger than decoding alone, because it assumes nothing
+    /// about which encoding the framework applies. A change in either direction still fails
+    /// this.
+    /// </summary>
+    private static void AssertCarriesNoPageContent(string body)
+    {
+        string decoded = WebUtility.HtmlDecode(body);
+
+        string[] pageContent =
+        [
+            UiText.SubmitIdeaButton,
+            UiText.RankingTab,
+            UiText.RecentTab,
+            UiText.EmptyList,
+            UiText.PublicVoteWarning,
+        ];
+
+        foreach (string content in pageContent)
+        {
+            Assert.DoesNotContain(content, body, StringComparison.Ordinal);
+            Assert.DoesNotContain(content, decoded, StringComparison.Ordinal);
+        }
+    }
+
 
     /// <summary>Keeps a failure message readable when the body is a whole error page.</summary>
     private static string Shorten(string body)
