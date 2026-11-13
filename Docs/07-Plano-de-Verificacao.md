@@ -58,21 +58,42 @@ daria confiança em algo que não é o que corre em produção.
 
 ## Ponta a ponta
 
-`Microsoft.Playwright.Xunit`, com browser real.
+`Microsoft.Playwright.Xunit.v3`, com browser real. O sufixo não é detalhe: a variante
+sem ele serve o xunit v2, e esta solução está em `xunit.v3`.
 
 ### Como a aplicação é arrancada
 
-Um fixture de coleção xUnit arranca a aplicação em Kestrel numa porta livre, pedindo a
-porta zero e lendo o endereço atribuído, com um ficheiro SQLite novo numa pasta
-temporária por execução, migrado no arranque e apagado no fim.
+Um fixture de coleção xUnit arranca a aplicação **como processo próprio**, numa porta
+livre, com um ficheiro SQLite novo numa pasta temporária por execução, migrado no
+arranque e apagado no fim.
+
+A propriedade que interessa é que **as portas não colidem entre execuções**. A mecânica
+de a obter é escolhida pelo fixture, e não fixada aqui.
 
 Nada de base de dados partilhada entre execuções, e nada de IIS. A suite corre em
 qualquer máquina que tenha o .NET e os browsers instalados, sem preparação prévia de
 dados.
 
-**A confirmar na Fase 1**: se o `WebApplicationFactory` do .NET 10 já expuser um
-servidor Kestrel real de forma nativa, o fixture usa isso. Caso contrário arranca o
-host diretamente. A escolha não tem consequências para o desenho dos testes.
+#### A pergunta que estava em aberto, e a resposta medida
+
+Este documento perguntava se o `WebApplicationFactory` do .NET 10 já expunha um servidor
+Kestrel real de forma nativa, para o fixture usar isso em vez de arrancar o host.
+
+**A resposta é não, e fica registada em vez de apagada**, porque é ela que poupa a
+próxima pessoa que tentar o caminho óbvio. Medido na construção da suite:
+
+- Um `WebApplicationFactory` simples instala o `TestServer` do
+  `Microsoft.AspNetCore.TestHost`, que não publica endereço nenhum.
+- Substituí lo por Kestrel não falha por omissão, **é ativamente recusado**: a
+  infraestrutura faz cast do servidor para `TestServer` e lança `InvalidCastException`.
+
+É por isso que a aplicação é arrancada como processo próprio. E é também por isso que a
+porta não pode ser obtida pedindo a porta zero e lendo o endereço atribuído, como este
+documento dizia: fora do processo, esse endereço só se obteria a analisar uma linha de
+log. O fixture pede uma porta livre ao sistema operativo, devolve a, e passa a ao host.
+
+Isto é **correção a este documento e não exceção a ele**. A diferença importa, porque uma
+exceção deixaria o documento a descrever uma mecânica que não funciona.
 
 ### Como a autenticação é resolvida
 
@@ -130,11 +151,19 @@ motores seria custo sem risco correspondente. Ver
 
 Localmente, por quem desenvolve, e antes de publicar.
 
-Pré requisito de máquina, uma vez por máquina e não um passo de build:
+Pré requisito de máquina, uma vez por máquina e não um passo de build. O script é o
+mesmo, muda o interpretador conforme o que estiver instalado:
 
 ```
+# PowerShell 7 ou superior
 pwsh bin/Debug/net10.0/playwright.ps1 install chromium
+
+# Windows PowerShell, quando o pwsh não existe na máquina
+powershell.exe -File bin/Debug/net10.0/playwright.ps1 install chromium
 ```
+
+**Não assumir que o `pwsh` está instalado.** Nas máquinas desta equipa pode existir
+apenas o Windows PowerShell, e foi com ele que a instalação foi feita.
 
 **Nota de contexto, não item de trabalho**: o repositório tem remoto, em
 `https://github.com/Kail-the-akuma/AI_Exercise.git`, e o trabalho chega a `main` por
