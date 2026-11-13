@@ -29,3 +29,5 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-018](ADR-018-validacao-de-configuracao-no-arranque.md) | A aplicação recusa arrancar com configuração em falta | Aceite |
 | [ADR-019](ADR-019-wal-verificado-e-nao-imposto.md) | O modo WAL é verificado no arranque, e não aplicado | Aceite |
 | [ADR-020](ADR-020-migracoes-sem-idempotencia.md) | Migrações por script não idempotente, com verificação antes e depois | Aceite |
+| [ADR-021](ADR-021-contagem-relida-apos-o-voto.md) | A contagem mostrada depois de votar é relida, e não calculada | Aceite |
+| [ADR-022](ADR-022-resolucao-e-substituicao-do-nome.md) | Resolução do nome por claim, depois diretório, e substituição por proveniência | Aceite |
