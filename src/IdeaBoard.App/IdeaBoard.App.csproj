@@ -16,6 +16,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Reads the display name of the signed in account out of Active Directory. The
+         target framework stays plain net10.0 and does not become net10.0-windows: the one
+         class that calls into this package is annotated with SupportedOSPlatform, which
+         satisfies the platform analyser, and the composition root checks the platform at
+         run time before constructing it. Retargeting would have spread Windows only onto
+         every project in the solution in order to serve a single file. -->
+    <PackageReference Include="System.DirectoryServices" Version="10.0.0" />
+
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <PrivateAssets>all</PrivateAssets>

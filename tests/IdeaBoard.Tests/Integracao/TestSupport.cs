@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using IdeaBoard.App.Data;
 using IdeaBoard.App.Domain;
@@ -65,26 +66,71 @@ public static class TestData
     /// <summary>A fixed instant every fixture is anchored to.</summary>
     public static readonly DateTime Anchor = new DateTime(2026, 1, 1, 9, 0, 0, DateTimeKind.Utc);
 
+    /// <summary>
+    /// The domain part of every account name a fixture builds.
+    ///
+    /// Test data here has the SHAPE PRODUCTION WILL HAVE, and that is not decoration. The
+    /// identifier used to be a GUID because the identity provider issued GUIDs, and every
+    /// negative test went on passing the day it became a security identifier, because no
+    /// test ever provisioned anybody with a value of the real new shape. An invented string
+    /// that happens to satisfy a check verifies the check and nothing else.
+    /// </summary>
+    public const string AccountDomain = "EXEMPLO";
+
+    /// <summary>The fixed part of a security identifier, as a real domain issues it.</summary>
+    private const string SecurityIdentifierPrefix = "S-1-5-21-2901470336-2226362600-3229698106-";
+
+    private static int nextRelativeIdentifier = 1000;
+
+    #endregion
+
+
+    #region Identity values
+
+    /// <summary>Builds a security identifier of the shape Windows actually issues.</summary>
+    public static string NewSubjectId()
+    {
+        int relativeIdentifier = Interlocked.Increment(ref nextRelativeIdentifier);
+
+        return string.Concat(
+            SecurityIdentifierPrefix,
+            relativeIdentifier.ToString(CultureInfo.InvariantCulture));
+    }
+
+
+    /// <summary>Builds an account name of the DOMAIN\someone shape.</summary>
+    public static string NewAccountName(string displayName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+
+        string account = displayName
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .ToLowerInvariant();
+
+        return string.Concat(AccountDomain, "\\", account);
+    }
+
     #endregion
 
 
     #region Rows
 
-    /// <summary>Builds a person with a fresh object identifier.</summary>
+    /// <summary>Builds a person with a fresh subject identifier.</summary>
     public static User NewUser(string displayName)
     {
-        return NewUser(displayName, Guid.NewGuid().ToString());
+        return NewUser(displayName, NewSubjectId());
     }
 
 
-    /// <summary>Builds a person with a given object identifier.</summary>
-    public static User NewUser(string displayName, string entraObjectId)
+    /// <summary>Builds a person with a given subject identifier.</summary>
+    public static User NewUser(string displayName, string subjectId)
     {
         return new User
         {
-            EntraObjectId = entraObjectId,
+            SubjectId = subjectId,
             DisplayName = displayName,
-            Email = string.Concat(displayName.Replace(" ", string.Empty, StringComparison.Ordinal), "@example.test"),
+            DisplayNameSource = DisplayNameSource.Directory,
+            AccountName = NewAccountName(displayName),
             FirstSeenAt = Anchor,
         };
     }
@@ -125,23 +171,52 @@ public static class TestData
     #region Principals
 
     /// <summary>
-    /// Builds a principal carrying the claim types the application standardises on. A null
-    /// object identifier leaves that claim out altogether, which is the case the
+    /// Builds a principal of the shape Windows authentication produces: a security
+    /// identifier and an account name, and NO name fit to show. That absence is the whole
+    /// point, because it is what sends the application to the directory.
+    ///
+    /// A null subject identifier leaves that claim out altogether, which is the case the
     /// provisioning service has to refuse.
     /// </summary>
-    public static ClaimsPrincipal NewPrincipal(string? objectId, string displayName, string email)
+    public static ClaimsPrincipal NewWindowsPrincipal(string? subjectId, string accountName)
     {
         List<Claim> claims = new List<Claim>();
 
-        if (objectId is not null)
+        if (subjectId is not null)
         {
-            claims.Add(new Claim(IdeaBoardClaimTypes.ObjectId, objectId));
+            claims.Add(new Claim(IdeaBoardClaimTypes.PrimarySid, subjectId));
         }
 
-        claims.Add(new Claim(IdeaBoardClaimTypes.DisplayName, displayName));
-        claims.Add(new Claim(IdeaBoardClaimTypes.Email, email));
+        claims.Add(new Claim(IdeaBoardClaimTypes.WindowsAccountName, accountName));
 
-        ClaimsIdentity identity = new ClaimsIdentity(claims, "TestAuthentication");
+        ClaimsIdentity identity = new ClaimsIdentity(
+            claims,
+            "TestAuthentication",
+            IdeaBoardClaimTypes.WindowsAccountName,
+            ClaimTypes.Role);
+
+        return new ClaimsPrincipal(identity);
+    }
+
+
+    /// <summary>
+    /// Builds a principal of the shape the hosts that are never published produce: an
+    /// object identifier and a name already fit to show, plus an account name.
+    /// </summary>
+    public static ClaimsPrincipal NewNamedPrincipal(string subjectId, string displayName, string accountName)
+    {
+        List<Claim> claims =
+        [
+            new Claim(IdeaBoardClaimTypes.ObjectId, subjectId),
+            new Claim(IdeaBoardClaimTypes.DisplayName, displayName),
+            new Claim(IdeaBoardClaimTypes.WindowsAccountName, accountName),
+        ];
+
+        ClaimsIdentity identity = new ClaimsIdentity(
+            claims,
+            "TestAuthentication",
+            IdeaBoardClaimTypes.DisplayName,
+            ClaimTypes.Role);
 
         return new ClaimsPrincipal(identity);
     }
