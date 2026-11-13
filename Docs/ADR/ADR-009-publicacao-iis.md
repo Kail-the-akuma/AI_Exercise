@@ -1,6 +1,6 @@
 # ADR-009. IIS in-process, com persistência das chaves de Data Protection
 
-**Estado**: Aceite. **Data**: 30 de outubro de 2026.
+**Estado**: Aceite, parcialmente substituído pelo [ADR-014](ADR-014-autenticacao-integrada-windows.md) quanto ao que as chaves protegem. **Data**: 30 de outubro de 2026.
 
 ## Contexto
 

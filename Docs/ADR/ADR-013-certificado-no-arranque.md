@@ -1,6 +1,6 @@
 # ADR-013. Certificado emitido pela equipa no arranque, certificado confiado depois
 
-**Estado**: Aceite. **Data**: 4 de novembro de 2026.
+**Estado**: Substituído pelo [ADR-024](ADR-024-http-sem-certificado.md). **Data**: 4 de novembro de 2026.
 
 ## Contexto
 

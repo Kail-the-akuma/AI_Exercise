@@ -1,6 +1,6 @@
 # ADR-006. Um projeto de aplicação, com separação por pastas
 
-**Estado**: Aceite. **Data**: 30 de outubro de 2026.
+**Estado**: Aceite, parcialmente substituído pelo [ADR-015](ADR-015-estrutura-de-quatro-projetos.md) quanto ao número de projetos. **Data**: 30 de outubro de 2026.
 
 ## Contexto
 

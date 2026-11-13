@@ -1,6 +1,6 @@
 # ADR-004. Tabela local de utilizadores, com o identificador de objeto como chave
 
-**Estado**: Aceite. **Data**: 30 de outubro de 2026.
+**Estado**: Aceite, parcialmente substituído pelo [ADR-023](ADR-023-chave-da-tabela-de-utilizadores.md) quanto à chave e à coluna do email. **Data**: 30 de outubro de 2026.
 
 ## Contexto
 
