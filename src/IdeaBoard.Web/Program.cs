@@ -26,10 +26,19 @@ if (!builder.Environment.IsDevelopment() && OperatingSystem.IsWindows())
 // here is the one the server provides, and the application only consumes it.
 //
 // The constant comes from the IIS integration namespace rather than from the in-process
-// server one. The two carry the SAME scheme name, so this is not a hosting model decision
-// and does not have to change if the hosting model does. This one is the constant the
-// Windows authentication guidance names, and the other did not resolve without pulling in
-// a package this host has no other reason to carry.
+// server one, and the reason is simply that this is the one the Windows authentication
+// guidance names. Nothing else is being claimed.
+//
+// The two carry the SAME scheme name, so this is not a hosting model decision and does
+// not have to change if the hosting model does. That is asserted by a test rather than
+// left as a statement here, because it is the kind of claim a reader would trust without
+// rechecking.
+//
+// A correction worth keeping, because the wrong version of it was briefly written here:
+// the other constant resolves perfectly well, in the server namespace, with no extra
+// package. A first attempt at it failed on the NAMESPACE and the cause was attributed to
+// a missing package, which was never measured and was false. Anyone changing this should
+// know both options are open.
 //
 // That is the whole of the change away from a federated sign-in, and it has a consequence
 // worth stating because it is invisible in this file. The published host no longer has any
