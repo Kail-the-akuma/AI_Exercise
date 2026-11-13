@@ -186,7 +186,6 @@ definições de servidor que são invisíveis no código.
 - [ ] Iniciar sessão com uma conta corporativa real, de alguém que **nunca** entrou
       antes, e confirmar que a linha de `User` é criada com o nome e o email certos.
 - [ ] Confirmar que o nome apresentado na aplicação é o esperado.
-- [ ] Terminar sessão e confirmar que o acesso a `/` volta a pedir autenticação.
 - [ ] Confirmar que um acesso sem sessão a `/ideias/1` pede autenticação e, depois
       dela, chega à página pedida, e não à página inicial.
 
@@ -195,20 +194,26 @@ definições de servidor que são invisíveis no código.
 - [ ] Pool de aplicações com **um só processo de trabalho**.
 - [ ] Chaves de Data Protection a serem escritas em `C:\IdeaBoard\keys\`. Confirmar
       que o ficheiro existe, e não apenas que a pasta está configurada.
-- [ ] Reciclar o pool de aplicações e confirmar que uma sessão já iniciada **continua
-      válida**. É o teste que prova que a persistência das chaves funciona, e falha
-      silenciosamente se não for feito.
+- [ ] Reciclar o pool de aplicações e confirmar a persistência das chaves, por esta
+      ordem exata:
+      1. Abrir o formulário de submissão e **deixá-lo aberto sem submeter**.
+      2. Reciclar o pool.
+      3. Confirmar no Gestor de Tarefas que o identificador do processo `w3wp` **mudou**.
+      4. Só então submeter o formulário que ficou aberto, e confirmar que é aceite.
+      O passo 3 não é zelo. A reciclagem do IIS é por omissão sobreposta, e o processo
+      antigo continua a servir até o novo estar pronto, portanto uma submissão logo a
+      seguir pode ser servida pelo processo antigo, que ainda tem o anel de chaves em
+      memória. Passa, e não prova nada.
+      Com autenticação integrada não há sessão da aplicação que possa sobreviver ou
+      não, por isso o antiforgery é o único consumidor das chaves e este é o único item
+      que as exercita. Se as chaves não estiverem a ser guardadas, a submissão falha
+      com um erro de pedido inválido, e não com qualquer mensagem sobre chaves.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
 - [ ] Modo WAL ativo no ficheiro da base de dados.
-- [ ] HTTPS a servir o site, com HTTP a redirecionar.
-- [ ] Certificado emitido para o **nome DNS definitivo**, e não para o nome da máquina
-      nem para um endereço IP.
-- [ ] **HSTS desligado**, enquanto o certificado não for confiado. Confirmar que a
-      resposta não traz o cabeçalho `Strict-Transport-Security`, e não apenas que
-      ninguém se lembra de o ter ligado.
-- [ ] Início de sessão completo a partir de uma máquina que nunca aceitou a exceção do
-      certificado, aceitando o aviso pelo caminho. É o percurso que toda a equipa vai
-      fazer no primeiro dia.
+- [ ] Entrar a partir de uma máquina do domínio, usando **o endereço exato** que vai
+      ser dado à equipa, e confirmar que a entrada é silenciosa, sem pedido de
+      credenciais. A forma do nome é o que decide: um pedido de credenciais aqui não é
+      um defeito da aplicação, é configuração de zona por resolver antes do lançamento.
 
 ### Dados e operação
 
