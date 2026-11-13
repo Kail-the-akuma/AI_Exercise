@@ -1,6 +1,6 @@
 # 02. Especificação funcional
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Descreve o comportamento das quatro funcionalidades do produto mínimo definido em
 [BRIEFING.md](../BRIEFING.md). O que aqui não estiver, não existe.
@@ -78,6 +78,31 @@ ser editada nem removida."
 Avisar antes é a única mitigação disponível dentro do âmbito para o risco de erros
 permanentes identificado no briefing. A correção de um erro é um procedimento manual
 descrito em [06](06-Operacao-e-Publicacao.md).
+
+### Idempotência da submissão, DECISÃO EM ABERTO
+
+O voto é idempotente por decisão fechada, descrita em F2 e em
+[ADR-010](ADR/ADR-010-idempotencia-do-voto.md). **A submissão não é**, e isso ainda não
+foi decidido.
+
+Hoje, dois POST da mesma submissão criam duas ideias. O padrão POST/Redirect/GET evita
+o caso do recarregamento da página, e não evita um duplo clique nem um pedido repetido
+por uma ligação lenta. Como não há deteção de duplicados, por exclusão do briefing, o
+resultado fica visível na lista.
+
+Tornar a submissão idempotente obriga a escolher uma chave, e essa escolha tem
+consequências que não são óbvias:
+
+| Chave possível | O que trava | O que trava a mais |
+|---|---|---|
+| Autor mais título | Repetição acidental do mesmo texto | Duas pessoas com a mesma ideia genuína, e a mesma pessoa a propor duas variantes com o mesmo título |
+| Token por formulário | Só a repetição daquele envio | Nada, mas obriga a guardar estado do formulário |
+| Janela de tempo por autor | Repetição acidental em segundos | Submissões rápidas legítimas |
+
+**Fica em aberto, e a decisão é de quem é dono do produto.** Não é uma decisão para um
+agente tomar por iniciativa, porque qualquer uma destas chaves aproxima se da deteção
+de duplicados, que o briefing exclui de forma explícita. A decisão é tomada depois de o
+produto mínimo estar à vista e de se perceber se o caso acontece mesmo.
 
 ---
 
