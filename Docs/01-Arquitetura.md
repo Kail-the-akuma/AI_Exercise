@@ -1,6 +1,6 @@
 # 01. Arquitetura
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Pressupõe a leitura de [BRIEFING.md](../BRIEFING.md). Este documento descreve a forma
 do sistema. As funcionalidades estão em [02](02-Especificacao-Funcional.md), os dados
@@ -21,25 +21,31 @@ custo desproporcionado, não por incapacidade técnica.
 ```mermaid
 flowchart LR
     browser["Browser do utilizador"]
-    entra["Microsoft Entra ID"]
-    iis["IIS, servidor interno"]
+    iis["IIS, servidor interno<br/>autentica por Negotiate"]
     app["IdeaBoard.Web, ASP.NET Core Razor Pages"]
+    dir["Diretório corporativo"]
     db[("ideaboard.db, SQLite")]
     keys[("Chaves de Data Protection")]
 
-    browser -->|HTTPS| iis
+    browser -->|HTTP| iis
     iis -->|in-process, ASP.NET Core Module v2| app
-    browser -.->|redirect de início de sessão| entra
-    entra -.->|id_token para /signin-oidc| app
+    app -.->|só no primeiro acesso de cada pessoa| dir
     app --> db
     app --> keys
 ```
 
-A ligação ao Entra ID acontece apenas no início de sessão. Depois disso a aplicação
-trabalha só com o cookie de autenticação e com a base de dados local. Não há chamadas
-ao Microsoft Graph nem a qualquer serviço externo durante a utilização normal, o que
-significa que a aplicação continua a funcionar se o Entra ID estiver indisponível,
-para quem já tenha sessão iniciada.
+**Quem autentica é o IIS, e não a aplicação.** A identidade chega ao pedido já
+resolvida, e a aplicação lê dela o identificador de segurança da conta. Não há
+redirecionamento para um fornecedor externo, não há token para validar e não há cookie
+de sessão. Ver [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md).
+
+A única chamada externa é a consulta ao diretório corporativo para obter o nome
+apresentável, e acontece uma vez por pessoa, no primeiro acesso. Depois disso a
+aplicação trabalha só com a base de dados local.
+
+Se o diretório não responder, a pessoa regista o seu nome à mão e continua, portanto a
+indisponibilidade do diretório não impede o acesso. **O que impede o acesso é estar fora
+da rede corporativa**, que é um custo aceite e está registado no ADR-014.
 
 ## Plataforma e versões
 
@@ -48,34 +54,83 @@ para quem já tenha sessão iniciada.
 | Runtime | .NET 10, versão de suporte alargado | |
 | Aplicação | ASP.NET Core Razor Pages | [ADR-001](ADR/ADR-001-razor-pages.md) |
 | Acesso a dados | EF Core 10, `Microsoft.EntityFrameworkCore.Sqlite` | [ADR-002](ADR/ADR-002-sqlite.md) |
-| Autenticação | `Microsoft.Identity.Web` e `Microsoft.Identity.Web.UI` | [ADR-003](ADR/ADR-003-autenticacao-entra-id.md) |
+| Autenticação | Integrada do Windows, por Negotiate no IIS | [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md) |
 | Alojamento | IIS, hosting in-process | [ADR-009](ADR/ADR-009-publicacao-iis.md) |
-| Testes | xUnit, `Microsoft.Playwright.Xunit` | [ADR-011](ADR/ADR-011-autenticacao-nos-testes-e2e.md) |
+| Testes | xUnit v3, `Microsoft.Playwright.Xunit.v3` | [ADR-017](ADR/ADR-017-xunit-v3.md), [ADR-016](ADR/ADR-016-identidade-nos-testes-por-host-proprio.md) |
 
 Registo de eventos pelo `ILogger` com o provider de Event Log do Windows, que já vem
 na plataforma, em vez de acrescentar uma biblioteca de logging.
 
 ## Estrutura da solução
 
-Três projetos. A separação em camadas dentro do projeto web é por pastas, não por
-assemblies, porque quatro funcionalidades não justificam fronteiras de compilação.
-Ver [ADR-006](ADR/ADR-006-projeto-unico.md).
+Quatro projetos em `src`, com fronteiras que **não são camadas**. A divisão é por
+artefacto publicável, e é por isso que não contradiz o
+[ADR-006](ADR/ADR-006-projeto-unico.md), que recusou a divisão por camadas pelos
+motivos que lá estão. Ver [ADR-015](ADR/ADR-015-estrutura-de-quatro-projetos.md).
 
 ```
 IdeaBoard.sln
-  src/IdeaBoard.Web/
-    Pages/                    Index, Recentes, Nova, Detalhe, erros
-    Domain/                   Idea, Vote, User
-    Data/                     IdeaBoardDbContext, Migrations/
-    Services/                 IdeaService, VoteService, UserProvisioningService
+  src/IdeaBoard.App/           O produto inteiro, biblioteca de classes Razor
+    Pages/                     Index, Recentes, Nova, Detalhe, Nome, erros
+    Domain/                    Idea, Vote, User
+    Data/                      IdeaBoardDbContext, Migrations/
+    Services/                  IdeaService, VoteService, UserProvisioningService
+    Configuration/             Validação da configuração no arranque
+    Pipeline/                  Middleware próprio
     wwwroot/
-  tests/IdeaBoard.Tests/      xUnit, unidade e integração
-  tests/IdeaBoard.E2E/        xUnit mais Microsoft.Playwright.Xunit
-    Fixtures/                 AppHostFixture, TestAuthHandler
-    Scenarios/                Um ficheiro por funcionalidade
+  src/IdeaBoard.Web/           Host publicado. Só o arranque
+  src/IdeaBoard.Local/         Host local, nunca publicado
+  src/IdeaBoard.LocalIdentity/ Handler de identidade do host local
+  tests/IdeaBoard.Tests/       xUnit v3, unidade e integração
 ```
 
+A separação por pastas que o ADR-006 decidiu não desapareceu. Mudou de sítio e vive
+agora dentro do `IdeaBoard.App`, com a mesma direção única de dependências.
+
+**`tests/IdeaBoard.E2E/` ainda não existe nesta árvore.** Está a ser construído, e o
+desenho dele está em [07](07-Plano-de-Verificacao.md). Fica aqui nomeado para que a
+ausência se leia como trabalho em curso e não como esquecimento.
+
+### Porque é que os hosts são dois
+
+O `IdeaBoard.App` **não referencia projeto nenhum**, e é deliberado que seja a peça
+burra. Os dois hosts são irmãos e referenciam no, e só o host local referencia também o
+`IdeaBoard.LocalIdentity`.
+
+Isto compra uma coisa que o projeto único não conseguia dar. A regra mais dura do
+`CLAUDE.md`, que proíbe código de autenticação de teste dentro do host publicado, era
+uma convenção defendida por revisão de código. Passa a ser um facto estrutural, porque
+o handler vive num projeto que o host publicado não alcança.
+
+**A proteção que o compilador dava de graça desapareceu na divisão**, e teve de ser
+reposta à mão. Antes, uma referência do host publicado para o host local formava um
+ciclo de projetos e o MSBuild recusava construir. Com os hosts irmãos esse ciclo não
+existe, e uma referência errada compilaria, publicaria, e levaria o handler local para
+produção.
+
+O `Directory.Build.targets` repõe essa proteção, e a invariante que defende não é a que
+parece. Não é que o `IdeaBoard.Web` só referencie o `IdeaBoard.App`, é que **nada
+alcançável a partir do `IdeaBoard.Web` referencia um host**. Por isso a guarda vigia os
+dois projetos, e o conjunto permitido do `IdeaBoard.App` está vazio: acrescentar uma
+referência a um host faz hesitar quem a faz, e acrescentar uma à biblioteca partilhada
+parece exatamente aquilo para que uma biblioteca partilhada serve.
+
+### O prefixo dos ficheiros estáticos, que é o custo desta escolha
+
+Uma biblioteca de classes Razor serve os ficheiros estáticos sob
+`_content/IdeaBoard.App/`, e esse prefixo aparece nas referências do layout.
+
+Uma página pode compilar na perfeição e a folha de estilos devolver 404, porque o
+prefixo é configuração de servidor e não código. Compilar, arrancar e servir são três
+coisas e só a primeira dá erro de compilação, e é por isso que existe um teste que
+arranca o host publicado a sério e exige 200 no pedido do ficheiro de estilos.
+
+O custo é que toda a referência a um ficheiro estático carrega o nome do projeto, e
+mudar esse nome parte todas elas de uma vez.
+
 ### Responsabilidade de cada pasta
+
+As pastas abaixo são as do `IdeaBoard.App`.
 
 **`Pages`** contém os page models. Um page model valida a entrada, chama um serviço e
 devolve uma página ou um redirect. Não contém regras de negócio nem acesso direto ao
@@ -95,31 +150,37 @@ que os testes de unidade não precisem de base de dados.
 
 ## Fluxo de um pedido
 
-### Primeiro início de sessão
+### Primeiro acesso de uma pessoa
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
+    participant I as IIS
     participant A as IdeaBoard.Web
-    participant E as Entra ID
+    participant R as Diretório
     participant D as SQLite
 
-    B->>A: GET /
-    A-->>B: 302 para o Entra ID
-    B->>E: Autenticação corporativa
-    E-->>A: POST /signin-oidc com id_token
-    A->>A: Valida o token e cria o cookie
-    A->>D: Upsert do User por entraObjectId
-    A-->>B: 302 para /
-    B->>A: GET / com cookie
+    B->>I: GET /
+    I->>I: Negotiate, resolve a identidade
+    I->>A: Pedido com a identidade já resolvida
+    A->>D: Procura o User pelo subjectId
+    A->>R: Pede o nome, só se não houver linha
+    R-->>A: Nome, ou nada
+    A->>D: Cria o User com o nome e a proveniência
     A->>D: Lê ideias e contagens
     A-->>B: Ranking
 ```
 
-O upsert do utilizador local acontece aqui e só aqui. A partir deste momento o nome e
-o email mostrados na aplicação vêm da base de dados, e não das claims, o que é o que
-torna possível mostrar a lista nominal de votantes sem consultar o Entra ID. A
-consequência está em [ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md).
+Quando o diretório não devolve nome, a aplicação **não cria a linha** e redireciona para
+a página onde a pessoa regista o seu. A linha só nasce quando há nome para escrever, e é
+isso que mantém a invariante de que toda a linha de utilizador tem nome, em vez de cada
+página que mostra um autor ter de defender a ausência dele.
+
+A criação do utilizador local acontece aqui e só aqui. A partir deste momento o nome
+mostrado na aplicação vem da base de dados, e não da identidade do pedido, o que é o que
+torna possível mostrar a lista nominal de votantes sem consultar o diretório a cada
+leitura. A consequência está em
+[ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md).
 
 ### Votar
 

@@ -7,13 +7,48 @@ Descreve o comportamento das quatro funcionalidades do produto mínimo definido 
 
 ## Identidade e acesso
 
-Toda a aplicação exige sessão iniciada com a conta corporativa. Não há área pública,
-não há papéis e não há permissões diferenciadas. Quem entra, propõe e vota nas mesmas
-condições de toda a gente.
+Toda a aplicação exige utilizador autenticado, e quem autentica é o IIS, por
+autenticação integrada do Windows. Não há área pública, não há papéis e não há
+permissões diferenciadas. Quem entra, propõe e vota nas mesmas condições de toda a
+gente.
 
-O nome apresentado em toda a aplicação é o nome do utilizador tal como foi registado
-no primeiro início de sessão. Ver [ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md)
-para a consequência disto quando alguém muda de nome.
+Não há botão de terminar sessão, porque não há sessão aplicacional para terminar. Ver
+[ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md).
+
+O nome apresentado em toda a aplicação é o que está guardado na linha dessa pessoa. Ver
+[ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md) para a consequência disto quando
+alguém muda de nome.
+
+### Quando o nome não é conhecido
+
+A identidade que o IIS fornece não traz nome apresentável. A aplicação obtém no por
+consulta ao diretório corporativo, no primeiro acesso de cada pessoa.
+
+**Quando a consulta não devolve nada, a pessoa escreve o seu nome.** O pedido é
+redirecionado para `/nome`, e a linha de utilizador só é criada quando há nome para
+escrever. Nenhuma página tem de defender a ausência de um nome, porque a ausência nunca
+chega a ser gravada. Ver
+[ADR-022](ADR/ADR-022-resolucao-e-substituicao-do-nome.md).
+
+| Campo | Obrigatório | Limite | Notas |
+|---|---|---|---|
+| Nome | Sim | 80 caracteres | Linha única, espaços aparados antes de validar e de guardar |
+
+| Situação | Comportamento |
+|---|---|
+| Nome vazio | "Indique o seu nome." |
+| Nome acima de 80 caracteres | "O nome não pode ultrapassar 80 caracteres." |
+| Nome com barra invertida | "O nome não pode conter uma barra invertida. Escreva o seu nome, não o nome de utilizador." |
+
+**A regra da barra invertida não é cosmética, e convém que a razão fique escrita**, senão
+alguém a remove por parecer arbitrária. Uma conta de domínio tem sempre a forma
+`DOMINIO\pessoa` e um nome de pessoa não tem barra invertida nenhuma. Sem esta regra,
+alguém poderia registar se com o aspeto de um identificador de conta e aparecer assim na
+lista nominal de votantes, que é pública para toda a equipa. Aparentar autoridade de
+sistema é um problema diferente de usar o nome de um colega.
+
+O ecrã avisa, antes de o nome ser escrito, que ele fica visível para os colegas como
+autor das ideias e na lista de quem votou.
 
 ## Mapa de ecrãs
 
@@ -23,9 +58,13 @@ para a consequência disto quando alguém muda de nome.
 | `/recentes` | Recentes | As mesmas ideias, ordenadas por data de submissão |
 | `/nova` | Nova ideia | Formulário de submissão |
 | `/ideias/{id}` | Detalhe | Uma ideia, com a descrição completa e a lista de votantes |
+| `/nome` | Registo do nome | Só para quem chega sem nome conhecido |
 
-Quatro ecrãs, mais as páginas de erro. A navegação principal tem dois separadores,
-Mais votadas e Recentes, e um botão para submeter.
+Quatro ecrãs do produto, mais o registo do nome e as páginas de erro. A navegação
+principal tem dois separadores, Mais votadas e Recentes, e um botão para submeter.
+
+O `/nome` não está na navegação. Chega se lá por redirecionamento e uma só vez, e quem
+tem nome conhecido nunca o vê.
 
 ---
 
@@ -264,6 +303,11 @@ Português europeu em toda a aplicação. Sem emojis.
 | Estado vazio | Ainda não há ideias. Seja a primeira pessoa a propor uma. |
 | Aviso de permanência | Depois de submeter, a ideia não pode ser editada nem removida. |
 | Aviso de transparência | O seu voto é público. |
+| Registo do nome, título | Escreva o seu nome |
+| Registo do nome, explicação | Não foi possível obter o seu nome automaticamente. Escreva-o para continuar. |
+| Registo do nome, etiqueta | Nome |
+| Registo do nome, botão | Guardar |
+| Registo do nome, aviso | Este nome fica visível para os seus colegas, como autor das suas ideias e na lista de quem votou. |
 
 ---
 
