@@ -6,9 +6,10 @@
 BEGIN TRANSACTION;
 CREATE TABLE "User" (
     "id" INTEGER NOT NULL CONSTRAINT "PK_User" PRIMARY KEY AUTOINCREMENT,
-    "entraObjectId" TEXT NOT NULL,
+    "subjectId" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
-    "email" TEXT NULL,
+    "displayNameSource" TEXT NOT NULL,
+    "accountName" TEXT NOT NULL,
     "firstSeenAt" TEXT NOT NULL
 );
 
@@ -34,14 +35,14 @@ CREATE INDEX "IX_Idea_authorUserId" ON "Idea" ("authorUserId");
 
 CREATE INDEX "IX_Idea_createdAt" ON "Idea" ("createdAt" DESC);
 
-CREATE UNIQUE INDEX "IX_User_entraObjectId" ON "User" ("entraObjectId");
+CREATE UNIQUE INDEX "IX_User_subjectId" ON "User" ("subjectId");
 
 CREATE UNIQUE INDEX "IX_Vote_ideaId_userId" ON "Vote" ("ideaId", "userId");
 
 CREATE INDEX "IX_Vote_userId" ON "Vote" ("userId");
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20261113161344_EsquemaInicial', '10.0.14');
+VALUES ('20261113171845_EsquemaInicial', '10.0.14');
 
 COMMIT;
 

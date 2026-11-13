@@ -1,6 +1,7 @@
 using System.Globalization;
 using IdeaBoard.App.Configuration;
 using IdeaBoard.App.Data;
+using IdeaBoard.App.Pipeline;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
@@ -51,6 +52,12 @@ public static class IdeaBoardApplicationBuilderExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // After authorisation, because it has an opinion only about people who are signed
+        // in, and before the endpoints, because its whole job is to stop a request reaching
+        // one. A person whose name is not known yet can reach the page that asks for it and
+        // nothing else.
+        app.UseMiddleware<DisplayNameGateMiddleware>();
 
         return app;
     }

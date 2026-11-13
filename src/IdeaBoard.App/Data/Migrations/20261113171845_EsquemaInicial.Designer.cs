@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdeaBoard.App.Data.Migrations
 {
     [DbContext(typeof(IdeaBoardDbContext))]
-    [Migration("20261113161344_EsquemaInicial")]
+    [Migration("20261113171845_EsquemaInicial")]
     partial class EsquemaInicial
     {
         /// <inheritdoc />
@@ -65,29 +65,35 @@ namespace IdeaBoard.App.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("id");
 
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("accountName");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("displayName");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("email");
-
-                    b.Property<string>("EntraObjectId")
+                    b.Property<string>("DisplayNameSource")
                         .IsRequired()
                         .HasColumnType("TEXT")
-                        .HasColumnName("entraObjectId");
+                        .HasColumnName("displayNameSource");
 
                     b.Property<DateTime>("FirstSeenAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("firstSeenAt");
 
+                    b.Property<string>("SubjectId")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("subjectId");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("EntraObjectId")
+                    b.HasIndex("SubjectId")
                         .IsUnique()
-                        .HasDatabaseName("IX_User_entraObjectId");
+                        .HasDatabaseName("IX_User_subjectId");
 
                     b.ToTable("User", (string)null);
                 });

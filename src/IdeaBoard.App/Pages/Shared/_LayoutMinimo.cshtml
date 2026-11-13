@@ -1,0 +1,28 @@
+@{
+    // A layout without navigation, for the one page somebody can reach before the
+    // application knows who they are.
+    //
+    // The ordinary layout carries the two tabs and the submit button, and every one of them
+    // is behind the gate that sent the person here, so each would bounce them straight back.
+    // Offering a way out that leads nowhere reads as a broken site rather than as a rule.
+    string documentTitle = string.Empty;
+
+    if (ViewData["Title"] is string pageTitle && pageTitle.Length > 0)
+    {
+        documentTitle = pageTitle;
+    }
+}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@documentTitle</title>
+    <link rel="stylesheet" href="~/_content/IdeaBoard.App/css/site.css" />
+</head>
+<body>
+    <main class="conteudo">
+        @RenderBody()
+    </main>
+</body>
+</html>

@@ -76,26 +76,33 @@ public class IdeaBoardDbContext : DbContext
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        user.Property(entity => entity.EntraObjectId)
-            .HasColumnName("entraObjectId")
+        user.Property(entity => entity.SubjectId)
+            .HasColumnName("subjectId")
             .IsRequired();
 
         user.Property(entity => entity.DisplayName)
             .HasColumnName("displayName")
             .IsRequired();
 
-        // Optional, because a version 1.0 token carries no preferred_username and the
-        // application tolerates that: the object identifier is what identity depends on.
-        user.Property(entity => entity.Email)
-            .HasColumnName("email");
+        // Stored as its name and not as a number. This table is read by hand during the
+        // manual correction procedure, and a column holding 1 or 2 would need the
+        // procedure to carry a key that can fall out of step with this enum.
+        user.Property(entity => entity.DisplayNameSource)
+            .HasColumnName("displayNameSource")
+            .HasConversion<string>()
+            .IsRequired();
+
+        user.Property(entity => entity.AccountName)
+            .HasColumnName("accountName")
+            .IsRequired();
 
         user.Property(entity => entity.FirstSeenAt)
             .HasColumnName("firstSeenAt")
             .IsRequired();
 
-        user.HasIndex(entity => entity.EntraObjectId)
+        user.HasIndex(entity => entity.SubjectId)
             .IsUnique()
-            .HasDatabaseName("IX_User_entraObjectId");
+            .HasDatabaseName("IX_User_subjectId");
     }
 
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 
@@ -27,10 +28,10 @@ public static class StartupConfigurationValidator
 
         List<string> problems = new List<string>();
 
-        ValidateAzureAd(configuration, problems);
         ValidateDatabase(configuration, isDevelopment, contentRootPath, problems);
         ValidateDataProtection(configuration, isDevelopment, contentRootPath, problems);
         ValidateTimeZone(configuration, problems);
+        ValidateDirectoryLookup(configuration, problems);
 
         return new ConfigurationValidationResult(problems);
     }
@@ -40,19 +41,22 @@ public static class StartupConfigurationValidator
 
     #region Authentication
 
-    /// <summary>
-    /// Requires the four sign-in keys to be present and non-empty, in every environment.
-    /// Presence only: no format check, no network call, and no client secret. Whether a
-    /// client secret is needed is an open decision, and a validator that demanded one
-    /// would be closing that decision silently, through a line of code.
-    /// </summary>
-    private static void ValidateAzureAd(IConfiguration configuration, List<string> problems)
-    {
-        RequirePresent(configuration, ConfigurationKeys.AzureAdInstance, problems);
-        RequirePresent(configuration, ConfigurationKeys.AzureAdTenantId, problems);
-        RequirePresent(configuration, ConfigurationKeys.AzureAdClientId, problems);
-        RequirePresent(configuration, ConfigurationKeys.AzureAdCallbackPath, problems);
-    }
+    // There is deliberately no authentication validation here any more, and a capability
+    // was LOST when it went, which is why this is written down rather than quietly deleted.
+    //
+    // It used to require four sign-in keys to be present, which amounted to saying that
+    // without authentication configuration the application does nothing useful. That was
+    // checkable because the configuration was within the application's reach.
+    //
+    // Under Windows authentication it is not. The settings live in the site's web.config,
+    // in the IIS configuration, outside anything this process can read at startup. The host
+    // can now start perfectly with Windows authentication switched off and anonymous
+    // authentication switched on, and nothing in here will notice. The symptom is a 401 on
+    // the first request, visible but unexplained.
+    //
+    // Detecting that moved to the manual verification list, which is the honest place for
+    // it. Do not put a check back here: with the four keys gone from configuration, any
+    // check written against them would refuse to start the very host it is meant to guard.
 
     #endregion
 
@@ -181,6 +185,55 @@ public static class StartupConfigurationValidator
                 $"('{keysPath}'). A key ring kept there is deleted by the next publish, and the " +
                 $"symptom is people being thrown out of their session and submissions failing with " +
                 $"antiforgery errors, intermittently, with nothing in the code to explain it.");
+        }
+    }
+
+    #endregion
+
+
+    #region Directory
+
+    /// <summary>
+    /// Checks the directory settings when they are present, and accepts their absence.
+    ///
+    /// Absence is valid because both have documented defaults, and requiring them would
+    /// break every existing configuration file to say nothing new. A value that is present
+    /// and unreadable is a different matter: it means somebody meant to change the
+    /// behaviour and did not, which is worth stopping for rather than silently ignoring.
+    /// </summary>
+    private static void ValidateDirectoryLookup(IConfiguration configuration, List<string> problems)
+    {
+        string? enabled = configuration[ConfigurationKeys.DirectoryLookupEnabled];
+
+        if (!string.IsNullOrWhiteSpace(enabled) && !bool.TryParse(enabled, out _))
+        {
+            problems.Add(
+                $"'{ConfigurationKeys.DirectoryLookupEnabled}' is set to '{enabled}', which is " +
+                $"not true or false.");
+        }
+
+        string? timeoutSeconds = configuration[ConfigurationKeys.DirectoryLookupTimeoutSeconds];
+
+        if (string.IsNullOrWhiteSpace(timeoutSeconds))
+        {
+            return;
+        }
+
+        if (!int.TryParse(timeoutSeconds, NumberStyles.Integer, CultureInfo.InvariantCulture, out int seconds))
+        {
+            problems.Add(
+                $"'{ConfigurationKeys.DirectoryLookupTimeoutSeconds}' is set to '{timeoutSeconds}', " +
+                $"which is not a whole number.");
+            return;
+        }
+
+        if (seconds < 1 || seconds > DirectoryLookupOptions.MaximumTimeoutSeconds)
+        {
+            problems.Add(
+                $"'{ConfigurationKeys.DirectoryLookupTimeoutSeconds}' is set to {seconds}, and has " +
+                $"to be between 1 and {DirectoryLookupOptions.MaximumTimeoutSeconds}. A timeout of " +
+                $"zero would make every lookup fail, and one longer than that is a person waiting " +
+                $"in front of a blank page.");
         }
     }
 
