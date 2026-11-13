@@ -5,43 +5,29 @@
 Destina se a quem publica e mantém a aplicação no servidor interno. Os caminhos usam
 o nome de trabalho `IdeaBoard` e têm de ser ajustados ao nome final.
 
-## Provisionamento no Entra ID
+## Identidade
 
-> **Esta secção inteira está pendente de substituição, e não deve ser executada.**
-> A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
-> Windows por Negotiate no IIS. Deixa de haver registo de aplicação, client secret e URI
-> de redirecionamento de qualquer espécie.
->
-> **Ninguém deve pedir este registo à equipa de identidade.** O pedido já não tem objeto,
-> e fazê lo gasta o tempo de outra equipa a provisionar o que não vai ser usado.
->
-> O que substitui esta secção depende do ADR que substitui o
-> [ADR-003](ADR/ADR-003-autenticacao-entra-id.md), que ainda não está escrito e pertence
-> ao ARQ. O texto abaixo fica como está, e não alinhado com o desenho novo, porque
-> documentar uma autenticação que ainda não existe em código nem em ADR seria registar
-> uma intenção e não o que foi construído.
+**Não há nada a provisionar junto da equipa de identidade.** Nem registo de aplicação,
+nem client secret, nem URI de redirecionamento. A autenticação é integrada do Windows,
+servida pelo IIS, conforme
+[ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md).
 
-Registo de aplicação de um só tenant, no tenant corporativo.
+O que é preciso é configuração do site, e está na secção do IIS mais abaixo:
+autenticação Windows ativada e acesso anónimo desligado.
 
-| Definição | Valor |
-|---|---|
-| Tipo de conta suportado | Apenas contas desta organização |
-| URI de redirecionamento | `https://{nome-do-site}/signin-oidc`, do tipo Web |
-| URL de saída pós sessão | `https://{nome-do-site}/signout-oidc` |
-| Permissões | Apenas as de início de sessão e leitura do perfil básico |
+### A consulta ao diretório
 
-Nenhuma permissão do Microsoft Graph é necessária. A aplicação não consulta o Graph em
-momento nenhum, e pedir permissões a mais torna a aprovação mais lenta sem benefício.
+A aplicação consulta o diretório corporativo para obter o nome apresentável, uma vez por
+pessoa, no primeiro acesso. Pede **apenas o atributo do nome**, e não o registo da
+pessoa.
 
-**Client secret**: a confirmar antes de pedir um. Uma aplicação que apenas autentica
-pode não precisar de segredo, e nesse caso basta ter a emissão de token de
-identificação ativada no registo. Ver
-[ADR-003](ADR/ADR-003-autenticacao-entra-id.md). Se for necessário, o valor não entra
-no repositório, fica na configuração do servidor, e a data de expiração tem de ficar
-registada em sítio onde alguém a veja antes de expirar.
+A identidade do pool de aplicações tem de conseguir ler o diretório. Com identidade de
+pool por omissão a consulta sai como a conta da máquina, o que basta num domínio para
+ler atributos públicos, e convém confirmar antes de assumir.
 
-Os valores de `TenantId` e `ClientId` vão para a configuração do servidor, não para o
-`appsettings.json` versionado.
+**Se o diretório não responder, a aplicação não fica bloqueada.** Quem chega sem nome
+regista o seu, e a linha só nasce quando há nome para escrever. Uma indisponibilidade do
+diretório degrada a experiência, não impede o acesso.
 
 ## Pastas no servidor
 
@@ -93,54 +79,34 @@ em [07](07-Plano-de-Verificacao.md).
 
 ### Site
 
-HTTPS com redirecionamento de HTTP, e **HSTS desligado até a Fase 6 estar concluída**.
-O `web.config` é gerado pela publicação e não deve ser editado à mão no servidor,
-porque a publicação seguinte sobrepõe o.
+HTTP, no nome curto do servidor com porta. O `web.config` é gerado pela publicação e não
+deve ser editado à mão no servidor, porque a publicação seguinte sobrepõe o.
 
-### Certificado
+| Definição de autenticação | Valor |
+|---|---|
+| Autenticação Windows | **Ativada** |
+| Autenticação anónima | **Desligada** |
 
-A aplicação arranca com um certificado emitido pela própria equipa, conforme
-[ADR-013](ADR/ADR-013-certificado-no-arranque.md), e é substituído por um certificado
-confiado na Fase 6.
+As duas andam juntas. Com a anónima ligada, o IIS serve o pedido sem desafiar ninguém, e
+a aplicação recebe pedidos sem identidade, o que faz a política de autorização recusar
+toda a gente em vez de autenticar.
 
-**Por ordem de preferência:**
+### Certificado e HSTS, que não existem
 
-1. **Autoridade certificadora interna da organização**, se existir. É o melhor caso,
-   porque as máquinas do domínio já confiam nela e não há aviso nenhum. Vale sempre a
-   pena perguntar antes de assumir que não existe.
-2. **Auto assinado**, criado no próprio servidor.
+**Não há certificado e o HSTS fica desligado.** O site serve HTTP, conforme
+[ADR-024](ADR/ADR-024-http-sem-certificado.md), que substitui o ADR-013.
 
-```powershell
-New-SelfSignedCertificate `
-    -DnsName "{nome-dns-do-site}" `
-    -CertStoreLocation "Cert:\LocalMachine\My" `
-    -FriendlyName "IdeaBoard" `
-    -NotAfter (Get-Date).AddYears(2)
-```
+Fica aqui com título próprio em vez de ausente, porque esta secção já descreveu um
+certificado durante algum tempo, e quem a procure tem de encontrar a resposta em vez de
+um vazio que se lê como esquecimento.
 
-Depois, associar o certificado ao site no IIS, na porta 443, com o mesmo nome.
-
-**O nome tem de ser o nome DNS definitivo.** Não o nome da máquina, não um endereço
-IP. É o mesmo nome que vai no URI de redirecionamento do registo do Entra ID, e o
-mesmo que vai no certificado de substituição mais tarde.
-
-**O Entra ID não é afetado por o certificado não ser confiado.** O Entra ID nunca liga
-à aplicação. Quem liga é o browser, que devolve o token por POST depois de a pessoa
-aceitar a exceção de segurança. O início de sessão funciona na mesma.
-
-### HSTS, e porque fica desligado
-
-Com HSTS ativo, um browser que encontre um erro de certificado **termina a ligação sem
-dar opção de prosseguir**. O botão de continuar deixa de existir, e não há forma de o
-utilizador contornar.
-
-Ativar o HSTS enquanto o certificado for auto assinado deixa portanto o site
-inacessível a toda a gente, incluindo a quem o publicou. Pior, o browser guarda a
-instrução durante o tempo declarado, portanto desligar o HSTS no servidor não
-desbloqueia de imediato quem já a recebeu.
-
-O HSTS é ativado na Fase 6, depois do certificado confiado estar no lugar, e nunca
-antes.
+**Se o HTTPS voltar algum dia, a ordem é fixa: certificado confiado primeiro, HSTS
+depois, nunca ao contrário.** O raciocínio está em
+[04](04-Requisitos-Nao-Funcionais-e-Seguranca.md) e no
+[ADR-024](ADR/ADR-024-http-sem-certificado.md). Com HSTS ativo e um certificado não
+confiado, o browser termina a ligação sem oferecer forma de prosseguir, e guarda a
+instrução pelo tempo declarado, portanto desligar o HSTS no servidor não desbloqueia
+quem já a recebeu.
 
 ## Ligação à base de dados
 
@@ -382,9 +348,10 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Pessoas atiradas para fora da sessão ao acaso, ou erros em submissões | Chaves de Data Protection não persistidas. Ver [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Bloqueios ou tempos limite em escritas | Mais de um processo de trabalho no pool de aplicações |
 | Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado |
-| Ciclo infinito de redirecionamentos no início de sessão | URI de redirecionamento do registo diferente do URL real do site, ou site a ser servido em HTTP |
-| Site inacessível, sem opção de prosseguir no aviso de certificado | HSTS ativado antes de haver certificado confiado. Ver a secção do HSTS acima |
-| Aviso de segurança do browser a cada acesso | Esperado até à Fase 6. Deixa de ser esperado depois dela |
+| Toda a gente recusada no primeiro acesso | Autenticação anónima ligada no site, ou autenticação Windows desligada |
+| O browser pede credenciais em vez de entrar sozinho | O endereço não está na zona de intranet local do browser. Ver [ADR-024](ADR/ADR-024-http-sem-certificado.md) |
+| Ciclo infinito de redirecionamentos para `/nome` | A linha de utilizador existe sem nome, o que não devia acontecer, porque a linha só nasce com nome |
+| Nome de utilizador a aparecer como autor, na forma `DOMINIO\pessoa` | Nome registado à mão a contornar a validação, que recusa barra invertida |
 | Dados desaparecidos depois de uma publicação | Base de dados dentro da pasta da aplicação |
 | Backup que restaura sem os últimos dias | Cópia do ficheiro em vez de `VACUUM INTO` |
 

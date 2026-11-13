@@ -21,25 +21,31 @@ custo desproporcionado, não por incapacidade técnica.
 ```mermaid
 flowchart LR
     browser["Browser do utilizador"]
-    entra["Microsoft Entra ID"]
-    iis["IIS, servidor interno"]
+    iis["IIS, servidor interno<br/>autentica por Negotiate"]
     app["IdeaBoard.Web, ASP.NET Core Razor Pages"]
+    dir["Diretório corporativo"]
     db[("ideaboard.db, SQLite")]
     keys[("Chaves de Data Protection")]
 
-    browser -->|HTTPS| iis
+    browser -->|HTTP| iis
     iis -->|in-process, ASP.NET Core Module v2| app
-    browser -.->|redirect de início de sessão| entra
-    entra -.->|id_token para /signin-oidc| app
+    app -.->|só no primeiro acesso de cada pessoa| dir
     app --> db
     app --> keys
 ```
 
-A ligação ao Entra ID acontece apenas no início de sessão. Depois disso a aplicação
-trabalha só com o cookie de autenticação e com a base de dados local. Não há chamadas
-ao Microsoft Graph nem a qualquer serviço externo durante a utilização normal, o que
-significa que a aplicação continua a funcionar se o Entra ID estiver indisponível,
-para quem já tenha sessão iniciada.
+**Quem autentica é o IIS, e não a aplicação.** A identidade chega ao pedido já
+resolvida, e a aplicação lê dela o identificador de segurança da conta. Não há
+redirecionamento para um fornecedor externo, não há token para validar e não há cookie
+de sessão. Ver [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md).
+
+A única chamada externa é a consulta ao diretório corporativo para obter o nome
+apresentável, e acontece uma vez por pessoa, no primeiro acesso. Depois disso a
+aplicação trabalha só com a base de dados local.
+
+Se o diretório não responder, a pessoa regista o seu nome à mão e continua, portanto a
+indisponibilidade do diretório não impede o acesso. **O que impede o acesso é estar fora
+da rede corporativa**, que é um custo aceite e está registado no ADR-014.
 
 ## Plataforma e versões
 
@@ -48,7 +54,7 @@ para quem já tenha sessão iniciada.
 | Runtime | .NET 10, versão de suporte alargado | |
 | Aplicação | ASP.NET Core Razor Pages | [ADR-001](ADR/ADR-001-razor-pages.md) |
 | Acesso a dados | EF Core 10, `Microsoft.EntityFrameworkCore.Sqlite` | [ADR-002](ADR/ADR-002-sqlite.md) |
-| Autenticação | `Microsoft.Identity.Web` e `Microsoft.Identity.Web.UI` | [ADR-003](ADR/ADR-003-autenticacao-entra-id.md) |
+| Autenticação | Integrada do Windows, por Negotiate no IIS | [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md) |
 | Alojamento | IIS, hosting in-process | [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Testes | xUnit v3, `Microsoft.Playwright.Xunit.v3` | [ADR-017](ADR/ADR-017-xunit-v3.md), [ADR-016](ADR/ADR-016-identidade-nos-testes-por-host-proprio.md) |
 
@@ -144,31 +150,37 @@ que os testes de unidade não precisem de base de dados.
 
 ## Fluxo de um pedido
 
-### Primeiro início de sessão
+### Primeiro acesso de uma pessoa
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
+    participant I as IIS
     participant A as IdeaBoard.Web
-    participant E as Entra ID
+    participant R as Diretório
     participant D as SQLite
 
-    B->>A: GET /
-    A-->>B: 302 para o Entra ID
-    B->>E: Autenticação corporativa
-    E-->>A: POST /signin-oidc com id_token
-    A->>A: Valida o token e cria o cookie
-    A->>D: Upsert do User por entraObjectId
-    A-->>B: 302 para /
-    B->>A: GET / com cookie
+    B->>I: GET /
+    I->>I: Negotiate, resolve a identidade
+    I->>A: Pedido com a identidade já resolvida
+    A->>D: Procura o User pelo subjectId
+    A->>R: Pede o nome, só se não houver linha
+    R-->>A: Nome, ou nada
+    A->>D: Cria o User com o nome e a proveniência
     A->>D: Lê ideias e contagens
     A-->>B: Ranking
 ```
 
-O upsert do utilizador local acontece aqui e só aqui. A partir deste momento o nome e
-o email mostrados na aplicação vêm da base de dados, e não das claims, o que é o que
-torna possível mostrar a lista nominal de votantes sem consultar o Entra ID. A
-consequência está em [ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md).
+Quando o diretório não devolve nome, a aplicação **não cria a linha** e redireciona para
+a página onde a pessoa regista o seu. A linha só nasce quando há nome para escrever, e é
+isso que mantém a invariante de que toda a linha de utilizador tem nome, em vez de cada
+página que mostra um autor ter de defender a ausência dele.
+
+A criação do utilizador local acontece aqui e só aqui. A partir deste momento o nome
+mostrado na aplicação vem da base de dados, e não da identidade do pedido, o que é o que
+torna possível mostrar a lista nominal de votantes sem consultar o diretório a cada
+leitura. A consequência está em
+[ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md).
 
 ### Votar
 
