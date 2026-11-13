@@ -17,12 +17,24 @@ O briefing lista riscos conhecidos destas decisões e diz de forma explícita qu
 deles é motivo para mudar o âmbito. Uma proposta de funcionalidade que resolva um
 desses riscos é uma mudança de âmbito e precisa de decisão humana, não de iniciativa.
 
+## Método
+
+Antes de afirmar o que um ficheiro contém, ler o ficheiro. Vale para citar, resumir ou
+passar a afirmação a outra pessoa, e vale sobretudo quando a afirmação vem de alguém que
+já o leu, porque é aí que ela viaja sem ser verificada e chega ao fim com a autoridade de
+quem a repetiu e não de quem a confirmou.
+
+Antes de afirmar como se comporta uma ferramenta, confirmar com ela. Um comportamento
+lembrado é uma hipótese, e as ferramentas mudam entre versões sem avisar quem as usa. O
+custo de confirmar mede se em segundos, o de não confirmar mede se no trabalho feito em
+cima da suposição errada.
+
 ## Stack
 
 - .NET 10 (LTS), ASP.NET Core Razor Pages, renderização no servidor.
 - EF Core sobre SQLite.
 - `Microsoft.Identity.Web` para autenticação por Entra ID.
-- xUnit em toda a solução, com `Microsoft.Playwright.Xunit` nos testes ponta a ponta.
+- xUnit em toda a solução, com `Microsoft.Playwright.Xunit.v3` nos testes ponta a ponta.
 
 Dependências externas são para minimizar. Antes de acrescentar um pacote, verificar o
 que a plataforma já oferece. O registo de eventos usa o `ILogger` com o provider de
