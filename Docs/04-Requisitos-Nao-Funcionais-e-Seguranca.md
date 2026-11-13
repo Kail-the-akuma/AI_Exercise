@@ -150,14 +150,17 @@ Nada mais. Sem fotografia, sem departamento, sem hierarquia, sem registo de nave
 e sem analítica de terceiros.
 
 **O email pode não vir.** A coluna é anulável no esquema real, como se confirma em
-`deploy/migracao.sql`, onde `email` é declarado `TEXT NULL`. Nem todos os registos de
-aplicação emitem a claim, e a aplicação tem de funcionar sem ela.
+`deploy/migracao.sql`, onde `email` é declarado `TEXT NULL`. A aplicação tem de
+funcionar sem ele.
 
 Guardar uma cadeia vazia numa coluna não anulável seria registar que a pessoa tem um
-email vazio, o que é falso. A ausência fica registada como ausência. O email nunca é
-apresentado na interface, portanto a falta dele não é visível para ninguém, e a
-identificação da pessoa não depende dele, porque a chave é o identificador de objeto do
-Entra ID.
+email vazio, o que é falso. A ausência fica registada como ausência.
+
+O email nunca é apresentado na interface, portanto a falta dele não é visível para
+ninguém, e a identificação da pessoa não depende dele, porque a chave é o identificador
+estável que o fornecedor de identidade emite, e não o email. Qual é esse identificador
+depende do ADR que substitui o [ADR-003](ADR/ADR-003-autenticacao-entra-id.md), que
+ainda não está escrito.
 
 ### Transparência deliberada
 

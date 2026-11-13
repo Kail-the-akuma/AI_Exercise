@@ -18,18 +18,28 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 |---|---|---|---|
 | Identificador de código decidido | Equipa | Fase 1 | Fechado em `IdeaBoard` |
 | Nome de produto em prosa decidido | Equipa | Lançamento | **Em aberto** |
-| Registo de aplicação no Entra ID, com URL de redirect | Equipa de identidade | Fase 1 | Por fazer |
-| Spike do client secret fechado | Equipa de desenvolvimento | Fase 1 | **Em aberto** |
 | Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 | Por fazer |
-| Nome DNS do site decidido, com registo a apontar para o servidor | Infraestrutura | Fases 1 e 5 | Por fazer |
-| Certificado HTTPS emitido pela própria equipa | Equipa de desenvolvimento | Fase 5 | Por fazer |
+| Endereço do site decidido | Equipa | Fases 1 e 5 | Decidido na forma, **valor por preencher** |
 | Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 | Por fazer |
 | Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento | **Em aberto** |
 | Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
-**Dois itens bloqueiam a Fase 1 e continuam em aberto**, o spike do client secret e o
-nome DNS. O registo de aplicação no Entra ID depende dos dois, porque é o registo que
-carrega o URI de redirecionamento e é o spike que diz se é preciso segredo.
+O **endereço é o nome curto do servidor com porta**, e não o nome qualificado. A forma
+está decidida e o valor concreto ainda não, porque o servidor ainda não está escolhido.
+
+> **Pré requisitos de identidade, pendentes de ADR.**
+> A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
+> Windows por Negotiate no IIS. Os pré requisitos que esta tabela listava por causa do
+> Entra ID, o registo de aplicação e o spike do client secret, deixaram de existir, e
+> por isso saíram daqui em vez de ficarem marcados como em aberto.
+>
+> Os pré requisitos do desenho novo ficam por escrever até existir o ADR que substitui o
+> [ADR-003](ADR/ADR-003-autenticacao-entra-id.md). Até lá esta secção está incompleta de
+> propósito, e isso é preferível a estar completa e errada.
+>
+> O mesmo vale para a linha do certificado, que saiu desta tabela porque depende da
+> decisão de HTTP contra HTTPS, que também está em aberto. Ninguém emite certificado
+> antes dessa decisão estar fechada.
 
 ### O identificador de código ficou decidido, o nome de produto não
 
@@ -44,14 +54,15 @@ dono do produto. Pode ser diferente do identificador de código e pode ser tomad
 lançamento. Nenhum documento deve inventar um, nem tratar `IdeaBoard` como se fosse o
 nome de produto.
 
-### O spike de autenticação
+### O spike de autenticação, encerrado por deixar de se aplicar
 
-Antes da Fase 1, confirmar se uma aplicação que apenas autentica, sem chamar nenhuma
-API a jusante, funciona sem client secret no registo da organização. A resposta muda o
-que a infraestrutura tem de provisionar e tem de estar fechada antes de alguém esperar
-por um segredo que afinal não era preciso, ou de construir assumindo que não era
-preciso e descobrir que era. Ver
-[ADR-003](ADR/ADR-003-autenticacao-entra-id.md).
+Esta subsecção descrevia um spike para confirmar se o registo no Entra ID precisava de
+client secret. Com a mudança para autenticação Windows deixa de haver registo de
+aplicação e deixa de haver segredo, portanto o spike não tem objeto.
+
+Fica registado que foi encerrado por deixar de se aplicar, e não por ter sido
+respondido. O que substitui esta subsecção depende do ADR que substitui o
+[ADR-003](ADR/ADR-003-autenticacao-entra-id.md), e é do ARQ.
 
 ### O certificado no arranque, e o nome que ele carrega
 

@@ -7,6 +7,20 @@ o nome de trabalho `IdeaBoard` e têm de ser ajustados ao nome final.
 
 ## Provisionamento no Entra ID
 
+> **Esta secção inteira está pendente de substituição, e não deve ser executada.**
+> A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
+> Windows por Negotiate no IIS. Deixa de haver registo de aplicação, client secret e URI
+> de redirecionamento de qualquer espécie.
+>
+> **Ninguém deve pedir este registo à equipa de identidade.** O pedido já não tem objeto,
+> e fazê lo gasta o tempo de outra equipa a provisionar o que não vai ser usado.
+>
+> O que substitui esta secção depende do ADR que substitui o
+> [ADR-003](ADR/ADR-003-autenticacao-entra-id.md), que ainda não está escrito e pertence
+> ao ARQ. O texto abaixo fica como está, e não alinhado com o desenho novo, porque
+> documentar uma autenticação que ainda não existe em código nem em ADR seria registar
+> uma intenção e não o que foi construído.
+
 Registo de aplicação de um só tenant, no tenant corporativo.
 
 | Definição | Valor |
@@ -18,27 +32,6 @@ Registo de aplicação de um só tenant, no tenant corporativo.
 
 Nenhuma permissão do Microsoft Graph é necessária. A aplicação não consulta o Graph em
 momento nenhum, e pedir permissões a mais torna a aprovação mais lenta sem benefício.
-
-### Pedir o URI de desenvolvimento ao mesmo tempo
-
-**Pedir os dois URI no mesmo pedido, e não só o do servidor.** O Entra ID recusa URI de
-redirecionamento em HTTP, com a única exceção de `localhost`, conforme
-[ADR-013](ADR/ADR-013-certificado-no-arranque.md). Sem um URI de `localhost` registado,
-ninguém consegue exercitar o início de sessão real contra o Entra ID a partir de uma
-máquina de desenvolvimento.
-
-Descobrir isso depois custa uma segunda ida à equipa de identidade, e essa espera cai
-dentro da Fase 1.
-
-| Ambiente | URI de redirecionamento |
-|---|---|
-| Servidor | `https://{nome-do-site}/signin-oidc` |
-| Desenvolvimento | `https://localhost:{porta}/signin-oidc` |
-
-**A porta ainda não está fixada**, e fica por decidir. O host que fala com o Entra ID é
-o `IdeaBoard.Web`, que hoje não tem perfil de arranque próprio, ao contrário do
-`IdeaBoard.Local`, que usa identidade local e nunca chama o Entra ID. A porta tem de ser
-fixada antes de o registo ser pedido, porque entra no pedido.
 
 **Client secret**: a confirmar antes de pedir um. Uma aplicação que apenas autentica
 pode não precisar de segredo, e nesse caso basta ter a emissão de token de

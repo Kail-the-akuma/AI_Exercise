@@ -52,24 +52,36 @@ que ele já foi lido.
 
 ## Decisões ainda em aberto
 
-Registadas aqui para não desaparecerem. **Duas delas bloqueiam a Fase 1**, o spike do
-client secret e o nome DNS, e estão assinaladas como tal.
+Registadas aqui para não desaparecerem. São três decisões de produto, mais o que a
+mudança de autenticação deixar em aberto quando o ADR for escrito.
 
 - **Nome de produto em prosa.** O identificador de código já está fechado em
   `IdeaBoard`, e esta é a outra metade da decisão, que continua por tomar. Pode ser
   diferente do identificador e pode ser decidido até ao lançamento.
-- **Necessidade de client secret no registo do Entra ID.** A confirmar num spike
-  curto, conforme [ADR-003](Docs/ADR/ADR-003-autenticacao-entra-id.md).
-  **Bloqueia a Fase 1.**
-- **Nome DNS do site.** Entra no URI de redirecionamento do registo do Entra ID e, mais
-  tarde, no certificado. **Bloqueia a Fase 1 e a Fase 5.**
 - **Chave de idempotência da submissão.** O voto é idempotente, a submissão não é, e a
   chave que a tornaria idempotente aproxima se da deteção de duplicados, que o briefing
   exclui. As alternativas estão em
   [Docs/02](Docs/02-Especificacao-Funcional.md).
 - **Valores alvo dos critérios de sucesso.** O briefing pede que sejam fixados pela
   equipa antes do lançamento.
-- **Prazo da substituição do certificado.** A aplicação arranca com um certificado
-  emitido pela própria equipa, conforme
-  [ADR-013](Docs/ADR/ADR-013-certificado-no-arranque.md). O prazo para o trocar por um
-  certificado confiado fica fixado no lançamento, e não pode ficar em aberto.
+
+### Decididas, com o valor por preencher
+
+- **Endereço do site.** É o **nome curto do servidor com porta**, e não o nome
+  qualificado. A forma está decidida e o valor concreto ainda não, porque o servidor
+  ainda não está escolhido.
+
+### Pendentes do ADR da autenticação
+
+A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
+Windows por Negotiate no IIS. A necessidade de client secret e o registo de aplicação no
+Entra ID **saíram desta lista por deixarem de existir**, e não por terem sido
+respondidos.
+
+O prazo da substituição do certificado, antes aqui registado por causa do
+[ADR-013](Docs/ADR/ADR-013-certificado-no-arranque.md), depende agora da decisão de HTTP
+contra HTTPS, que está em aberto e que decide se aquele ADR sobrevive.
+
+O que substitui estes pontos fica por escrever até existir o ADR que substitui o
+[ADR-003](Docs/ADR/ADR-003-autenticacao-entra-id.md), que pertence ao ARQ. Até lá esta
+lista está incompleta de propósito.
