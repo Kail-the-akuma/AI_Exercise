@@ -1,0 +1,43 @@
+@page "/ideias/{id:int}"
+@model DetalheModel
+@{
+    ViewData["Title"] = Model.Idea.Title;
+}
+<article class="ideia-detalhe" id="ideia-@Model.Idea.Id">
+    <h1>@Model.Idea.Title</h1>
+
+    <p class="ideia-meta">
+        <span class="ideia-autor">@Model.Idea.AuthorDisplayName</span>
+        <time datetime="@(Model.Idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(Model.Idea.CreatedAt, displayTimeZone).ToString("d")</time>
+    </p>
+
+    @* Plain text with the line breaks kept, which the stylesheet does with pre-wrap.
+       Razor encodes the value, and no user content is ever written as raw markup. *@
+    <p class="descricao">@Model.Idea.Description</p>
+
+    <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
+
+    <partial name="_VoteButton"
+             model="@(new VoteButtonModel { IdeaId = Model.Idea.Id, HasVoted = Model.Idea.HasVoted, VoteCount = Model.Idea.VoteCount })" />
+</article>
+
+<section class="votantes" aria-labelledby="titulo-votantes">
+    <h2 id="titulo-votantes">Quem votou</h2>
+
+    @if (Model.Idea.Voters.Count == 0)
+    {
+        <p>Ainda ninguém votou nesta ideia.</p>
+    }
+    else
+    {
+        <ul class="lista-votantes">
+            @foreach (IdeaVoter voter in Model.Idea.Voters)
+            {
+                <li>
+                    <span class="votante-nome">@voter.DisplayName</span>
+                    <time datetime="@(voter.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(voter.CreatedAt, displayTimeZone).ToString("d")</time>
+                </li>
+            }
+        </ul>
+    }
+</section>

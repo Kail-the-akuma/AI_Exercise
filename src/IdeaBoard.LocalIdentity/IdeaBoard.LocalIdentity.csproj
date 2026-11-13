@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>IdeaBoard.LocalIdentity</RootNamespace>
+    <AssemblyName>IdeaBoard.LocalIdentity</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Never published. Referenced only by the local host and by the end to end suite. -->
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- Only for the shared claim type constants. The local handler has to emit exactly the
+       claim types the provisioning service reads, and one definition is the only way to
+       guarantee that. This direction is safe: it does not put this project inside the
+       published closure of IdeaBoard.Web. -->
+  <ItemGroup>
+    <ProjectReference Include="..\IdeaBoard.App\IdeaBoard.App.csproj" />
+  </ItemGroup>
+
+</Project>
