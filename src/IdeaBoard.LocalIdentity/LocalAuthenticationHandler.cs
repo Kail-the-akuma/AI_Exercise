@@ -8,8 +8,19 @@ using Microsoft.Extensions.Options;
 namespace IdeaBoard.LocalIdentity;
 
 /// <summary>
-/// Signs a request in as whoever the injected source names, emitting the same three claims
-/// Entra ID emits: <c>oid</c>, <c>name</c> and <c>preferred_username</c>.
+/// Signs a request in as whoever the injected source names, emitting three short OpenID
+/// Connect claims: <c>oid</c>, <c>name</c> and <c>preferred_username</c>.
+///
+/// THESE NO LONGER MATCH THE SHAPE PRODUCTION SEES, and that is worth knowing rather than
+/// discovering. The published host takes its identity from the web server, which delivers a
+/// security identifier and an account name under the long schemas URIs, and carries no name
+/// fit to show at all. So the path this handler exercises is the one where a name arrives in
+/// a claim, and the path production takes is the one where a name has to be resolved or
+/// asked for.
+///
+/// Both paths are covered by the integration tests, which build principals of either shape.
+/// What no end to end scenario running on this handler can reach is the production shape,
+/// and changing that is a decision about this handler rather than a defect in it.
 ///
 /// It is deliberately incapable of deciding anything. It reads the source, builds a
 /// principal, and stops. When the source names nobody it returns no result and lets the

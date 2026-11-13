@@ -38,10 +38,15 @@ public static class IdeaBoardApplicationBuilderExtensions
             app.UseExceptionHandler("/Erro");
         }
 
-        // There is deliberately no UseHsts and no UseHttpsRedirection. HTTPS and the
-        // redirection of HTTP belong to the IIS site, and HSTS stays off until the
-        // self-issued certificate is replaced, because together they make the site
-        // unreachable with no way for anyone to proceed past the warning.
+        // There is deliberately no UseHsts and no UseHttpsRedirection, and this is a CLOSED
+        // decision rather than a pending step. The site is served over HTTP, which is
+        // recorded in the architecture decisions; whether to put HTTPS in front of it is the
+        // site's business and not this application's.
+        //
+        // The previous wording said HSTS stayed off "until the certificate is replaced",
+        // which described a condition that is never going to be met and left a reader
+        // believing there was work outstanding. The behaviour was right and the reason had
+        // outlived the arrangement it belonged to.
 
         app.UseStatusCodePagesWithReExecute("/Estado/{0}");
 

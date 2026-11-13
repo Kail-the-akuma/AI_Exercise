@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Http;
 namespace IdeaBoard.LocalIdentity;
 
 /// <summary>
-/// One identity the local authentication handler can present, carrying exactly the three
-/// claims Entra ID would have issued.
+/// One identity the local authentication handler can present, carrying exactly three short
+/// OpenID Connect claims. They are not the shape the published host receives: see the
+/// handler for what differs and what that does and does not cover.
 /// </summary>
 public class LocalUserIdentity
 {

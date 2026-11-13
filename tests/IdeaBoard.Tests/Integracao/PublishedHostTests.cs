@@ -43,10 +43,6 @@ public class PublishedHostTests
         environment.Set("ASPNETCORE_ENVIRONMENT", "Development");
         environment.Set("ConnectionStrings__IdeaBoard", database.ConnectionString);
         environment.Set("Localization__TimeZoneId", "Europe/Lisbon");
-        environment.Set("AzureAd__Instance", "https://login.microsoftonline.com/");
-        environment.Set("AzureAd__TenantId", "11111111-1111-1111-1111-111111111111");
-        environment.Set("AzureAd__ClientId", "22222222-2222-2222-2222-222222222222");
-        environment.Set("AzureAd__CallbackPath", "/signin-oidc");
     }
 
     #endregion
