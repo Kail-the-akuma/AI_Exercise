@@ -1,6 +1,6 @@
 # 07. Plano de verificação
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 ## Três níveis, sem sobreposição
 
@@ -136,10 +136,14 @@ Pré requisito de máquina, uma vez por máquina e não um passo de build:
 pwsh bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
-**Nota de contexto, não item de trabalho**: o repositório é local e não tem remoto,
-portanto não há pipeline de integração contínua e este plano não assume nenhuma. No
-dia em que o repositório passar a ter remoto, correr esta suite automaticamente passa
-a ser possível, e a única preparação necessária é a instalação dos browsers no agente.
+**Nota de contexto, não item de trabalho**: o repositório tem remoto, em
+`https://github.com/Kail-the-akuma/AI_Exercise.git`, e o trabalho chega a `main` por
+pull request. Não há pipeline de integração contínua configurada, e este plano não
+assume nenhuma.
+
+Correr esta suite automaticamente é portanto possível hoje, e a única preparação
+necessária seria a instalação dos browsers no agente. Se passa a haver pipeline é uma
+decisão por tomar, e não um pressuposto deste plano.
 
 ---
 
