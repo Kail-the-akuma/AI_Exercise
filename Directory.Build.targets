@@ -1,0 +1,52 @@
+<Project>
+
+  <!--
+    What gets published is not IdeaBoard.Web on its own, it is IdeaBoard.Web's whole
+    project closure. Anything IdeaBoard.App references is published too, so guarding only
+    the host would leave the easier mistake uncaught: IdeaBoard.App is where shared code is
+    supposed to go, so it is the first place anyone looks for somewhere to put a class.
+
+    Before the solution was split, a reference from the published host to the local host
+    would have formed a project cycle and MSBuild would have refused to build it. The two
+    hosts are now siblings, that cycle is gone, and a wrong reference anywhere in the
+    closure would compile, publish, and carry the local identity handler into production.
+    This target puts that protection back by hand.
+
+    The invariant is not "IdeaBoard.Web only references IdeaBoard.App". It is "nothing
+    reachable from IdeaBoard.Web references a host". That distinction matters because
+    adding a reference to a host feels like a transgression and makes people hesitate,
+    while adding one to the shared library feels like exactly what a shared library is
+    for. The second is the move somebody makes without noticing.
+
+    Each watched project declares the complete set of references it may have. An empty
+    set means none at all, which is how IdeaBoard.App is kept from reaching anything.
+    References pointing INTO IdeaBoard.App from projects outside the closure, such as
+    IdeaBoard.LocalIdentity, are the safe direction and are deliberately not restricted.
+
+    To watch a third project, add one GuardedProject row.
+  -->
+  <ItemGroup>
+    <GuardedProject Include="IdeaBoard.Web" AllowedReferences="IdeaBoard.App" />
+    <GuardedProject Include="IdeaBoard.App" AllowedReferences="" />
+  </ItemGroup>
+
+  <Target Name="GuardPublishedClosureReferences" BeforeTargets="Build">
+
+    <ItemGroup>
+      <ThisGuardedProject Include="@(GuardedProject)"
+                          Condition="'%(Identity)' == '$(MSBuildProjectName)'" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'@(ThisGuardedProject)' != ''">
+      <AllowedReferenceName Include="%(ThisGuardedProject.AllowedReferences)" />
+      <ForbiddenReferenceName Include="@(ProjectReference->'%(Filename)')" />
+      <ForbiddenReferenceName Remove="@(AllowedReferenceName)" />
+    </ItemGroup>
+
+    <Error Condition="'@(ForbiddenReferenceName)' != ''"
+           Code="IDEABOARD001"
+           Text="$(MSBuildProjectName) is inside the published closure and may only reference [@(AllowedReferenceName, ', ')]. It now also references: @(ForbiddenReferenceName, ', '). This is what keeps local identity code out of the published artefact. If the shared code is genuinely needed, it belongs in IdeaBoard.App, which both hosts already reference." />
+
+  </Target>
+
+</Project>

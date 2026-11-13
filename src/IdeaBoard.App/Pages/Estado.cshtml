@@ -1,0 +1,19 @@
+@page "/Estado/{code:int}"
+@model EstadoModel
+@{
+    ViewData["Title"] = "Erro";
+}
+@if (Model.IsNotFound)
+{
+    <h1>Ideia não encontrada</h1>
+
+    <p>A ideia que procura não existe.</p>
+}
+else
+{
+    <h1>Não foi possível mostrar esta página</h1>
+
+    <p>O pedido terminou com o código @Model.Code.</p>
+}
+
+<p><a asp-page="/Index">@UiText.RankingTab</a></p>
