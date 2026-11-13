@@ -8,20 +8,31 @@ public static class ConfigurationKeys
 {
     #region Authentication
 
-    /// <summary>Section bound by Microsoft.Identity.Web.</summary>
+    /// <summary>
+    /// Section still bound by the published host's sign-in registration.
+    ///
+    /// Nothing validates it any more. Under Windows authentication the sign-in settings
+    /// live in the site's web.config, out of this process's reach, so a startup check
+    /// written against configuration keys would refuse to start the host it is guarding.
+    /// </summary>
     public const string AzureAdSection = "AzureAd";
 
-    /// <summary>Authority the sign-in request is sent to.</summary>
-    public const string AzureAdInstance = "AzureAd:Instance";
+    #endregion
 
-    /// <summary>Single tenant the application accepts identities from.</summary>
-    public const string AzureAdTenantId = "AzureAd:TenantId";
 
-    /// <summary>Application registration identifier.</summary>
-    public const string AzureAdClientId = "AzureAd:ClientId";
+    #region Directory
 
-    /// <summary>Path the identity provider returns the token to.</summary>
-    public const string AzureAdCallbackPath = "AzureAd:CallbackPath";
+    /// <summary>
+    /// Whether the directory is consulted for somebody's display name at all.
+    ///
+    /// Switching it off forces the registration path. With the directory answering, that
+    /// path is never taken and therefore never exercised, so the first time it would ever
+    /// run for real is the day the directory breaks.
+    /// </summary>
+    public const string DirectoryLookupEnabled = "DirectoryLookup:Enabled";
+
+    /// <summary>How long one directory lookup may take before it is abandoned.</summary>
+    public const string DirectoryLookupTimeoutSeconds = "DirectoryLookup:TimeoutSeconds";
 
     #endregion
 
