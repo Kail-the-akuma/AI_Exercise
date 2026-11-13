@@ -14,7 +14,7 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-003](ADR-003-autenticacao-entra-id.md) | Microsoft Entra ID por OpenID Connect | Substituído pelo ADR-014 |
 | [ADR-004](ADR-004-tabela-local-de-utilizadores.md) | Tabela local de utilizadores, com o identificador de objeto como chave | Aceite |
 | [ADR-005](ADR-005-contagem-calculada.md) | Contagem de votos calculada, e não denormalizada | Aceite |
-| [ADR-006](ADR-006-projeto-unico.md) | Um projeto de aplicação, com separação por pastas | Aceite |
+| [ADR-006](ADR-006-projeto-unico.md) | Um projeto de aplicação, com separação por pastas | Aceite, parcialmente substituído pelo ADR-015 |
 | [ADR-007](ADR-007-ordenacao-e-desempate.md) | Ordenação por votos, com desempate pela data mais recente | Aceite |
 | [ADR-008](ADR-008-sem-administracao.md) | Sem administração, com correção por procedimento manual | Aceite |
 | [ADR-009](ADR-009-publicacao-iis.md) | IIS in-process, com persistência das chaves de Data Protection | Aceite |
@@ -23,3 +23,4 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-012](ADR-012-chromium-apenas.md) | Testes ponta a ponta apenas em Chromium | Aceite |
 | [ADR-013](ADR-013-certificado-no-arranque.md) | Certificado emitido pela equipa no arranque, certificado confiado depois | Aceite |
 | [ADR-014](ADR-014-autenticacao-integrada-windows.md) | Autenticação integrada do Windows, por Negotiate no IIS | Aceite, implementação por fazer |
+| [ADR-015](ADR-015-estrutura-de-quatro-projetos.md) | Quatro projetos, com o produto numa biblioteca e dois hosts irmãos | Aceite |
