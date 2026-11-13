@@ -1,7 +1,7 @@
 # ADR-014. Autenticação integrada do Windows, em substituição do Entra ID
 
-**Estado**: Aceite, com a decisão tomada e a implementação por fazer.
-**Data**: 13 de novembro de 2026. **Substitui**: [ADR-003](ADR-003-autenticacao-entra-id.md).
+**Estado**: Aceite, com a decisão tomada e a implementação por fazer. **Data**: 13 de novembro de 2026.
+**Substitui**: [ADR-003](ADR-003-autenticacao-entra-id.md).
 
 ## Contexto
 
@@ -136,6 +136,18 @@ saída de um colaborador continua a terminar o acesso de imediato, porque é a c
 domínio que o dá.
 
 **Más.** Quem trabalhe fora da rede corporativa perde o acesso, sem contrapartida.
+
+**E essa exclusão chega à medição do sucesso, que é onde ninguém a vai procurar.** O
+briefing mede o sucesso por percentagem de pessoas que participa. Quem trabalha fora da
+rede deixa de poder participar, e **não é um não participante, é um impedido**. Contado
+no denominador, faz a participação parecer mais fraca do que é, por decisão de desenho e
+não por desinteresse da equipa.
+
+A escolha do denominador é decisão de produto e não é tomada aqui. O que é tomado aqui, e
+tem de ficar escrito ao lado da decisão que o causa, é que esta autenticação **cria uma
+classe de pessoas impedidas que a métrica, tal como está definida, não distingue de quem
+simplesmente não quis participar**. Quem olhar para o número aos três meses sem saber
+disto vai tirar a conclusão errada sobre a adesão.
 
 A dependência externa não desapareceu, mudou de nome. Era o Entra ID estar disponível
 para iniciar sessão, passa a ser o controlador de domínio estar disponível para a
