@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Encodings.Web;
 using IdeaBoard.App.Pages;
 using Xunit;
 
@@ -61,6 +63,54 @@ public class UiTextTests
     {
         Assert.Equal("Votar", UiText.VoteButton);
         Assert.Equal("Votado", UiText.VotedButton);
+    }
+
+    #endregion
+
+
+    #region How these strings travel
+
+    /// <summary>
+    /// An accented string does NOT travel to the browser as written, and a test that
+    /// compares one against a raw response body is comparing against something that was
+    /// never there.
+    ///
+    /// This is measured here rather than taken on trust, because the failure mode is
+    /// asymmetric and nasty. A POSITIVE assertion fails loudly and sends somebody hunting
+    /// for a defect in server-side validation that does not exist. A NEGATIVE assertion
+    /// does not fail at all: it passes while checking nothing, and goes on passing even if
+    /// the content it was meant to exclude were served in full.
+    ///
+    /// The encoder used here is the one Razor applies to an expression written with @.
+    /// </summary>
+    [Fact]
+    public void AnAccentedStringIsEncodedAsEntitiesOnTheWayOut()
+    {
+        string encoded = HtmlEncoder.Default.Encode(UiText.EmptyList);
+
+        Assert.NotEqual(UiText.EmptyList, encoded);
+        Assert.DoesNotContain(UiText.EmptyList, encoded, StringComparison.Ordinal);
+        Assert.Contains("&#x", encoded, StringComparison.Ordinal);
+
+        // And decoding recovers it, which is what makes checking the decoded form a
+        // valid way to assert against a response body.
+        Assert.Equal(UiText.EmptyList, WebUtility.HtmlDecode(encoded));
+    }
+
+
+    /// <summary>
+    /// The strings that happen to be pure ASCII travel unchanged, which is exactly why a
+    /// group of assertions mixing the two kinds can look healthy while half of it is
+    /// doing nothing.
+    /// </summary>
+    [Theory]
+    [InlineData("Mais votadas")]
+    [InlineData("Recentes")]
+    [InlineData("Submeter ideia")]
+    [InlineData("Votar")]
+    public void APlainStringTravelsUnchanged(string text)
+    {
+        Assert.Equal(text, HtmlEncoder.Default.Encode(text));
     }
 
     #endregion
