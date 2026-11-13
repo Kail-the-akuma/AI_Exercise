@@ -1,4 +1,11 @@
 using System.Net;
+using IdeaBoard.App.Pages;
+using IdeaBoard.App.Pipeline;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -112,6 +119,152 @@ public class PublishedHostTests
         Assert.NotEqual(HttpStatusCode.TemporaryRedirect, response.StatusCode);
         Assert.NotEqual(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    #endregion
+
+    #region Authorisation
+
+    /// <summary>
+    /// Status codes that count as a CHALLENGE, meaning the application refused to serve a
+    /// page and asked for identity instead.
+    ///
+    /// ENVIRONMENT DEPENDENCY: these are the shapes the sign-in scheme the published host
+    /// currently registers produces. When authentication is switched to Windows, the
+    /// challenge becomes a negotiate challenge and the set changes. This list is the one
+    /// line to change, which is why it is a list and not a condition spread through the
+    /// test below.
+    /// </summary>
+    private static readonly HttpStatusCode[] challengeStatusCodes =
+    [
+        HttpStatusCode.Found,
+        HttpStatusCode.Redirect,
+        HttpStatusCode.Unauthorized,
+        HttpStatusCode.Forbidden,
+    ];
+
+
+    /// <summary>
+    /// An unauthenticated request for a page of the application is not served with content.
+    ///
+    /// The assertion has three parts, and the third one is what makes the other two worth
+    /// anything. Without it, a server error would satisfy the test: a 500 is not a 200 and
+    /// carries no page content either, so "was not served" would be true while nothing
+    /// about authorisation had been shown. Requiring the response to be a CHALLENGE, rather
+    /// than merely not a success, makes an error a failure instead of a pass.
+    ///
+    /// WHAT THIS DOES NOT ESTABLISH, and the limit is worth stating because the assertion
+    /// is weak. It proves the fallback authorisation policy bites: the page is behind
+    /// identity and is not served without it. It does NOT prove the challenge goes
+    /// anywhere useful, because almost any other fault also produces something that is not
+    /// a 200. Whether a person who is challenged actually arrives at a working sign-in, and
+    /// comes back, stays on the manual verification list, which is the only place it can
+    /// live.
+    ///
+    /// The fictitious sign-in values in the environment matter here in a way they do not
+    /// elsewhere in this file: this is the one request that reaches the authentication
+    /// handler rather than stopping at static files.
+    /// </summary>
+    [Fact]
+    public async Task APageIsNotServedToAnUnauthenticatedRequest()
+    {
+        using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
+
+        Assert.Equal("wal", database.EnableWriteAheadLogging());
+
+        using EnvironmentVariableScope environment = new EnvironmentVariableScope();
+        ConfigureValidEnvironment(environment, database);
+
+        using IdeaBoardWebFactory factory = new IdeaBoardWebFactory();
+
+        // The discovery document is supplied instead of being fetched, and this was
+        // MEASURED to be necessary rather than assumed. Without it the request answers 500:
+        // the handler tries to fetch metadata from the fictitious authority these tests
+        // configure, the fetch fails, and the challenge never gets built.
+        //
+        // That is worth stating plainly, because it is also an operational finding. A
+        // published host pointed at a tenant that does not answer does not send anybody to
+        // sign in, it returns a server error with nothing to explain it.
+        //
+        // What is given up by supplying it: this test no longer exercises discovery, which
+        // was never verifiable here anyway against an authority that does not exist. What
+        // is kept is the part that matters, which is whether a page is served without
+        // identity.
+        using WebApplicationFactory<Program> configured = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                services.PostConfigure<OpenIdConnectOptions>(
+                    OpenIdConnectDefaults.AuthenticationScheme,
+                    oidcOptions =>
+                    {
+                        OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration
+                        {
+                            AuthorizationEndpoint = "https://authority.invalid/authorize",
+                            TokenEndpoint = "https://authority.invalid/token",
+                            Issuer = "https://authority.invalid/",
+                        };
+
+                        // BOTH are set, and the second one is why the first alone did
+                        // nothing. Measured: with only Configuration set, the request
+                        // still answered 500, because the sign-in library installs a
+                        // configuration manager built from the authority and the handler
+                        // prefers it. The static manager is what actually stops the
+                        // network call.
+                        oidcOptions.Configuration = configuration;
+                        oidcOptions.ConfigurationManager =
+                            new StaticConfigurationManager<OpenIdConnectConfiguration>(configuration);
+                    });
+            });
+        });
+
+        // The redirect is not followed, so a challenge shows up as a status code here
+        // instead of being chased to whatever sits at the other end.
+        WebApplicationFactoryClientOptions options = new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+        };
+
+        using HttpClient client = configured.CreateClient(options);
+
+        using HttpResponseMessage response = await client.GetAsync("/", Cancellation);
+
+        string body = await response.Content.ReadAsStringAsync(Cancellation);
+
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+
+        Assert.DoesNotContain(UiText.SubmitIdeaButton, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(UiText.RankingTab, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(UiText.EmptyList, body, StringComparison.Ordinal);
+
+        Assert.True(
+            Array.IndexOf(challengeStatusCodes, response.StatusCode) >= 0,
+            $"Expected a challenge, got {(int)response.StatusCode}. Body: {Shorten(body)}");
+
+        // A challenge and not the name gate. The gate redirects to its own page with the
+        // same status code, and it has no business acting on somebody who has not been
+        // identified yet. Without this line, a pipeline composed with the gate in front of
+        // authorisation would satisfy every assertion above.
+        if (response.Headers.Location is not null)
+        {
+            Assert.NotEqual(
+                DisplayNameGateMiddleware.RegistrationPath,
+                response.Headers.Location.ToString());
+        }
+    }
+
+    /// <summary>Keeps a failure message readable when the body is a whole error page.</summary>
+    private static string Shorten(string body)
+    {
+        string collapsed = body.Replace("\r", " ", StringComparison.Ordinal)
+            .Replace("\n", " ", StringComparison.Ordinal);
+
+        if (collapsed.Length <= 600)
+        {
+            return collapsed;
+        }
+
+        return collapsed[..600];
     }
 
     #endregion
