@@ -1,6 +1,6 @@
 # 03. Modelo de dados
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Três tabelas. O comportamento que elas suportam está em
 [02](02-Especificacao-Funcional.md).
@@ -154,10 +154,15 @@ escrita sobre as entidades lidas.
 
 Migrações do EF Core, versionadas no repositório.
 
-**Aplicadas como passo explícito da publicação**, por script SQL idempotente gerado a
-partir das migrações, e nunca automaticamente no arranque da aplicação. Um arranque
-que migra sozinho dá uma alteração de esquema sem supervisão, sem backup prévio e sem
+**Aplicadas como passo explícito da publicação**, por script SQL gerado a partir das
+migrações, e nunca automaticamente no arranque da aplicação. Um arranque que migra
+sozinho dá uma alteração de esquema sem supervisão, sem backup prévio e sem
 oportunidade de a rever.
+
+**O script não é idempotente, e não pode ser.** O EF Core recusa gerar scripts
+idempotentes para SQLite. A aplicação é por isso enquadrada por verificação antes e
+depois, em vez de por idempotência, conforme
+[ADR-020](ADR/ADR-020-migracoes-sem-idempotencia.md).
 
 O procedimento está em [06](06-Operacao-e-Publicacao.md).
 

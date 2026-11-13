@@ -92,7 +92,8 @@ registo DNS não é a equipa de desenvolvimento que o cria.
 o Entra ID, regista a no banco local, e tem uma suite de testes capaz de a arrancar e
 navegar nela.
 
-- Solução com os três projetos descritos em [01](01-Arquitetura.md).
+- Solução com os projetos descritos em [01](01-Arquitetura.md), conforme
+  [ADR-015](ADR/ADR-015-estrutura-de-quatro-projetos.md).
 - Início e fim de sessão com `Microsoft.Identity.Web`.
 - Política de autorização de fallback a exigir autenticação em tudo.
 - `UserProvisioningService` com o upsert do utilizador local.
