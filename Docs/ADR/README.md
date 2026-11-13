@@ -11,7 +11,7 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 |---|---|---|
 | [ADR-001](ADR-001-razor-pages.md) | ASP.NET Core Razor Pages, com renderização no servidor | Aceite |
 | [ADR-002](ADR-002-sqlite.md) | EF Core sobre SQLite, em ficheiro | Aceite |
-| [ADR-003](ADR-003-autenticacao-entra-id.md) | Microsoft Entra ID por OpenID Connect | Aceite, com um ponto por confirmar |
+| [ADR-003](ADR-003-autenticacao-entra-id.md) | Microsoft Entra ID por OpenID Connect | Substituído pelo ADR-014 |
 | [ADR-004](ADR-004-tabela-local-de-utilizadores.md) | Tabela local de utilizadores, com o identificador de objeto como chave | Aceite |
 | [ADR-005](ADR-005-contagem-calculada.md) | Contagem de votos calculada, e não denormalizada | Aceite |
 | [ADR-006](ADR-006-projeto-unico.md) | Um projeto de aplicação, com separação por pastas | Aceite |
@@ -22,3 +22,4 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-011](ADR-011-autenticacao-nos-testes-e2e.md) | Autenticação por handler de teste, fora do projeto web | Aceite |
 | [ADR-012](ADR-012-chromium-apenas.md) | Testes ponta a ponta apenas em Chromium | Aceite |
 | [ADR-013](ADR-013-certificado-no-arranque.md) | Certificado emitido pela equipa no arranque, certificado confiado depois | Aceite |
+| [ADR-014](ADR-014-autenticacao-integrada-windows.md) | Autenticação integrada do Windows, por Negotiate no IIS | Aceite, implementação por fazer |
