@@ -1,0 +1,57 @@
+@page "/pessoa"
+@model IdeaBoard.Local.Pages.PessoaModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Arranque local</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 40rem; line-height: 1.5; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 0.5rem; }
+        button { font: inherit; padding: 0.5rem 0.75rem; cursor: pointer; }
+        .aviso { background: #fff6d6; border: 1px solid #d8c378; padding: 0.75rem; }
+    </style>
+</head>
+<body>
+    <h1>Arranque local</h1>
+
+    <p class="aviso">
+        Esta página pertence ao arranque local e não faz parte da aplicação.
+        Serve para escolher em nome de quem é que o browser fica a trabalhar,
+        no lugar da conta corporativa.
+    </p>
+
+    @if (Model.People.Count == 0)
+    {
+        <p>
+            Não há pessoas configuradas. Acrescente entradas na secção
+            <code>LocalPeople:People</code> do <code>appsettings.json</code> deste projeto.
+        </p>
+    }
+    else
+    {
+        <h2>Escolher pessoa</h2>
+        <ul>
+            @foreach (IdeaBoard.Local.LocalPerson person in Model.People)
+            {
+                <li>
+                    <form method="post" asp-page-handler="Choose">
+                        <input type="hidden" name="objectId" value="@person.ObjectId" />
+                        <button type="submit">@person.DisplayName</button>
+                        <span>@person.Email</span>
+                    </form>
+                </li>
+            }
+        </ul>
+
+        <form method="post" asp-page-handler="Clear">
+            <button type="submit">Esquecer a escolha atual</button>
+        </form>
+    }
+</body>
+</html>
