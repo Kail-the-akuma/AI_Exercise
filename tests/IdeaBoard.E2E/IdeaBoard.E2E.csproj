@@ -23,7 +23,7 @@
       suite is this small, because with a handful of scenarios a generous floor would let
       most of them disappear without anyone noticing.
     -->
-    <TestingPlatformCommandLineArguments>--minimum-expected-tests 16</TestingPlatformCommandLineArguments>
+    <TestingPlatformCommandLineArguments>--minimum-expected-tests 17</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup>

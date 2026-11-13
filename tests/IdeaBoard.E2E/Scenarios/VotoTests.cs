@@ -348,6 +348,48 @@ public class VotoTests : ScenarioBase
         Assert.Equal(2, await CountVotesAsync());
     }
 
+
+    /// <summary>
+    /// The warning that a vote is public is on screen before the button that casts one,
+    /// on the idea's own page and on the list.
+    ///
+    /// Presence alone would not be enough here. The specification says nobody should
+    /// discover this rule after using it, so what matters is that the warning comes first,
+    /// and a warning rendered underneath the button satisfies any assertion that only asks
+    /// whether it exists. Document order is what is asserted, which is also the order a
+    /// screen reader reads. Whether it is placed where a sighted person's eye meets it
+    /// before the button stays a manual item, because no selector judges that.
+    /// </summary>
+    [Fact]
+    public async Task ThePublicVoteWarningComesBeforeTheButtonThatCastsOne()
+    {
+        await StartCleanAsync();
+
+        IPage ana = await OpenAsAsync(People.AnaObjectId);
+
+        int ideaId = await SubmitIdeaAndReadIdAsync(ana, "Ideia com aviso", "Descricao.");
+
+        await Expect(ana.GetByText(UiText.PublicVoteWarning).First).ToBeVisibleAsync();
+
+        Assert.True(
+            await WarningComesFirstAsync(ana),
+            "On the idea's own page the public vote warning does not precede the button.");
+
+        await ana.GotoAsync(Url("/"));
+
+        await Expect(ana.GetByText(UiText.PublicVoteWarning).First).ToBeVisibleAsync();
+
+        Assert.True(
+            await WarningComesFirstAsync(ana),
+            "On the ranking the public vote warning does not precede the first button.");
+
+        // And it is still there once the person has already voted, because the next press
+        // casts a vote again for somebody who withdrew.
+        await ana.Locator($"#ideia-{ideaId} [data-vote-button]").ClickAsync();
+
+        await Expect(ana.GetByText(UiText.PublicVoteWarning).First).ToBeVisibleAsync();
+    }
+
     #endregion
 
 
@@ -357,6 +399,28 @@ public class VotoTests : ScenarioBase
     private static ILocator VoteButton(IPage page)
     {
         return page.Locator("[data-vote-button]");
+    }
+
+
+    /// <summary>
+    /// Tells whether the first public vote warning on the page precedes the first vote
+    /// button in document order.
+    /// </summary>
+    private static async Task<bool> WarningComesFirstAsync(IPage page)
+    {
+        return await page.EvaluateAsync<bool>(
+            @"() => {
+                const warning = document.querySelector('.aviso-voto');
+                const button = document.querySelector('[data-vote-button]');
+
+                if (warning === null || button === null)
+                {
+                    return false;
+                }
+
+                return (warning.compareDocumentPosition(button)
+                    & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+            }");
     }
 
 
