@@ -2,8 +2,8 @@
 
 **Versão 1, 30 de outubro de 2026.**
 
-Seis fases. Cada uma entrega algo verificável, e nenhuma depende de trabalho de uma
-fase posterior.
+Sete fases, da zero à seis. Cada uma entrega algo verificável, e nenhuma depende de
+trabalho de uma fase posterior.
 
 Não há estimativas de duração neste documento. A equipa que construir fixa as, e
 números inventados nesta fase só serviriam para ser citados mais tarde como
@@ -19,7 +19,8 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 | Nome de produto e identificador de código decididos | Equipa | Fase 1 |
 | Registo de aplicação no Entra ID, com URL de redirect | Equipa de identidade | Fase 1 |
 | Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 |
-| Certificado HTTPS para o nome do site | Infraestrutura | Fase 5 |
+| Nome DNS do site decidido, com registo a apontar para o servidor | Infraestrutura | Fase 5 |
+| Certificado HTTPS emitido pela própria equipa | Equipa de desenvolvimento | Fase 5 |
 | Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 |
 | Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento |
 | Repositório git local, com `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 |
@@ -42,6 +43,26 @@ que a infraestrutura tem de provisionar e tem de estar fechada antes de alguém 
 por um segredo que afinal não era preciso, ou de construir assumindo que não era
 preciso e descobrir que era. Ver
 [ADR-003](ADR/ADR-003-autenticacao-entra-id.md).
+
+### O certificado no arranque, e o nome que ele carrega
+
+A aplicação arranca com um certificado emitido pela própria equipa, da autoridade
+certificadora interna se existir, auto assinado se não existir. Decisão e consequências
+em [ADR-013](ADR/ADR-013-certificado-no-arranque.md).
+
+Isto retira a dependência da infraestrutura do caminho crítico, ao preço de um aviso de
+segurança no browser até o certificado definitivo chegar. O Entra ID continua a
+funcionar sem qualquer alteração, porque quem liga à aplicação é o browser e não o
+Entra ID.
+
+**O nome DNS tem de ser o definitivo desde o primeiro dia.** O mesmo nome entra no
+certificado, no URI de redirecionamento do registo do Entra ID e, mais tarde, no
+certificado de substituição. Emitir o certificado de arranque para um nome provisório
+obrigaria a repetir o registo da aplicação no dia da troca, que é precisamente o
+trabalho que esta decisão procura evitar.
+
+É também o único destes dois itens que continua a depender da infraestrutura, porque o
+registo DNS não é a equipa de desenvolvimento que o cria.
 
 ---
 
@@ -123,6 +144,11 @@ da equipa de desenvolvimento para recolher reação antes de estar completa.
 em que abre.
 
 - Publicação em IIS conforme [06](06-Operacao-e-Publicacao.md).
+- Certificado de arranque emitido e associado ao site, **com HSTS desligado**. A razão
+  está em [ADR-013](ADR/ADR-013-certificado-no-arranque.md) e não é opcional.
+- Aviso à equipa, na comunicação de lançamento, de que o browser vai mostrar um aviso
+  de segurança e porquê. Uma pessoa que encontra um aviso destes sem explicação assume
+  que a ligação foi intercetada, e tem razão em assumir.
 - Migração aplicada por script, com backup prévio.
 - Suite completa verde.
 - **Verificação manual do início de sessão real contra o Entra ID**, que nenhum teste
@@ -143,6 +169,28 @@ convida a participar. Uma lista vazia não.
 O briefing diz também que menos de cinco ideias ao fim de duas semanas é motivo para
 reconsiderar. Essa contagem só é honesta se as ideias de arranque forem distinguidas
 das espontâneas, portanto convém registar quais foram, fora da plataforma.
+
+---
+
+## Fase 6. Substituição do certificado
+
+A única coisa nesta documentação que é trabalho adiado em vez de trabalho excluído.
+Fica como fase própria, e não como nota de rodapé, porque tem dono, tem passos
+definidos e tem uma data a partir da qual deixa de ser aceitável adiar.
+
+**Entrega**: certificado confiado pelas máquinas da organização, aviso de segurança
+eliminado, HSTS ativado.
+
+- Pedido do certificado à infraestrutura, para o mesmo nome DNS já em uso.
+- Substituição da associação no IIS. A aplicação não muda, o registo no Entra ID não
+  muda, e o nome não muda.
+- **Só depois disto, ativar o HSTS.** Pela ordem inversa, o site fica inacessível.
+- Confirmar o início de sessão sem aviso, a partir de uma máquina que nunca aceitou a
+  exceção do certificado anterior.
+
+O prazo é a decidir com a equipa no lançamento. O que não pode acontecer é ficar sem
+prazo nenhum, porque um aviso de segurança que dura meses deixa de ser notado, que é
+exatamente o efeito que esta decisão quer evitar.
 
 ---
 

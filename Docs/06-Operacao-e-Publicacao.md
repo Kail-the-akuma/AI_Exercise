@@ -79,9 +79,54 @@ em [07](07-Plano-de-Verificacao.md).
 
 ### Site
 
-HTTPS com certificado válido para o nome interno, redirecionamento de HTTP para HTTPS,
-e HSTS ativo. O `web.config` é gerado pela publicação e não deve ser editado à mão no
-servidor, porque a publicação seguinte sobrepõe o.
+HTTPS com redirecionamento de HTTP, e **HSTS desligado até a Fase 6 estar concluída**.
+O `web.config` é gerado pela publicação e não deve ser editado à mão no servidor,
+porque a publicação seguinte sobrepõe o.
+
+### Certificado
+
+A aplicação arranca com um certificado emitido pela própria equipa, conforme
+[ADR-013](ADR/ADR-013-certificado-no-arranque.md), e é substituído por um certificado
+confiado na Fase 6.
+
+**Por ordem de preferência:**
+
+1. **Autoridade certificadora interna da organização**, se existir. É o melhor caso,
+   porque as máquinas do domínio já confiam nela e não há aviso nenhum. Vale sempre a
+   pena perguntar antes de assumir que não existe.
+2. **Auto assinado**, criado no próprio servidor.
+
+```powershell
+New-SelfSignedCertificate `
+    -DnsName "{nome-dns-do-site}" `
+    -CertStoreLocation "Cert:\LocalMachine\My" `
+    -FriendlyName "IdeaBoard" `
+    -NotAfter (Get-Date).AddYears(2)
+```
+
+Depois, associar o certificado ao site no IIS, na porta 443, com o mesmo nome.
+
+**O nome tem de ser o nome DNS definitivo.** Não o nome da máquina, não um endereço
+IP. É o mesmo nome que vai no URI de redirecionamento do registo do Entra ID, e o
+mesmo que vai no certificado de substituição mais tarde.
+
+**O Entra ID não é afetado por o certificado não ser confiado.** O Entra ID nunca liga
+à aplicação. Quem liga é o browser, que devolve o token por POST depois de a pessoa
+aceitar a exceção de segurança. O início de sessão funciona na mesma.
+
+### HSTS, e porque fica desligado
+
+Com HSTS ativo, um browser que encontre um erro de certificado **termina a ligação sem
+dar opção de prosseguir**. O botão de continuar deixa de existir, e não há forma de o
+utilizador contornar.
+
+Ativar o HSTS enquanto o certificado for auto assinado deixa portanto o site
+inacessível a toda a gente, incluindo a quem o publicou. Pior, o browser guarda a
+instrução durante o tempo declarado, portanto desligar o HSTS no servidor não
+desbloqueia de imediato quem já a recebeu.
+
+O HSTS é ativado na Fase 6, depois do certificado confiado estar no lugar, e nunca
+antes.
 
 ## Ligação à base de dados
 
@@ -257,7 +302,9 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Pessoas atiradas para fora da sessão ao acaso, ou erros em submissões | Chaves de Data Protection não persistidas. Ver [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Bloqueios ou tempos limite em escritas | Mais de um processo de trabalho no pool de aplicações |
 | Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado |
-| Ciclo infinito de redirecionamentos no início de sessão | URI de redirecionamento do registo diferente do URL real do site |
+| Ciclo infinito de redirecionamentos no início de sessão | URI de redirecionamento do registo diferente do URL real do site, ou site a ser servido em HTTP |
+| Site inacessível, sem opção de prosseguir no aviso de certificado | HSTS ativado antes de haver certificado confiado. Ver a secção do HSTS acima |
+| Aviso de segurança do browser a cada acesso | Esperado até à Fase 6. Deixa de ser esperado depois dela |
 | Dados desaparecidos depois de uma publicação | Base de dados dentro da pasta da aplicação |
 | Backup que restaura sem os últimos dias | Cópia do ficheiro em vez de `VACUUM INTO` |
 
