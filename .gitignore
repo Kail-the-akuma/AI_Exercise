@@ -53,3 +53,9 @@ node_modules/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Regras de agente, ver .claude/rules/engineering-baseline.md
+# A baseline de engenharia é versionada por ser prática portável. As preferências
+# pessoais ficam de fora, porque o CLAUDE.md deste repositório já fixa o estilo C#
+# e a língua da prosa, e duas fontes para a mesma regra divergem com o tempo.
+.claude/rules/personal-preferences.md
