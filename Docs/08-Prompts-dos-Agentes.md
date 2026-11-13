@@ -70,32 +70,39 @@ fórmula, e uma fórmula numa lista de revisão é o item que se lê sem ler.
 No presente, e sem "ainda". O "ainda" pressupõe que alguma vez provou, e deixa passar o
 que nunca foi verdadeiro.
 
-### Quem a faz não é quem escreveu, e esta é a parte que importa
+### O que falta ao autor é o gatilho, não a capacidade de ver
 
-Observação do ARQ, e derruba o que estava a ser assumido sem se dizer.
+Observação do ARQ, e é a parte que dá à pergunta um sítio neste documento.
 
-Num dia inteiro desta classe de achados, **nenhum foi apanhado pelo próprio autor.** O
-ARQ apanhou um ADR que ele próprio escrevera horas antes, mas só por ter ido verificar
-uma afirmação de outro. O ORQ deu um número com o âmbito restringido e foi o ARQ a
-contar. O DEV escreveu uma justificação falsa e foi o ORQ a repetir a medição. O QA
-apanhou se a si próprio, e por um cenário ter falhado, não por ter relido o que escrevera.
+**Os cinco papéis valem por produzirem gatilhos uns para os outros.** Dos oito casos
+abaixo, nenhum foi apanhado por iniciativa do autor, e **dois foram apanhados pelo
+próprio autor depois de um gatilho externo**: um ADR apanhado por quem o escrevera, ao ir
+verificar uma afirmação de outra pessoa, e um filtro de pesquisa que ia esconder um
+achado, apanhado por quem o escrevera ao ler a saída em vez de a contar.
 
-A razão é estrutural e não de competência. **Quem escreveu uma justificação tem a razão
-dela na cabeça, e lê a presença dela como confirmação.** Reler o próprio texto não produz
-esta pergunta, porque a pergunta exige não saber a resposta de antemão.
+É verdade que quem escreveu uma justificação tem a razão dela na cabeça e lê a presença
+dela como confirmação. Mas isso cega **enquanto ninguém o manda verificar**, e deixa de
+cegar no momento em que ele vai.
 
-Portanto isto **não é uma lista de revisão pessoal**. É a razão por que o trabalho tem de
-passar por mais do que uma cabeça, e a diferença prática é simples: um papel não aplica a
-pergunta ao que escreveu, aplica a ao que recebe de outro.
+A diferença entre as duas formulações não é de estilo, é de custo. Se a lição fosse que
+só outra cabeça apanha isto, o remédio seria sempre uma segunda cabeça, que é caro e não
+escala para cada afirmação. Sendo que o que falta é um gatilho, **gatilhos baratos
+servem**, e dois deles estão escritos aqui e não precisam de pessoa nenhuma: a varredura
+depois de uma decisão que troca uma dependência, e a data obrigatória numa afirmação
+sobre estado de implementação.
 
-### Uma razão nova para os cinco papéis existirem
+E evita o erro na direção contrária. "Nenhum autor apanha o seu" lê se como "este
+trabalho não se pode fazer sozinho", o que é falso, e desencorajador para quem o faça sem
+cinco papéis à volta.
+
+### Uma razão para os cinco papéis que ninguém tinha escrito
 
 Os papéis foram desenhados para separar responsabilidade sobre ficheiros, que é o que a
 tabela no topo deste documento descreve.
 
-Acabam de mostrar que servem para outra coisa, que ninguém tinha escrito: **haver sempre
-alguém sem a razão na cabeça a olhar para o que outro escreveu.** É uma propriedade do
-desenho e não um efeito feliz, e também é observação do ARQ.
+Servem também para outra coisa: **produzirem uns para os outros o gatilho que nenhum
+produz para si.** É uma propriedade do desenho e não um efeito feliz, e também é
+observação do ARQ.
 
 ### O que ela apanha, e que nenhuma outra regra nossa apanhava
 
