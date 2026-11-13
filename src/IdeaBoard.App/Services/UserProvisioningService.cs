@@ -282,8 +282,22 @@ public class UserProvisioningService : IUserProvisioningService
         }
 
         // A subject identifier has one of exactly two shapes: a Windows security
-        // identifier, or the GUID an OpenID Connect provider issues. The check is widened
-        // rather than dropped, because of what it protects against.
+        // identifier, or a GUID.
+        //
+        // The GUID branch is here for the DEVELOPMENT HOST, and saying so is the point of
+        // this paragraph. It is tempting to attribute it to the sign-in library the
+        // published host still carries, and that attribution would be wrong in a way that
+        // costs something: when authentication is switched over and that library goes, a
+        // reader would see a justification naming a provider that no longer exists,
+        // conclude the branch is dead, and remove it. Removing it breaks IdeaBoard.Local,
+        // whose configured people carry GUID object identifiers, and with it the end to end
+        // suite built on that host.
+        //
+        // ENVIRONMENT DEPENDENCY: the GUID branch rests on the development host issuing
+        // GUID identifiers. If that host ever changes identity source, this branch stops
+        // being needed, and that is the only thing that makes it unnecessary.
+        //
+        // The check is widened rather than dropped, because of what it protects against.
         //
         // The claims most likely to be picked up by mistake are the ones sitting next to
         // this one: the display name, and the account name in its DOMAIN\someone form.
