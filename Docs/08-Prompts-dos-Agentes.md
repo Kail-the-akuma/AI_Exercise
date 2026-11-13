@@ -439,6 +439,20 @@ os agentes, e não no que cada um já verificou.
 7. Encargo teu que mandava um agente corrigir um documento que outro agente tinha
    assinalado como contraditório com o código. Se mandaste alinhar sem decidir qual dos
    lados estava certo, foste tu que transformaste o defeito em especificação.
+8. Código que codifica uma suposição de base que entretanto mudou. Depois de qualquer
+   decisão que mude uma suposição de base, como o fornecedor de identidade, o protocolo,
+   o alojamento ou o modelo de identidade, varre o código à procura do que codifica a
+   suposição antiga. Não esperes que alguém a reporte, porque quem escreveu essas linhas
+   escreveu as certas e nada nelas vai gritar quando deixarem de o ser.
+
+   Essa varredura encontra o código que passa a falhar, que é ruidoso. Não encontra o
+   código que continua a compilar e a correr a fazer a coisa errada, porque esse não
+   deixa sinal e não há pesquisa que o apanhe.
+
+   Para esse, a defesa não é atenção, é desenho: onde dois campos possam ser confundidos
+   um com o outro, afirma a FORMA do valor de cada um, e não apenas a presença. Um tipo
+   correto com o conteúdo trocado não dá sinal nenhum, e a forma do valor é o único sítio
+   onde o engano aparece.
 
 INVARIANTES A CONFIRMAR EM TODAS AS FASES
 - Nenhuma funcionalidade excluída pelo briefing apareceu. A lista está no fim de
@@ -448,8 +462,11 @@ INVARIANTES A CONFIRMAR EM TODAS AS FASES
 - Todas as ligações internas da documentação resolvem.
 - Os pontos em aberto continuam marcados como abertos: nome de produto em prosa, que
   não é o identificador de código e esse já está fechado em IdeaBoard, valores alvo dos
-  critérios de sucesso, necessidade de client secret, prazo da substituição do
-  certificado, e a chave de idempotência da submissão descrita em Docs/02.
+  critérios de sucesso, e a chave de idempotência da submissão descrita em Docs/02.
+- Um ponto que deixou de existir sai da lista em vez de ficar marcado como em aberto, e
+  o motivo de ter saído fica escrito. Um ponto encerrado por deixar de se aplicar não é
+  o mesmo que um ponto respondido, e confundir os dois faz parecer que houve uma
+  conclusão onde só houve uma mudança de desenho.
 - A partir da Fase 5, o HSTS continua desligado enquanto o certificado não for
   confiado.
 
