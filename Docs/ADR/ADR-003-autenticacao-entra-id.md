@@ -1,6 +1,6 @@
 # ADR-003. Microsoft Entra ID por OpenID Connect
 
-**Estado**: Aceite, com um ponto por confirmar. **Data**: 30 de outubro de 2026.
+**Estado**: Substituído pelo [ADR-014](ADR-014-autenticacao-integrada-windows.md). **Data**: 30 de outubro de 2026.
 
 ## Contexto
 
