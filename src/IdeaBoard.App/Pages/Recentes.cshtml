@@ -1,0 +1,8 @@
+@page "/recentes"
+@model RecentesModel
+@{
+    ViewData["Title"] = UiText.RecentTab;
+}
+<h1>@UiText.RecentTab</h1>
+
+<partial name="_IdeaList" model="Model.Ideas" />

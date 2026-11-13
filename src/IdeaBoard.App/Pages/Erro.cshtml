@@ -1,0 +1,15 @@
+@page "/Erro"
+@model ErroModel
+@{
+    ViewData["Title"] = "Erro";
+}
+<h1>Ocorreu um erro</h1>
+
+<p>Não foi possível completar o pedido. Volte a tentar dentro de instantes.</p>
+
+<p>
+    Se precisar de pedir ajuda, indique este identificador:
+    <code class="correlacao">@Model.CorrelationId</code>
+</p>
+
+<p><a asp-page="/Index">@UiText.RankingTab</a></p>

@@ -1,0 +1,59 @@
+@{
+    // The active tab is worked out from the path rather than from a flag each page sets,
+    // so that a new page cannot forget to declare it and silently light up both tabs.
+    string currentPath = Context.Request.Path.Value ?? "/";
+
+    string? rankingCurrent = null;
+    string? recentCurrent = null;
+
+    if (string.Equals(currentPath, "/", StringComparison.OrdinalIgnoreCase))
+    {
+        rankingCurrent = "page";
+    }
+
+    if (string.Equals(currentPath, "/recentes", StringComparison.OrdinalIgnoreCase))
+    {
+        recentCurrent = "page";
+    }
+
+    // The document title carries only the page name. There is deliberately no product
+    // name anywhere in this layout: choosing one is a human decision that is still open,
+    // and a placeholder in the interface would close it by simply being there long enough.
+    string documentTitle = string.Empty;
+
+    if (ViewData["Title"] is string pageTitle && pageTitle.Length > 0)
+    {
+        documentTitle = pageTitle;
+    }
+}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@documentTitle</title>
+    <link rel="stylesheet" href="~/_content/IdeaBoard.App/css/site.css" />
+</head>
+<body>
+    <header class="cabecalho">
+        <nav class="navegacao" aria-label="Navegação principal">
+            <ul class="separadores">
+                <li>
+                    <a asp-page="/Index" aria-current="@rankingCurrent">@UiText.RankingTab</a>
+                </li>
+                <li>
+                    <a asp-page="/Recentes" aria-current="@recentCurrent">@UiText.RecentTab</a>
+                </li>
+            </ul>
+
+            <a class="botao botao-principal" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+        </nav>
+    </header>
+
+    <main class="conteudo">
+        @RenderBody()
+    </main>
+
+    <script src="~/_content/IdeaBoard.App/js/vote.js" defer></script>
+</body>
+</html>

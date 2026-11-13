@@ -1,0 +1,18 @@
+@model VoteButtonModel
+@{
+    // The button carries an explicit intent instead of toggling, so a repeated submission
+    // asks the server for the same end state rather than undoing the previous one.
+    string handler = VotingPageModel.VoteHandlerName;
+    string label = UiText.VoteButton;
+
+    if (Model.HasVoted)
+    {
+        handler = VotingPageModel.UnvoteHandlerName;
+        label = UiText.VotedButton;
+    }
+}
+<form method="post" data-vote-form data-idea-id="@Model.IdeaId" asp-page-handler="@handler">
+    <input type="hidden" name="ideaId" value="@Model.IdeaId" />
+    <button type="submit" data-vote-button>@label</button>
+    <span data-vote-count aria-live="polite">@UiText.FormatVoteCount(Model.VoteCount)</span>
+</form>
