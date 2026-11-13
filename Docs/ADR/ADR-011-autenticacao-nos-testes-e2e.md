@@ -1,6 +1,6 @@
 # ADR-011. Autenticação por handler de teste, fora do projeto web
 
-**Estado**: Aceite. **Data**: 30 de outubro de 2026.
+**Estado**: Substituído pelo [ADR-016](ADR-016-identidade-nos-testes-por-host-proprio.md). **Data**: 30 de outubro de 2026.
 
 ## Contexto
 
