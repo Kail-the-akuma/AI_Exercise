@@ -167,7 +167,15 @@ definições de servidor que são invisíveis no código.
       silenciosamente se não for feito.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
 - [ ] Modo WAL ativo no ficheiro da base de dados.
-- [ ] HTTPS com certificado válido, e HTTP a redirecionar.
+- [ ] HTTPS a servir o site, com HTTP a redirecionar.
+- [ ] Certificado emitido para o **nome DNS definitivo**, e não para o nome da máquina
+      nem para um endereço IP.
+- [ ] **HSTS desligado**, enquanto o certificado não for confiado. Confirmar que a
+      resposta não traz o cabeçalho `Strict-Transport-Security`, e não apenas que
+      ninguém se lembra de o ter ligado.
+- [ ] Início de sessão completo a partir de uma máquina que nunca aceitou a exceção do
+      certificado, aceitando o aviso pelo caminho. É o percurso que toda a equipa vai
+      fazer no primeiro dia.
 
 ### Dados e operação
 

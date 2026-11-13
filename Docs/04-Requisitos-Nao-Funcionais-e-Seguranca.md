@@ -92,8 +92,19 @@ submeter e votar, e nada mais existe para fazer.
 
 ### Transporte
 
-HTTPS obrigatório, com redirecionamento de HTTP e HSTS ativo fora de ambiente de
-desenvolvimento. O certificado é tratado ao nível do IIS.
+HTTPS obrigatório, com redirecionamento de HTTP. O certificado é tratado ao nível do
+IIS.
+
+HTTPS não é aqui uma boa prática opcional. É condição de funcionamento: o Entra ID
+recusa URIs de redirecionamento em HTTP, e os cookies que ligam o pedido de
+autenticação à resposta precisam de `Secure`, que só viaja em HTTPS. Sobre HTTP, a
+aplicação não autentica ninguém.
+
+**HSTS fica desligado no arranque, e é ativado apenas na Fase 6.** A aplicação começa
+com um certificado emitido pela própria equipa, e o HSTS torna os erros de certificado
+impossíveis de contornar pelo utilizador. Ativar os dois ao mesmo tempo deixa o site
+inacessível, sem opção de prosseguir. Ver
+[ADR-013](ADR/ADR-013-certificado-no-arranque.md).
 
 ### Chaves de Data Protection
 

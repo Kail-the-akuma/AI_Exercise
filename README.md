@@ -41,6 +41,7 @@ que ele já foi lido.
 | [Docs/05-Plano-de-Entrega.md](Docs/05-Plano-de-Entrega.md) | Fases, pré requisitos e dependências externas |
 | [Docs/06-Operacao-e-Publicacao.md](Docs/06-Operacao-e-Publicacao.md) | Entra ID, IIS, backup, métricas, correções manuais |
 | [Docs/07-Plano-de-Verificacao.md](Docs/07-Plano-de-Verificacao.md) | Estratégia de testes e verificação manual antes do lançamento |
+| [Docs/08-Prompts-dos-Agentes.md](Docs/08-Prompts-dos-Agentes.md) | Os quatro papéis de agente, as suas fronteiras e os prompts de arranque |
 | [Docs/ADR/](Docs/ADR/) | Uma decisão por ficheiro, com alternativas e consequências |
 
 ## Decisões ainda em aberto
@@ -54,3 +55,7 @@ com exceção da primeira.
   equipa antes do lançamento.
 - **Necessidade de client secret no registo do Entra ID.** A confirmar num spike
   curto, conforme [ADR-003](Docs/ADR/ADR-003-autenticacao-entra-id.md).
+- **Prazo da substituição do certificado.** A aplicação arranca com um certificado
+  emitido pela própria equipa, conforme
+  [ADR-013](Docs/ADR/ADR-013-certificado-no-arranque.md). O prazo para o trocar por um
+  certificado confiado fica fixado no lançamento, e não pode ficar em aberto.

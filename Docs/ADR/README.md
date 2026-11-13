@@ -21,3 +21,4 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-010](ADR-010-idempotencia-do-voto.md) | Um voto por pessoa garantido por índice único, com tratamento idempotente | Aceite |
 | [ADR-011](ADR-011-autenticacao-nos-testes-e2e.md) | Autenticação por handler de teste, fora do projeto web | Aceite |
 | [ADR-012](ADR-012-chromium-apenas.md) | Testes ponta a ponta apenas em Chromium | Aceite |
+| [ADR-013](ADR-013-certificado-no-arranque.md) | Certificado emitido pela equipa no arranque, certificado confiado depois | Aceite |
