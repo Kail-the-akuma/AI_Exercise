@@ -39,13 +39,13 @@ public class SubmissaoTests : ScenarioBase
 
         IPage page = await OpenAsAsync(People.AnaObjectId);
 
-        await SubmitAsync(page, "Primeira ideia da equipa", "Descricao da primeira.");
+        await SubmitIdeaAsync(page, "Primeira ideia da equipa", "Descricao da primeira.");
 
         await Expect(page).ToHaveURLAsync(new Regex(@"/ideias/\d+$"));
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Primeira ideia da equipa" }))
             .ToBeVisibleAsync();
 
-        await SubmitAsync(page, "Segunda ideia da equipa", "Descricao da segunda.");
+        await SubmitIdeaAsync(page, "Segunda ideia da equipa", "Descricao da segunda.");
 
         await page.GotoAsync(Url("/recentes"));
 
@@ -91,7 +91,7 @@ public class SubmissaoTests : ScenarioBase
                 .ToBeVisibleAsync();
         }
 
-        await SubmitAsync(page, "Uma ideia qualquer", "Para a lista deixar de estar vazia.");
+        await SubmitIdeaAsync(page, "Uma ideia qualquer", "Para a lista deixar de estar vazia.");
 
         foreach (string path in new[] { "/", "/recentes" })
         {
@@ -211,17 +211,5 @@ public class SubmissaoTests : ScenarioBase
         string selector = "input[name='__RequestVerificationToken']";
 
         return await page.Locator(selector).First.GetAttributeAsync("value") ?? string.Empty;
-    }
-
-
-    /// <summary>Fills the form and submits it, the way a person does.</summary>
-    private async Task SubmitAsync(IPage page, string title, string description)
-    {
-        await page.GotoAsync(Url("/nova"));
-
-        await page.GetByLabel("Título").FillAsync(title);
-        await page.GetByLabel("Descrição").FillAsync(description);
-
-        await page.GetByRole(AriaRole.Button, new() { Name = UiText.SubmitIdeaButton }).ClickAsync();
     }
 }
