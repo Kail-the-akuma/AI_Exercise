@@ -1,6 +1,6 @@
 # 05. Plano de entrega
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Sete fases, da zero à seis. Cada uma entrega algo verificável, e nenhuma depende de
 trabalho de uma fase posterior.
@@ -14,35 +14,55 @@ compromisso.
 Nada aqui é código, e quase tudo depende de outras pessoas. É por isso a fase com
 maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 
-| Item | De quem depende | Bloqueia |
-|---|---|---|
-| Nome de produto e identificador de código decididos | Equipa | Fase 1 |
-| Registo de aplicação no Entra ID, com URL de redirect | Equipa de identidade | Fase 1 |
-| Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 |
-| Nome DNS do site decidido, com registo a apontar para o servidor | Infraestrutura | Fase 5 |
-| Certificado HTTPS emitido pela própria equipa | Equipa de desenvolvimento | Fase 5 |
-| Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 |
-| Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento |
-| Repositório git local, com `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 |
+| Item | De quem depende | Bloqueia | Estado |
+|---|---|---|---|
+| Identificador de código decidido | Equipa | Fase 1 | Fechado em `IdeaBoard` |
+| Nome de produto em prosa decidido | Equipa | Lançamento | **Em aberto** |
+| Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 | Por fazer |
+| Endereço do site decidido | Equipa | Fases 1 e 5 | Decidido na forma, **valor por preencher** |
+| Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 | Por fazer |
+| Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento | **Em aberto** |
+| Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
-### O nome tem de ficar decidido primeiro
+O **endereço é o nome curto do servidor com porta**, e não o nome qualificado. A forma
+está decidida e o valor concreto ainda não, porque o servidor ainda não está escolhido.
 
-O identificador de código fica em namespaces, nomes de projeto, caminhos de ficheiros,
-no nome do site do IIS e nos caminhos de dados do servidor. Mudá lo depois é uma
-operação transversal e sem valor para ninguém.
+> **Pré requisitos de identidade, pendentes de ADR.**
+> A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
+> Windows por Negotiate no IIS. Os pré requisitos que esta tabela listava por causa do
+> Entra ID, o registo de aplicação e o spike do client secret, deixaram de existir, e
+> por isso saíram daqui em vez de ficarem marcados como em aberto.
+>
+> Os pré requisitos do desenho novo ficam por escrever até existir o ADR que substitui o
+> [ADR-003](ADR/ADR-003-autenticacao-entra-id.md). Até lá esta secção está incompleta de
+> propósito, e isso é preferível a estar completa e errada.
+>
+> O mesmo vale para a linha do certificado, que saiu desta tabela porque depende da
+> decisão de HTTP contra HTTPS, que também está em aberto. Ninguém emite certificado
+> antes dessa decisão estar fechada.
 
-`IdeaBoard` é o nome de trabalho usado em toda esta documentação, e serve se não
-houver melhor. O nome de produto em prosa é uma decisão separada, pode ser diferente
-do identificador de código, e pode ser tomada mais tarde.
+### O identificador de código ficou decidido, o nome de produto não
 
-### O spike de autenticação
+São duas decisões distintas e só uma está fechada.
 
-Antes da Fase 1, confirmar se uma aplicação que apenas autentica, sem chamar nenhuma
-API a jusante, funciona sem client secret no registo da organização. A resposta muda o
-que a infraestrutura tem de provisionar e tem de estar fechada antes de alguém esperar
-por um segredo que afinal não era preciso, ou de construir assumindo que não era
-preciso e descobrir que era. Ver
-[ADR-003](ADR/ADR-003-autenticacao-entra-id.md).
+O identificador de código é **`IdeaBoard`**, e está ratificado. Fica em namespaces,
+nomes de projeto, caminhos de ficheiros, no nome do site do IIS e nos caminhos de dados
+do servidor. Mudá lo agora seria uma operação transversal e sem valor para ninguém.
+
+O **nome de produto em prosa continua em aberto**, e é uma decisão reservada a quem é
+dono do produto. Pode ser diferente do identificador de código e pode ser tomado até ao
+lançamento. Nenhum documento deve inventar um, nem tratar `IdeaBoard` como se fosse o
+nome de produto.
+
+### O spike de autenticação, encerrado por deixar de se aplicar
+
+Esta subsecção descrevia um spike para confirmar se o registo no Entra ID precisava de
+client secret. Com a mudança para autenticação Windows deixa de haver registo de
+aplicação e deixa de haver segredo, portanto o spike não tem objeto.
+
+Fica registado que foi encerrado por deixar de se aplicar, e não por ter sido
+respondido. O que substitui esta subsecção depende do ADR que substitui o
+[ADR-003](ADR/ADR-003-autenticacao-entra-id.md), e é do ARQ.
 
 ### O certificado no arranque, e o nome que ele carrega
 
@@ -100,7 +120,9 @@ pessoa provada contra SQLite real.
 - Entidades `User`, `Idea` e `Vote`.
 - `IdeaBoardDbContext` com a configuração por Fluent API.
 - Primeira migração, incluindo o índice único em `Vote(ideaId, userId)`.
-- Script SQL idempotente gerado a partir da migração, e o procedimento de o aplicar.
+- Script SQL gerado a partir da migração, e o procedimento de o aplicar. O script não
+  é idempotente, porque o EF Core recusa gerar scripts idempotentes para SQLite. Ver
+  [06](06-Operacao-e-Publicacao.md).
 - Testes de integração a provar que o segundo voto da mesma pessoa na mesma ideia é
   rejeitado pela base de dados.
 
