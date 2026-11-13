@@ -1,6 +1,6 @@
 # 01. Arquitetura
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 13 de novembro de 2026.**
 
 Pressupõe a leitura de [BRIEFING.md](../BRIEFING.md). Este documento descreve a forma
 do sistema. As funcionalidades estão em [02](02-Especificacao-Funcional.md), os dados
@@ -50,32 +50,81 @@ para quem já tenha sessão iniciada.
 | Acesso a dados | EF Core 10, `Microsoft.EntityFrameworkCore.Sqlite` | [ADR-002](ADR/ADR-002-sqlite.md) |
 | Autenticação | `Microsoft.Identity.Web` e `Microsoft.Identity.Web.UI` | [ADR-003](ADR/ADR-003-autenticacao-entra-id.md) |
 | Alojamento | IIS, hosting in-process | [ADR-009](ADR/ADR-009-publicacao-iis.md) |
-| Testes | xUnit, `Microsoft.Playwright.Xunit` | [ADR-011](ADR/ADR-011-autenticacao-nos-testes-e2e.md) |
+| Testes | xUnit v3, `Microsoft.Playwright.Xunit.v3` | [ADR-017](ADR/ADR-017-xunit-v3.md), [ADR-016](ADR/ADR-016-identidade-nos-testes-por-host-proprio.md) |
 
 Registo de eventos pelo `ILogger` com o provider de Event Log do Windows, que já vem
 na plataforma, em vez de acrescentar uma biblioteca de logging.
 
 ## Estrutura da solução
 
-Três projetos. A separação em camadas dentro do projeto web é por pastas, não por
-assemblies, porque quatro funcionalidades não justificam fronteiras de compilação.
-Ver [ADR-006](ADR/ADR-006-projeto-unico.md).
+Quatro projetos em `src`, com fronteiras que **não são camadas**. A divisão é por
+artefacto publicável, e é por isso que não contradiz o
+[ADR-006](ADR/ADR-006-projeto-unico.md), que recusou a divisão por camadas pelos
+motivos que lá estão. Ver [ADR-015](ADR/ADR-015-estrutura-de-quatro-projetos.md).
 
 ```
 IdeaBoard.sln
-  src/IdeaBoard.Web/
-    Pages/                    Index, Recentes, Nova, Detalhe, erros
-    Domain/                   Idea, Vote, User
-    Data/                     IdeaBoardDbContext, Migrations/
-    Services/                 IdeaService, VoteService, UserProvisioningService
+  src/IdeaBoard.App/           O produto inteiro, biblioteca de classes Razor
+    Pages/                     Index, Recentes, Nova, Detalhe, Nome, erros
+    Domain/                    Idea, Vote, User
+    Data/                      IdeaBoardDbContext, Migrations/
+    Services/                  IdeaService, VoteService, UserProvisioningService
+    Configuration/             Validação da configuração no arranque
+    Pipeline/                  Middleware próprio
     wwwroot/
-  tests/IdeaBoard.Tests/      xUnit, unidade e integração
-  tests/IdeaBoard.E2E/        xUnit mais Microsoft.Playwright.Xunit
-    Fixtures/                 AppHostFixture, TestAuthHandler
-    Scenarios/                Um ficheiro por funcionalidade
+  src/IdeaBoard.Web/           Host publicado. Só o arranque
+  src/IdeaBoard.Local/         Host local, nunca publicado
+  src/IdeaBoard.LocalIdentity/ Handler de identidade do host local
+  tests/IdeaBoard.Tests/       xUnit v3, unidade e integração
 ```
 
+A separação por pastas que o ADR-006 decidiu não desapareceu. Mudou de sítio e vive
+agora dentro do `IdeaBoard.App`, com a mesma direção única de dependências.
+
+**`tests/IdeaBoard.E2E/` ainda não existe nesta árvore.** Está a ser construído, e o
+desenho dele está em [07](07-Plano-de-Verificacao.md). Fica aqui nomeado para que a
+ausência se leia como trabalho em curso e não como esquecimento.
+
+### Porque é que os hosts são dois
+
+O `IdeaBoard.App` **não referencia projeto nenhum**, e é deliberado que seja a peça
+burra. Os dois hosts são irmãos e referenciam no, e só o host local referencia também o
+`IdeaBoard.LocalIdentity`.
+
+Isto compra uma coisa que o projeto único não conseguia dar. A regra mais dura do
+`CLAUDE.md`, que proíbe código de autenticação de teste dentro do host publicado, era
+uma convenção defendida por revisão de código. Passa a ser um facto estrutural, porque
+o handler vive num projeto que o host publicado não alcança.
+
+**A proteção que o compilador dava de graça desapareceu na divisão**, e teve de ser
+reposta à mão. Antes, uma referência do host publicado para o host local formava um
+ciclo de projetos e o MSBuild recusava construir. Com os hosts irmãos esse ciclo não
+existe, e uma referência errada compilaria, publicaria, e levaria o handler local para
+produção.
+
+O `Directory.Build.targets` repõe essa proteção, e a invariante que defende não é a que
+parece. Não é que o `IdeaBoard.Web` só referencie o `IdeaBoard.App`, é que **nada
+alcançável a partir do `IdeaBoard.Web` referencia um host**. Por isso a guarda vigia os
+dois projetos, e o conjunto permitido do `IdeaBoard.App` está vazio: acrescentar uma
+referência a um host faz hesitar quem a faz, e acrescentar uma à biblioteca partilhada
+parece exatamente aquilo para que uma biblioteca partilhada serve.
+
+### O prefixo dos ficheiros estáticos, que é o custo desta escolha
+
+Uma biblioteca de classes Razor serve os ficheiros estáticos sob
+`_content/IdeaBoard.App/`, e esse prefixo aparece nas referências do layout.
+
+Uma página pode compilar na perfeição e a folha de estilos devolver 404, porque o
+prefixo é configuração de servidor e não código. Compilar, arrancar e servir são três
+coisas e só a primeira dá erro de compilação, e é por isso que existe um teste que
+arranca o host publicado a sério e exige 200 no pedido do ficheiro de estilos.
+
+O custo é que toda a referência a um ficheiro estático carrega o nome do projeto, e
+mudar esse nome parte todas elas de uma vez.
+
 ### Responsabilidade de cada pasta
+
+As pastas abaixo são as do `IdeaBoard.App`.
 
 **`Pages`** contém os page models. Um page model valida a entrada, chama um serviço e
 devolve uma página ou um redirect. Não contém regras de negócio nem acesso direto ao

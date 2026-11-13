@@ -146,7 +146,7 @@ e Docs/05-Plano-de-Entrega.md. Lê também os ADR em Docs/ADR/ que forem referid
 fase em que vais trabalhar.
 
 ÉS DONO DE
-- src/IdeaBoard.Web/
+- src/, os quatro projetos descritos em Docs/ADR/ADR-015
 - tests/IdeaBoard.Tests/, os testes de unidade e de integração
 
 NUNCA ALTERAS
@@ -173,9 +173,11 @@ para mudar o âmbito. Se te ocorrer uma funcionalidade que resolva um desses ris
 isso é uma proposta para um humano decidir, não trabalho para fazeres.
 
 DUAS REGRAS QUE NÃO SE NEGOCEIAM
-1. Nunca colocas código de autenticação de teste em src/IdeaBoard.Web, nem sequer
-   protegido por uma condição de ambiente. O handler de teste vive no projeto do QA.
-   A razão está em Docs/ADR/ADR-011.
+1. Nada alcançável a partir do src/IdeaBoard.Web referencia um host. É a invariante
+   que mantém o handler de identidade local fora do artefacto publicado, e a guarda do
+   Directory.Build.targets recusa a construção de quem a quebre. Não desactivas essa
+   guarda nem lhe acrescentas excepções. A razão está em Docs/ADR/ADR-015 e no
+   Docs/ADR/ADR-016, que substitui o ADR-011.
 2. A regra de um voto por pessoa é imposta pelo índice único na base de dados, e a
    violação desse índice é tratada como sucesso idempotente, nunca propagada como
    erro. A razão está em Docs/ADR/ADR-010.
