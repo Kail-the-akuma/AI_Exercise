@@ -15,9 +15,10 @@ erDiagram
 
     User {
         int id PK
-        string entraObjectId UK
+        string subjectId UK
         string displayName
-        string email
+        string displayNameSource
+        string accountName
         datetime firstSeenAt
     }
     Idea {
@@ -45,18 +46,29 @@ primeiro início de sessão e nunca é apagada.
 | Coluna | Tipo | Nulo | Notas |
 |---|---|---|---|
 | `id` | INTEGER | Não | Chave primária, autoincremento |
-| `entraObjectId` | TEXT | Não | Identificador de objeto do Entra ID, índice único |
+| `subjectId` | TEXT | Não | Identificador de segurança da conta, índice único |
 | `displayName` | TEXT | Não | Nome apresentado em toda a aplicação |
-| `email` | TEXT | Não | Guardado para identificação, não apresentado na interface |
+| `displayNameSource` | TEXT | Não | De onde veio o nome, `Directory` ou `SelfRegistered` |
+| `accountName` | TEXT | Não | A conta na forma `DOMINIO\pessoa` |
 | `firstSeenAt` | TEXT | Não | UTC |
 
-A chave de correspondência é o `entraObjectId`, nunca o email. O email de uma pessoa
-pode mudar, por casamento ou por mudança de nome na organização, e o identificador de
-objeto não muda. Usar o email como chave produziria utilizadores duplicados no dia em
-que alguém mudasse de nome.
+**A chave de correspondência é o `subjectId`.** O nome da coluna é deliberado e não é
+um detalhe. Não se chama `windowsSid` nem `entraObjectId`, chama se pelo que é, que é o
+identificador por que a pessoa é encontrada, e não pelo sítio de onde veio. O fornecedor
+por trás dela já mudou uma vez, e uma coluna com o nome do fornecedor do dia garante um
+segundo renomear na mudança seguinte. Ver
+[ADR-023](ADR/ADR-023-chave-da-tabela-de-utilizadores.md).
 
-A razão de existir esta tabela, em vez de guardar o nome em cada voto ou de consultar
-o Microsoft Graph, está em
+**Não há coluna de email.** O `accountName` ocupa o lugar que ela ocupava, que era
+distinguir à mão duas pessoas com o mesmo nome apresentado, e fá lo melhor, porque a
+conta de domínio é única por construção e o email podia faltar.
+
+O `displayNameSource` existe porque o nome pode vir do diretório ou ser escrito pela
+própria pessoa quando a consulta não devolve nada, e porque é essa proveniência que
+decide se uma consulta posterior o pode substituir. Ver
+[ADR-022](ADR/ADR-022-resolucao-e-substituicao-do-nome.md).
+
+A razão de existir esta tabela, em vez de guardar o nome em cada voto, está em
 [ADR-004](ADR/ADR-004-tabela-local-de-utilizadores.md).
 
 ### Idea
@@ -119,7 +131,7 @@ entidades, para que as entidades de domínio não carreguem conhecimento de pers
 
 Pontos que têm de estar na configuração:
 
-- Índice único em `User.entraObjectId`.
+- Índice único em `User.subjectId`.
 - Índice único em `Vote(ideaId, userId)`, com nome explícito para que a deteção da
   violação não dependa de um nome gerado por convenção.
 - Comprimentos máximos de `Idea.title` e `Idea.description`.
