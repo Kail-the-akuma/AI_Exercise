@@ -32,12 +32,7 @@
     <PackageReference Include="xunit.v3" Version="4.0.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
 
-    <!-- Reaching IdeaBoard.Web pulls Microsoft.Identity.Web's dependency on
-         System.Security.Cryptography.Xml 10.0.10, which carries three known high severity
-         advisories, GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj and GHSA-r955-8q5j-3h83.
-         The web SDK prunes this package to the shared framework and this SDK does not, so
-         the pin has to live here. -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.15" />
+
   </ItemGroup>
 
   <ItemGroup>

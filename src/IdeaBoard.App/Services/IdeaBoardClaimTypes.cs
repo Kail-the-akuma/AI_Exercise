@@ -50,7 +50,16 @@ public static class IdeaBoardClaimTypes
     /// <summary>Name fit to show, when the sign-in already carries one.</summary>
     public const string DisplayName = "name";
 
-    /// <summary>Object identifier in the form inbound claim mapping produces.</summary>
+    /// <summary>
+    /// Object identifier in the form inbound claim mapping produces.
+    ///
+    /// NOTHING EMITS THIS ANY MORE, and that is said here so that nobody reading the
+    /// list it sits in assumes otherwise. It is read as a third fallback for the subject
+    /// identifier, behind two forms that are emitted, so nothing can exercise it. It
+    /// stays because removing a fallback can only reduce what the application tolerates
+    /// and costs nothing, but it is not load bearing and a reader should not treat its
+    /// presence as evidence of anything.
+    /// </summary>
     public const string MappedObjectId = "http://schemas.microsoft.com/identity/claims/objectidentifier";
 
     /// <summary>
