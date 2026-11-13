@@ -25,3 +25,7 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-014](ADR-014-autenticacao-integrada-windows.md) | Autenticação integrada do Windows, por Negotiate no IIS | Aceite, implementação por fazer |
 | [ADR-015](ADR-015-estrutura-de-quatro-projetos.md) | Quatro projetos, com o produto numa biblioteca e dois hosts irmãos | Aceite |
 | [ADR-016](ADR-016-identidade-nos-testes-por-host-proprio.md) | Identidade nos testes por host próprio, em vez de esquema sobreposto | Aceite |
+| [ADR-017](ADR-017-xunit-v3.md) | xUnit v3 como único framework de teste da solução | Aceite |
+| [ADR-018](ADR-018-validacao-de-configuracao-no-arranque.md) | A aplicação recusa arrancar com configuração em falta | Aceite |
+| [ADR-019](ADR-019-wal-verificado-e-nao-imposto.md) | O modo WAL é verificado no arranque, e não aplicado | Aceite |
+| [ADR-020](ADR-020-migracoes-sem-idempotencia.md) | Migrações por script não idempotente, com verificação antes e depois | Aceite |
