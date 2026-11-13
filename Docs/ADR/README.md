@@ -12,12 +12,12 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-001](ADR-001-razor-pages.md) | ASP.NET Core Razor Pages, com renderização no servidor | Aceite |
 | [ADR-002](ADR-002-sqlite.md) | EF Core sobre SQLite, em ficheiro | Aceite |
 | [ADR-003](ADR-003-autenticacao-entra-id.md) | Microsoft Entra ID por OpenID Connect | Substituído pelo ADR-014 |
-| [ADR-004](ADR-004-tabela-local-de-utilizadores.md) | Tabela local de utilizadores, com o identificador de objeto como chave | Aceite |
+| [ADR-004](ADR-004-tabela-local-de-utilizadores.md) | Tabela local de utilizadores, com o identificador de objeto como chave | Aceite, parcialmente substituído pelo ADR-023 |
 | [ADR-005](ADR-005-contagem-calculada.md) | Contagem de votos calculada, e não denormalizada | Aceite |
 | [ADR-006](ADR-006-projeto-unico.md) | Um projeto de aplicação, com separação por pastas | Aceite, parcialmente substituído pelo ADR-015 |
 | [ADR-007](ADR-007-ordenacao-e-desempate.md) | Ordenação por votos, com desempate pela data mais recente | Aceite |
 | [ADR-008](ADR-008-sem-administracao.md) | Sem administração, com correção por procedimento manual | Aceite |
-| [ADR-009](ADR-009-publicacao-iis.md) | IIS in-process, com persistência das chaves de Data Protection | Aceite |
+| [ADR-009](ADR-009-publicacao-iis.md) | IIS in-process, com persistência das chaves de Data Protection | Aceite, parcialmente substituído pelo ADR-014 |
 | [ADR-010](ADR-010-idempotencia-do-voto.md) | Um voto por pessoa garantido por índice único, com tratamento idempotente | Aceite |
 | [ADR-011](ADR-011-autenticacao-nos-testes-e2e.md) | Autenticação por handler de teste, fora do projeto web | Substituído pelo ADR-016 |
 | [ADR-012](ADR-012-chromium-apenas.md) | Testes ponta a ponta apenas em Chromium | Aceite |
@@ -31,3 +31,4 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-020](ADR-020-migracoes-sem-idempotencia.md) | Migrações por script não idempotente, com verificação antes e depois | Aceite |
 | [ADR-021](ADR-021-contagem-relida-apos-o-voto.md) | A contagem mostrada depois de votar é relida, e não calculada | Aceite |
 | [ADR-022](ADR-022-resolucao-e-substituicao-do-nome.md) | Resolução do nome por claim, depois diretório, e substituição por proveniência | Aceite |
+| [ADR-023](ADR-023-chave-da-tabela-de-utilizadores.md) | A chave da tabela de utilizadores passa a ser o identificador de segurança, e o email sai | Aceite |
