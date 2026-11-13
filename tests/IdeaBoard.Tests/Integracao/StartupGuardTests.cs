@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace IdeaBoard.Tests.Integracao;
@@ -45,6 +47,13 @@ public class StartupGuardTests
     ///
     /// Everything else is valid, including a database already in write-ahead logging mode,
     /// so a failure here could not be the other guard.
+    ///
+    /// The settings file carries no sign-in section either, and THAT is asserted rather
+    /// than arranged. An earlier version of this test cleared four sign-in environment
+    /// variables before starting the host, which proved nothing at all once the validator
+    /// that read them was gone: nothing consulted them, so the test passed whatever their
+    /// values were. Reading the configuration the host actually loaded, and requiring the
+    /// section to be absent from it, is a check that can fail.
     /// </summary>
     [Fact]
     public void StartingWithoutAnySignInConfigurationIsAccepted()
@@ -57,18 +66,23 @@ public class StartupGuardTests
         environment.Set("ASPNETCORE_ENVIRONMENT", "Development");
         environment.Set("ConnectionStrings__IdeaBoard", database.ConnectionString);
         environment.Set("Localization__TimeZoneId", "Europe/Lisbon");
-        environment.Set("AzureAd__Instance", null);
-        environment.Set("AzureAd__TenantId", null);
-        environment.Set("AzureAd__ClientId", null);
-        environment.Set("AzureAd__CallbackPath", null);
 
         using IdeaBoardWebFactory factory = new IdeaBoardWebFactory();
 
         // Creating the client is what builds and starts the host. Reaching the next line
-        // without an exception is the assertion.
+        // without an exception is half of the assertion.
         using HttpClient client = factory.CreateClient();
 
         Assert.NotNull(client);
+
+        IConfiguration configuration = factory.Services.GetRequiredService<IConfiguration>();
+
+        Assert.False(
+            configuration.GetSection("AzureAd").Exists(),
+            "The published host still loads a sign-in section that nothing reads. A setting " +
+            "nobody consults cannot fail when it is wrong and cannot fail when it is right, " +
+            "and whoever installs the product will ask the identity team for values that " +
+            "serve no purpose.");
     }
 
 
@@ -138,10 +152,6 @@ public class StartupGuardTests
         environment.Set("ASPNETCORE_ENVIRONMENT", "Development");
         environment.Set("ConnectionStrings__IdeaBoard", database.ConnectionString);
         environment.Set("Localization__TimeZoneId", "Europe/Lisbon");
-        environment.Set("AzureAd__Instance", "https://login.microsoftonline.com/");
-        environment.Set("AzureAd__TenantId", "11111111-1111-1111-1111-111111111111");
-        environment.Set("AzureAd__ClientId", "22222222-2222-2222-2222-222222222222");
-        environment.Set("AzureAd__CallbackPath", "/signin-oidc");
 
         Exception failure = Assert.ThrowsAny<Exception>(() =>
         {
