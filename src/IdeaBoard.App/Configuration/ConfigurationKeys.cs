@@ -6,19 +6,10 @@ namespace IdeaBoard.App.Configuration;
 /// </summary>
 public static class ConfigurationKeys
 {
-    #region Authentication
-
-    /// <summary>
-    /// Section still bound by the published host's sign-in registration.
-    ///
-    /// Nothing validates it any more. Under Windows authentication the sign-in settings
-    /// live in the site's web.config, out of this process's reach, so a startup check
-    /// written against configuration keys would refuse to start the host it is guarding.
-    /// </summary>
-    public const string AzureAdSection = "AzureAd";
-
-    #endregion
-
+    // There is deliberately no authentication section here. Identity comes from the web
+    // server, and its settings live in the site's web.config, out of reach of anything in
+    // this process. A key named here would be a key nothing reads, which is worse than a
+    // missing one: it cannot fail when it is wrong, and it cannot fail when it is right.
 
     #region Directory
 

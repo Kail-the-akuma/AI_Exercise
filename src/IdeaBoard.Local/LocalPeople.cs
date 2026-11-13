@@ -16,7 +16,10 @@ public class LocalPeopleOptions
 /// <summary>One person on offer, with the three claim values the handler will emit.</summary>
 public class LocalPerson
 {
-    /// <summary>Stands in for the Entra object identifier.</summary>
+    /// <summary>
+    /// Stands in for the subject identifier. It is a GUID here, which is why the
+    /// provisioning service still accepts that shape alongside a security identifier.
+    /// </summary>
     public string ObjectId { get; set; } = string.Empty;
 
     /// <summary>Name shown as author and in the list of voters.</summary>

@@ -15,8 +15,9 @@ namespace IdeaBoard.App;
 /// Everything the application needs in the service container, registered once and shared
 /// by every host.
 ///
-/// No authentication scheme is registered here, by design. Each host composes its own, and
-/// the published host is the only one that knows how to talk to Entra ID.
+/// No authentication scheme is registered here, by design. Each host composes its own: the
+/// published host consumes the one the web server provides, and the hosts that are never
+/// published register their own, which is what keeps those out of what gets deployed.
 /// </summary>
 public static class IdeaBoardServiceCollectionExtensions
 {

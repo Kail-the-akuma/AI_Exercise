@@ -64,7 +64,12 @@ public class IdeaBoardDbContext : DbContext
     }
 
 
-    /// <summary>Maps <see cref="User"/>, keyed for matching by Entra object identifier.</summary>
+    /// <summary>
+    /// Maps <see cref="User"/>, keyed for matching by subject identifier, which is the
+    /// account's security identifier under the current arrangement. The column is named for
+    /// what it is rather than for where it comes from, because the provider behind it has
+    /// already changed once.
+    /// </summary>
     private static void ConfigureUser(ModelBuilder modelBuilder)
     {
         EntityTypeBuilder<User> user = modelBuilder.Entity<User>();
