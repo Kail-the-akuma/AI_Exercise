@@ -10,6 +10,13 @@ namespace IdeaBoard.App.Data;
 /// during provisioning, so a database that is not in WAL means the provisioning step was
 /// skipped. Applying the pragma here instead would make the check confirm what this code
 /// had just done, which is worth much less as detection.
+///
+/// What it actually catches, measured rather than assumed. A database created by the EF
+/// Core tooling is already in WAL, because EF Core enables it on databases it creates, so
+/// this check would never fire against one. The published procedure does not use that
+/// tooling: it applies the generated SQL script to a file, and that path leaves the file
+/// in the default mode, which is exactly where the check earns its place. It also catches
+/// a restored backup, a file produced by another tool, and a mode changed by hand.
 /// </summary>
 public static class SqliteJournalModeVerifier
 {

@@ -27,6 +27,28 @@ public static class IdeaBoardClaimTypes
     /// <summary>Stands in for the email, and is what Entra ID issues as the username.</summary>
     public const string Email = "preferred_username";
 
+    /// <summary>
+    /// User principal name. Read as a fallback for the email because preferred_username
+    /// only exists in version 2.0 tokens: against a version 1.0 authority it never
+    /// arrives, and this is what does.
+    /// </summary>
+    public const string Upn = "upn";
+
+    /// <summary>Email address, the other short form a version 1.0 token may carry.</summary>
+    public const string EmailAddress = "email";
+
+    /// <summary>
+    /// Token version, which the token declares outright. Worth reading rather than
+    /// inferring from which other claims happen to be missing.
+    /// </summary>
+    public const string TokenVersion = "ver";
+
+    /// <summary>
+    /// Issuer. Only its shape is ever recorded, never its value, because it carries the
+    /// tenant identifier.
+    /// </summary>
+    public const string Issuer = "iss";
+
     #endregion
 
 

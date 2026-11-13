@@ -11,6 +11,19 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!--
+      A floor on how many tests must actually run.
+
+      The test platform's default zero-test policy counts SKIPPED tests as having run, so a
+      suite where every test ended up skipped reports success with exit code 0: green, and
+      nothing exercised. One miswritten condition attribute, or a fixture that fails in a
+      way that skips instead of failing, is enough.
+
+      The number is a floor and not the exact count, kept close to the real one. A generous
+      floor would let a partial collapse through, which is the thing this exists to catch.
+    -->
+    <TestingPlatformCommandLineArguments>--minimum-expected-tests 120</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup>

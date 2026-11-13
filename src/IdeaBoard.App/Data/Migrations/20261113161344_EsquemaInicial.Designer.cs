@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdeaBoard.App.Data.Migrations
 {
     [DbContext(typeof(IdeaBoardDbContext))]
-    [Migration("20261113155018_EsquemaInicial")]
+    [Migration("20261113161344_EsquemaInicial")]
     partial class EsquemaInicial
     {
         /// <inheritdoc />
@@ -71,7 +71,6 @@ namespace IdeaBoard.App.Data.Migrations
                         .HasColumnName("displayName");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("email");
 

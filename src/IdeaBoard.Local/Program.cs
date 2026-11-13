@@ -26,9 +26,15 @@ WebApplication app = builder.Build();
 app.Use(async (context, next) =>
 {
     bool isPickerRequest = context.Request.Path.StartsWithSegments("/pessoa");
+
+    // Static assets are not gated by the picker. They sit under the library's content
+    // prefix, they carry nothing personal, and redirecting them would mean a page served
+    // right after a person is chosen could still be missing its stylesheet.
+    bool isStaticAsset = context.Request.Path.StartsWithSegments("/_content");
+
     bool hasChosen = context.Request.Cookies.ContainsKey(SelectedPersonIdentitySource.CookieName);
 
-    if (!isPickerRequest && !hasChosen)
+    if (!isPickerRequest && !isStaticAsset && !hasChosen)
     {
         context.Response.Redirect("/pessoa");
         return;

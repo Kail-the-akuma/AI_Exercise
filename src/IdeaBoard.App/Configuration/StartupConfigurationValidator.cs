@@ -29,7 +29,7 @@ public static class StartupConfigurationValidator
 
         ValidateAzureAd(configuration, problems);
         ValidateDatabase(configuration, isDevelopment, contentRootPath, problems);
-        ValidateDataProtection(configuration, isDevelopment, problems);
+        ValidateDataProtection(configuration, isDevelopment, contentRootPath, problems);
         ValidateTimeZone(configuration, problems);
 
         return new ConfigurationValidationResult(problems);
@@ -150,6 +150,7 @@ public static class StartupConfigurationValidator
     private static void ValidateDataProtection(
         IConfiguration configuration,
         bool isDevelopment,
+        string contentRootPath,
         List<string> problems)
     {
         if (isDevelopment)
@@ -157,7 +158,30 @@ public static class StartupConfigurationValidator
             return;
         }
 
-        RequirePresent(configuration, ConfigurationKeys.DataProtectionKeysPath, problems);
+        string? keysPath = configuration[ConfigurationKeys.DataProtectionKeysPath];
+
+        if (string.IsNullOrWhiteSpace(keysPath))
+        {
+            problems.Add($"'{ConfigurationKeys.DataProtectionKeysPath}' is missing or empty.");
+            return;
+        }
+
+        if (!Path.IsPathRooted(keysPath))
+        {
+            problems.Add(
+                $"'{ConfigurationKeys.DataProtectionKeysPath}' must use an absolute path outside " +
+                $"development, and '{keysPath}' is relative.");
+            return;
+        }
+
+        if (IsInsideContentRoot(keysPath, contentRootPath))
+        {
+            problems.Add(
+                $"'{ConfigurationKeys.DataProtectionKeysPath}' points inside the application folder " +
+                $"('{keysPath}'). A key ring kept there is deleted by the next publish, and the " +
+                $"symptom is people being thrown out of their session and submissions failing with " +
+                $"antiforgery errors, intermittently, with nothing in the code to explain it.");
+        }
     }
 
     #endregion

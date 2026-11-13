@@ -19,7 +19,7 @@ namespace IdeaBoard.App.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     entraObjectId = table.Column<string>(type: "TEXT", nullable: false),
                     displayName = table.Column<string>(type: "TEXT", nullable: false),
-                    email = table.Column<string>(type: "TEXT", nullable: false),
+                    email = table.Column<string>(type: "TEXT", nullable: true),
                     firstSeenAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>

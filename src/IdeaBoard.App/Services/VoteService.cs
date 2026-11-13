@@ -1,6 +1,5 @@
 using IdeaBoard.App.Data;
 using IdeaBoard.App.Domain;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -17,18 +16,6 @@ namespace IdeaBoard.App.Services;
 /// </summary>
 public class VoteService : IVoteService
 {
-    #region Constants
-
-    /// <summary>
-    /// SQLITE_CONSTRAINT_UNIQUE. The extended result code is matched rather than the
-    /// exception type alone, so that a disk error or a foreign key failure is never
-    /// mistaken for a duplicate vote and reported to the person as success.
-    /// </summary>
-    private const int SqliteUniqueConstraintExtendedErrorCode = 2067;
-
-    #endregion
-
-
     #region Fields
 
     private readonly IdeaBoardDbContext dbContext;
@@ -154,7 +141,7 @@ public class VoteService : IVoteService
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException exception) when (IsVoteUniqueIndexViolation(exception))
+        catch (DbUpdateException exception) when (SqliteUniqueConstraint.IsViolation(exception))
         {
             dbContext.Entry(vote).State = EntityState.Detached;
 
@@ -186,21 +173,6 @@ public class VoteService : IVoteService
         }
     }
 
-
-    /// <summary>
-    /// Recognises a violation of the vote uniqueness rule, and nothing else. It matches the
-    /// SQLite extended result code rather than the exception type, because catching every
-    /// write failure would report real database faults to the person as a successful vote.
-    /// </summary>
-    private static bool IsVoteUniqueIndexViolation(DbUpdateException exception)
-    {
-        if (exception.InnerException is not SqliteException sqliteException)
-        {
-            return false;
-        }
-
-        return sqliteException.SqliteExtendedErrorCode == SqliteUniqueConstraintExtendedErrorCode;
-    }
 
     #endregion
 

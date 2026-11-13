@@ -38,6 +38,7 @@ public static class IdeaBoardServiceCollectionExtensions
 
         RefuseToStartOnBadConfiguration(configuration, isDevelopment, environment.ContentRootPath);
 
+        AddPresentation(services, configuration);
         AddStorage(services, configuration);
         AddDataProtection(services, configuration, isDevelopment);
         AddDomainServices(services);
@@ -77,6 +78,26 @@ public static class IdeaBoardServiceCollectionExtensions
     #endregion
 
 
+    #region Presentation
+
+    /// <summary>
+    /// Registers the time zone stored instants are rendered in.
+    ///
+    /// It comes from configuration rather than from the server clock on purpose. Both agree
+    /// on a Portuguese machine, which is exactly why relying on the clock would never be
+    /// noticed as wrong until the application moved.
+    /// </summary>
+    private static void AddPresentation(IServiceCollection services, IConfiguration configuration)
+    {
+        string timeZoneId = configuration[ConfigurationKeys.LocalizationTimeZoneId]!;
+        TimeZoneInfo displayTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+        services.AddSingleton(displayTimeZone);
+    }
+
+    #endregion
+
+
     #region Storage
 
     /// <summary>Registers the database context against the configured SQLite file.</summary>
@@ -84,9 +105,20 @@ public static class IdeaBoardServiceCollectionExtensions
     {
         string connectionString = configuration.GetConnectionString(ConfigurationKeys.DatabaseConnectionName)!;
 
-        services.AddDbContext<IdeaBoardDbContext>(options =>
+        // A factory as well as the scoped context. Provisioning the local user row has to
+        // commit independently of whatever business write shares its request, so it opens
+        // its own short lived context instead of the shared one.
+        services.AddDbContextFactory<IdeaBoardDbContext>(options =>
         {
             options.UseSqlite(connectionString);
+        });
+
+        services.AddScoped<IdeaBoardDbContext>(serviceProvider =>
+        {
+            IDbContextFactory<IdeaBoardDbContext> factory =
+                serviceProvider.GetRequiredService<IDbContextFactory<IdeaBoardDbContext>>();
+
+            return factory.CreateDbContext();
         });
     }
 

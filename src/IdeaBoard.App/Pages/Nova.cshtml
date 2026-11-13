@@ -1,0 +1,61 @@
+@page "/nova"
+@model NovaModel
+@{
+    ViewData["Title"] = UiText.SubmitIdeaButton;
+
+    // The error is read straight from the model state so that each message can be both
+    // rendered next to its own field and tied to it with aria-describedby. An empty
+    // description reference would be announced as nothing at all, so the attribute is
+    // only written when there is in fact a message to point at.
+    ModelStateEntry? titleEntry = ModelState[IdeaLimits.TitleField];
+    ModelStateEntry? descriptionEntry = ModelState[IdeaLimits.DescriptionField];
+
+    string? titleError = null;
+    string? titleDescribedBy = null;
+    string? descriptionError = null;
+    string? descriptionDescribedBy = null;
+
+    if (titleEntry is not null && titleEntry.Errors.Count > 0)
+    {
+        titleError = titleEntry.Errors[0].ErrorMessage;
+        titleDescribedBy = "erro-titulo";
+    }
+
+    if (descriptionEntry is not null && descriptionEntry.Errors.Count > 0)
+    {
+        descriptionError = descriptionEntry.Errors[0].ErrorMessage;
+        descriptionDescribedBy = "erro-descricao";
+    }
+}
+<h1>@UiText.SubmitIdeaButton</h1>
+
+<form method="post" class="formulario">
+    <div class="campo">
+        <label asp-for="Title">Título</label>
+        <input asp-for="Title"
+               type="text"
+               maxlength="@IdeaLimits.TitleMaximumLength"
+               autocomplete="off"
+               aria-describedby="@titleDescribedBy" />
+        @if (titleError is not null)
+        {
+            <p class="erro" id="erro-titulo">@titleError</p>
+        }
+    </div>
+
+    <div class="campo">
+        <label asp-for="Description">Descrição</label>
+        <textarea asp-for="Description"
+                  rows="12"
+                  maxlength="@IdeaLimits.DescriptionMaximumLength"
+                  aria-describedby="@descriptionDescribedBy"></textarea>
+        @if (descriptionError is not null)
+        {
+            <p class="erro" id="erro-descricao">@descriptionError</p>
+        }
+    </div>
+
+    <p class="aviso aviso-permanencia" id="aviso-permanencia">@UiText.PermanenceWarning</p>
+
+    <button type="submit" class="botao botao-principal" aria-describedby="aviso-permanencia">@UiText.SubmitIdeaButton</button>
+</form>

@@ -8,7 +8,7 @@ CREATE TABLE "User" (
     "id" INTEGER NOT NULL CONSTRAINT "PK_User" PRIMARY KEY AUTOINCREMENT,
     "entraObjectId" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "email" TEXT NULL,
     "firstSeenAt" TEXT NOT NULL
 );
 
@@ -41,7 +41,7 @@ CREATE UNIQUE INDEX "IX_Vote_ideaId_userId" ON "Vote" ("ideaId", "userId");
 CREATE INDEX "IX_Vote_userId" ON "Vote" ("userId");
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20261113155018_EsquemaInicial', '10.0.14');
+VALUES ('20261113161344_EsquemaInicial', '10.0.14');
 
 COMMIT;
 

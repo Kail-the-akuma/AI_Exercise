@@ -84,9 +84,10 @@ public class IdeaBoardDbContext : DbContext
             .HasColumnName("displayName")
             .IsRequired();
 
+        // Optional, because a version 1.0 token carries no preferred_username and the
+        // application tolerates that: the object identifier is what identity depends on.
         user.Property(entity => entity.Email)
-            .HasColumnName("email")
-            .IsRequired();
+            .HasColumnName("email");
 
         user.Property(entity => entity.FirstSeenAt)
             .HasColumnName("firstSeenAt")

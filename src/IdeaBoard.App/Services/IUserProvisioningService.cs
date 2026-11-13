@@ -21,7 +21,7 @@ public interface IUserProvisioningService
     Task<User> EnsureUserAsync(
         string entraObjectId,
         string displayName,
-        string email,
+        string? email,
         CancellationToken cancellationToken);
 
 

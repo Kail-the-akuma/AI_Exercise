@@ -19,8 +19,12 @@ public class User
     /// <summary>Name shown as idea author and in the public list of voters.</summary>
     public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>Kept to tell people apart, never rendered in the interface.</summary>
-    public string Email { get; set; } = string.Empty;
+    /// <summary>
+    /// Kept to tell people apart, never rendered in the interface. Nullable on purpose:
+    /// preferred_username only exists in version 2.0 tokens, so the absence is real, and
+    /// an empty string in a non-nullable column would be the same untruth in another form.
+    /// </summary>
+    public string? Email { get; set; }
 
     /// <summary>Instant of the first sign-in, in UTC.</summary>
     public DateTime FirstSeenAt { get; set; }

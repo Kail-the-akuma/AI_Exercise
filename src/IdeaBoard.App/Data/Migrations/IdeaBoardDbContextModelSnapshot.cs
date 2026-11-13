@@ -68,7 +68,6 @@ namespace IdeaBoard.App.Data.Migrations
                         .HasColumnName("displayName");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("email");
 
