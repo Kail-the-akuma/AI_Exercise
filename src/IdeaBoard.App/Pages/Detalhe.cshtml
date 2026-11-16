@@ -4,7 +4,7 @@
     ViewData["Title"] = Model.Idea.Title;
 }
 <article class="ideia-detalhe" id="ideia-@Model.Idea.Id">
-    <h1>@Model.Idea.Title</h1>
+    <h1 id="ideia-titulo-@Model.Idea.Id">@Model.Idea.Title</h1>
 
     <p class="ideia-meta">
         <span class="ideia-autor">@Model.Idea.AuthorDisplayName</span>
