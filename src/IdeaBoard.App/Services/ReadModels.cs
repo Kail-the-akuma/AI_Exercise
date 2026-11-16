@@ -23,6 +23,23 @@ public class IdeaListItem
 
     /// <summary>Whether the person looking at the list has voted on this idea.</summary>
     public bool HasVoted { get; set; }
+
+    /// <summary>
+    /// How long this idea's bar is next to the leader's, from 0 to 100.
+    ///
+    /// It is a fact about the LIST and not about the idea. The same idea carries a
+    /// different value in a list where something else leads, so only the service that
+    /// built the list may set it, and it means nothing on an item read outside its list.
+    ///
+    /// The division is done here rather than in the page because the page would then have
+    /// to handle the list where nothing has been voted on yet, and a view is the worst
+    /// place to discover that a denominator can be zero.
+    ///
+    /// Truncated downwards, so no bar ever claims more support than its idea has. The
+    /// leader is the only row that reaches 100, and a tie at the top puts every tied row
+    /// there.
+    /// </summary>
+    public int SupportPercent { get; set; }
 }
 
 
