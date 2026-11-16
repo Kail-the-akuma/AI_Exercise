@@ -85,6 +85,52 @@ public class VotingPageModelTests
     #endregion
 
 
+    #region Visual state
+
+    /// <summary>
+    /// The quiet treatment is decided by the server, at the one threshold that decides it.
+    ///
+    /// The script used to leave this class exactly as the page had been rendered with, so
+    /// an idea that had just left zero stayed dressed as an idea nobody had supported, and
+    /// an idea that had just reached zero kept the full weight. Neither showed an error and
+    /// neither looked broken, and a reload was the only thing that put them right.
+    /// </summary>
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    [InlineData(2, false)]
+    [InlineData(31, false)]
+    public void WhetherTheCountIsShownAsNoneIsDecidedHere(int voteCount, bool expected)
+    {
+        VoteResponse response = VotingPageModel.BuildVoteResponse(BuildState(5, false, voteCount));
+
+        Assert.Equal(expected, response.HasNoVotes);
+    }
+
+
+    /// <summary>
+    /// The two states are independent, because a person can be looking at an idea they
+    /// have not voted on and at one that nobody else has either. Deriving one from the
+    /// other, in the script or anywhere else, would tie together two answers that the
+    /// database gives separately.
+    /// </summary>
+    [Fact]
+    public void HavingVotedAndTheCountBeingNoneAreAnsweredSeparately()
+    {
+        VoteResponse voted = VotingPageModel.BuildVoteResponse(BuildState(5, true, 1));
+
+        Assert.True(voted.HasVoted);
+        Assert.False(voted.HasNoVotes);
+
+        VoteResponse withdrawn = VotingPageModel.BuildVoteResponse(BuildState(5, false, 0));
+
+        Assert.False(withdrawn.HasVoted);
+        Assert.True(withdrawn.HasNoVotes);
+    }
+
+    #endregion
+
+
     #region Wording of the count
 
     /// <summary>
