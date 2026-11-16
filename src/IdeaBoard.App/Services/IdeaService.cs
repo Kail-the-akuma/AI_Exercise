@@ -79,33 +79,59 @@ public class IdeaService : IIdeaService
     #region Listing
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<IdeaListItem>> GetRankingAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<IdeaListItem>> GetRankingAsync(
+        string? searchTerm,
+        CancellationToken cancellationToken)
     {
-        List<IdeaListItem> items = await ProjectIdeas()
+        List<IdeaListItem> everything = await ProjectIdeas()
             .OrderByDescending(item => item.VoteCount)
             .ThenByDescending(item => item.CreatedAt)
             .ThenByDescending(item => item.Id)
             .ToListAsync(cancellationToken);
 
-        await MarkVotedAsync(items, cancellationToken);
-
-        AssignSupportPercent(items, LeadingVoteCountOf(items));
-
-        return items;
+        return await NarrowAsync(everything, searchTerm, cancellationToken);
     }
 
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<IdeaListItem>> GetRecentAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<IdeaListItem>> GetRecentAsync(
+        string? searchTerm,
+        CancellationToken cancellationToken)
     {
-        List<IdeaListItem> items = await ProjectIdeas()
+        List<IdeaListItem> everything = await ProjectIdeas()
             .OrderByDescending(item => item.CreatedAt)
             .ThenByDescending(item => item.Id)
             .ToListAsync(cancellationToken);
 
-        await MarkVotedAsync(items, cancellationToken);
+        return await NarrowAsync(everything, searchTerm, cancellationToken);
+    }
 
-        AssignSupportPercent(items, LeadingVoteCountOf(items));
+
+    /// <summary>
+    /// Applies the search term to a list that holds every idea, and fills in the rest.
+    ///
+    /// The order of the three steps is the whole content of this method. The leading count
+    /// is taken from the FULL list, before anything is removed, so that the bars keep
+    /// measuring against the board and not against the result of somebody's search. A
+    /// search for two ideas with one and two votes would otherwise fill the second bar and
+    /// tell that person they are looking at the leader of a board whose leader has seven.
+    ///
+    /// Marking the vote state comes after the narrowing and not before it, so that a search
+    /// matching nothing costs one command rather than two.
+    /// </summary>
+    private async Task<IReadOnlyList<IdeaListItem>> NarrowAsync(
+        List<IdeaListItem> everything,
+        string? searchTerm,
+        CancellationToken cancellationToken)
+    {
+        int leaderVoteCount = LeadingVoteCountOf(everything);
+
+        List<IdeaListItem> items = IdeaSearch.Filter(everything, searchTerm);
+
+        await MarkVotedAsync(items, cancellationToken);
+        await LoadRecentVotersAsync(items, cancellationToken);
+
+        AssignSupportPercent(items, leaderVoteCount);
 
         return items;
     }
@@ -123,6 +149,8 @@ public class IdeaService : IIdeaService
             .ToListAsync(cancellationToken);
 
         await MarkVotedAsync(items, cancellationToken);
+
+        await LoadRecentVotersAsync(items, cancellationToken);
 
         AssignSupportPercent(items, await ReadLeadingVoteCountAsync(cancellationToken));
 
@@ -165,6 +193,8 @@ public class IdeaService : IIdeaService
         {
             item.HasVoted = true;
         }
+
+        await LoadRecentVotersAsync(items, cancellationToken);
 
         AssignSupportPercent(items, await ReadLeadingVoteCountAsync(cancellationToken));
 
@@ -226,6 +256,89 @@ public class IdeaService : IIdeaService
 
 
     /// <summary>
+    /// Reads the latest voters for a whole list with a single extra query, rather than
+    /// asking the database once per row.
+    ///
+    /// The shape of this method is forced by a measured limitation and not chosen. Asking
+    /// for the latest few voters INSIDE the projection, which would fetch exactly the rows
+    /// needed and cost no extra command at all, makes Entity Framework translate the query
+    /// with SQL APPLY, and SQLite does not support it: the query throws at run time with
+    /// "Translating this query requires the SQL APPLY operation". Measured against a real
+    /// database through this stack, not assumed.
+    ///
+    /// So the votes of the ideas on screen are read in one ordered pass and cut down here.
+    /// The cost grows with the number of VOTES on the page and not with the number of
+    /// ideas, and the command count stays flat, which is the property the page can actually
+    /// be ruined by losing.
+    /// </summary>
+    private async Task LoadRecentVotersAsync(List<IdeaListItem> items, CancellationToken cancellationToken)
+    {
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        List<int> ideaIds = new List<int>(items.Count);
+
+        foreach (IdeaListItem item in items)
+        {
+            ideaIds.Add(item.Id);
+        }
+
+        List<RecentVoteRow> rows = await dbContext.Votes
+            .AsNoTracking()
+            .Where(vote => ideaIds.Contains(vote.IdeaId))
+            .OrderByDescending(vote => vote.CreatedAt)
+            .ThenByDescending(vote => vote.Id)
+            .Select(vote => new RecentVoteRow
+            {
+                IdeaId = vote.IdeaId,
+                DisplayName = vote.User!.DisplayName,
+            })
+            .ToListAsync(cancellationToken);
+
+        Dictionary<int, List<string>> namesByIdea = new Dictionary<int, List<string>>(items.Count);
+
+        foreach (RecentVoteRow row in rows)
+        {
+            if (!namesByIdea.TryGetValue(row.IdeaId, out List<string>? names))
+            {
+                names = new List<string>(IdeaListItem.RecentVoterLimit);
+                namesByIdea[row.IdeaId] = names;
+            }
+
+            if (names.Count >= IdeaListItem.RecentVoterLimit)
+            {
+                continue;
+            }
+
+            names.Add(row.DisplayName);
+        }
+
+        foreach (IdeaListItem item in items)
+        {
+            if (!namesByIdea.TryGetValue(item.Id, out List<string>? names))
+            {
+                continue;
+            }
+
+            item.RecentVoterNames = names;
+        }
+    }
+
+
+    /// <summary>One vote, reduced to the idea it belongs to and the name to show for it.</summary>
+    private sealed class RecentVoteRow
+    {
+        /// <summary>The idea the vote was cast on.</summary>
+        public int IdeaId { get; set; }
+
+        /// <summary>The name of whoever cast it.</summary>
+        public string DisplayName { get; set; } = string.Empty;
+    }
+
+
+    /// <summary>
     /// Fills in the vote state for a whole list with a single extra query, rather than
     /// asking the database once per row.
     /// </summary>
@@ -283,6 +396,18 @@ public class IdeaService : IIdeaService
     /// <summary>
     /// The largest count in a list that is known to hold every idea. No query: the counts
     /// have already been read.
+    ///
+    /// THE CALLER HAS TO HAVE READ EVERY IDEA FOR THIS TO BE THE LEADING COUNT, and the two
+    /// main tabs do, because neither of them pages. The search narrows the list AFTER this
+    /// has been taken, which is why it can still be taken from memory.
+    ///
+    /// The day somebody adds paging, the observable trigger is a Skip or a Take anywhere on
+    /// the way to this call, or a page model that stops saying it carries every idea. On
+    /// that day two things break at once and neither of them errors: the bars start
+    /// measuring against whatever is on the current page, and the search starts searching
+    /// the current page instead of the board, quietly answering "no ideas match" for ideas
+    /// that are two pages down. Paging means reading the leading count from the table and
+    /// moving the search into the query, in that order.
     /// </summary>
     private static int LeadingVoteCountOf(List<IdeaListItem> items)
     {

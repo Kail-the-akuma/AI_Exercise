@@ -16,12 +16,17 @@ public interface IIdeaService
     /// The ranking: most votes first, then most recent, then highest identifier. The tie
     /// break on the more recent idea is deliberate and gives a small, permanent advantage
     /// to whoever arrives later.
+    ///
+    /// A search term narrows the list to the ideas whose title or author matches it, and
+    /// nothing else about the page changes: the order is the same order and the bars still
+    /// measure against the board's leader rather than against the leader of the result.
+    /// Null or blank is the unsearched page.
     /// </summary>
-    Task<IReadOnlyList<IdeaListItem>> GetRankingAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<IdeaListItem>> GetRankingAsync(string? searchTerm, CancellationToken cancellationToken);
 
 
-    /// <summary>The same ideas, ordered by submission date descending.</summary>
-    Task<IReadOnlyList<IdeaListItem>> GetRecentAsync(CancellationToken cancellationToken);
+    /// <summary>The same ideas and the same search, ordered by submission date descending.</summary>
+    Task<IReadOnlyList<IdeaListItem>> GetRecentAsync(string? searchTerm, CancellationToken cancellationToken);
 
 
     /// <summary>

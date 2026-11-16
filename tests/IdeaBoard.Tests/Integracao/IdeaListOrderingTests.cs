@@ -71,7 +71,7 @@ public class IdeaListOrderingTests
         clock.SetUtcNow(new DateTimeOffset(2026, 1, 8, 12, 0, 0, TimeSpan.Zero));
         await service.SubmitAsync("Oldest and last in", "Description", Cancellation);
 
-        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(null, Cancellation);
 
         Assert.Equal(
             new List<string> { "Newest and first in", "Middle", "Oldest and last in" },
@@ -118,7 +118,7 @@ public class IdeaListOrderingTests
         context.Votes.Add(TestData.NewVote(voted, voter, TestData.Anchor));
         await context.SaveChangesAsync(Cancellation);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(
             new List<string>
@@ -157,8 +157,8 @@ public class IdeaListOrderingTests
 
         Assert.Equal(first.CreatedAt, second.CreatedAt);
 
-        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(Cancellation);
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(null, Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(second.Id, recent[0].Id);
         Assert.Equal(first.Id, recent[1].Id);
@@ -188,7 +188,7 @@ public class IdeaListOrderingTests
 
         currentUser.SignInAs(reader);
 
-        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(null, Cancellation);
 
         Assert.Single(recent);
         Assert.Equal("Ana Dias", recent[0].AuthorDisplayName);
