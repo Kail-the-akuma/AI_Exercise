@@ -95,37 +95,60 @@ log. O fixture pede uma porta livre ao sistema operativo, devolve a, e passa a a
 Isto é **correção a este documento e não exceção a ele**. A diferença importa, porque uma
 exceção deixaria o documento a descrever uma mecânica que não funciona.
 
-### Como a autenticação é resolvida
+### Como a identidade é resolvida
 
-O fixture substitui o esquema de autenticação por um handler de teste que lê um header
-com o identificador do utilizador pretendido e devolve as claims correspondentes.
+**A suite arranca o `IdeaBoard.Local` e não o `IdeaBoard.Web`**, e a identidade vem da
+fonte própria desse host, escolhida por quem corre o teste. **Não há handler de
+autenticação de teste em lado nenhum.** Ver
+[ADR-016](ADR/ADR-016-identidade-nos-testes-por-host-proprio.md), que substitui o
+ADR-011.
 
-Isto dá o que o produto precisa de exercitar e o Entra ID não permite exercitar de
-forma estável: **dois utilizadores diferentes na mesma execução**. Sem isso não é
-possível provar que o voto é por pessoa, que a lista nominal mostra os nomes certos, e
-que a contagem soma os dois.
+O que o produto precisa de exercitar não mudou: **dois utilizadores diferentes na mesma
+execução**. Sem isso não é possível provar que o voto é por pessoa, que a lista nominal
+mostra os nomes certos, e que a contagem soma os dois.
 
-Duas salvaguardas, porque um atalho de autenticação é exatamente o tipo de código que
-não pode chegar a produção:
+O que mudou foi a forma de lá chegar. O desenho anterior mandava sobrepor o esquema de
+autenticação do host publicado, e isso significava remover dele exatamente aquilo que o
+torna o host publicado. O que sobrava era uma aplicação com identidade escolhida à mão a
+servir Razor Pages, que é precisamente o que o `IdeaBoard.Local` é.
 
-1. **O handler de teste vive no projeto de testes, nunca no projeto web.** O projeto
-   publicado não contém nenhum código de autenticação de teste, nem sequer protegido
-   por uma condição de ambiente. Uma condição de ambiente é uma linha que alguém pode
-   inverter, e código que não existe não pode ser ativado por engano.
-2. O fixture fornece valores fictícios para a secção `AzureAd`, para que o arranque do
-   `Microsoft.Identity.Web` não falhe, e só depois sobrepõe o esquema por omissão.
+#### A garantia ficou mais forte, e deixou de custar um mecanismo
 
-Ver [ADR-011](ADR/ADR-011-autenticacao-nos-testes-e2e.md).
+O raciocínio do ADR-011 era que um atalho de autenticação não pode chegar a produção, e
+que código que não existe no artefacto não pode ser ativado por engano. Esse raciocínio
+sobrevive inteiro, e **muda de função**: deixa de justificar onde o atalho vive e passa
+a justificar porque não existe nenhum.
+
+Antes, a garantia custava uma convenção sobre onde um ficheiro fica, defendida por
+revisão de código. Agora não custa mecanismo nenhum na suite, porque o host que ela
+arranca nunca teve um esquema de produção para ser sobreposto, e porque a guarda do
+`Directory.Build.targets` recusa a construção de quem torne a identidade local
+alcançável a partir do host publicado.
+
+#### O custo que foi aceite, e fica escrito
+
+A suite passa a assentar na escolha de pessoa do `IdeaBoard.Local`, que é código de
+conveniência desse host e **não é ele próprio verificado**.
+
+É tolerável por duas razões, e não porque seja pouco importante. Uma avaria aí parte
+todos os cenários de forma imediata e ruidosa, em vez de falsear um resultado em
+silêncio. E nada do que [02](02-Especificacao-Funcional.md) especifica depende dela.
 
 ### O que esta suite não cobre
 
-**O fluxo real do Entra ID nunca é exercitado.** O redirecionamento, a validação do
-token emitido pelo tenant, o URI de redirecionamento do registo de aplicação e o
-aprovisionamento do utilizador local a partir de claims verdadeiras ficam todos fora.
+**O fluxo de autenticação real nunca é exercitado**, e isso não mudou com a troca de
+fornecedor, só mudou de nome. Era o redirecionamento e o token do tenant, passa a ser o
+desafio de Negotiate, a consulta ao diretório pelo identificador de segurança e a
+criação do utilizador a partir de uma identidade verdadeira do Windows.
+
+Seria fácil ler "já não há handler de autenticação de teste" como se o problema tivesse
+desaparecido. Não desapareceu nem um pouco.
 
 Isto está escrito aqui de propósito. É a diferença entre uma suite verde e uma
 aplicação que funciona, e a compensação é a verificação manual mais abaixo, que é
-obrigatória antes de cada lançamento e não opcional.
+obrigatória antes de cada lançamento e não opcional. O que mudou foi a lista: a
+verificação numa máquina em domínio substitui a verificação contra uma conta real do
+Entra ID.
 
 ### Cenários
 

@@ -60,6 +60,109 @@ Cada agente trabalha na sua própria árvore de trabalho do git, criada a partir
 
 ---
 
+## A pergunta de revisão, e porque é que não serve a quem escreveu
+
+Uma só, antes dos prompts, porque se aplica a todos e porque repetida cinco vezes vira
+fórmula, e uma fórmula numa lista de revisão é o item que se lê sem ler.
+
+> **Isto prova o que diz provar?**
+
+No presente, e sem "ainda". O "ainda" pressupõe que alguma vez provou, e deixa passar o
+que nunca foi verdadeiro.
+
+### O que falta ao autor é o gatilho, não a capacidade de ver
+
+Observação do ARQ, e é a parte que dá à pergunta um sítio neste documento.
+
+**Os cinco papéis valem por produzirem gatilhos uns para os outros.** Dos oito casos
+abaixo, nenhum foi apanhado por iniciativa do autor, e **dois foram apanhados pelo
+próprio autor depois de um gatilho externo**: um ADR apanhado por quem o escrevera, ao ir
+verificar uma afirmação de outra pessoa, e um filtro de pesquisa que ia esconder um
+achado, apanhado por quem o escrevera ao ler a saída em vez de a contar.
+
+É verdade que quem escreveu uma justificação tem a razão dela na cabeça e lê a presença
+dela como confirmação. Mas isso cega **enquanto ninguém o manda verificar**, e deixa de
+cegar no momento em que ele vai.
+
+A diferença entre as duas formulações não é de estilo, é de custo. Se a lição fosse que
+só outra cabeça apanha isto, o remédio seria sempre uma segunda cabeça, que é caro e não
+escala para cada afirmação. Sendo que o que falta é um gatilho, **gatilhos baratos
+servem**, e dois deles estão escritos aqui e não precisam de pessoa nenhuma: a varredura
+depois de uma decisão que troca uma dependência, e a data obrigatória numa afirmação
+sobre estado de implementação.
+
+E evita o erro na direção contrária. "Nenhum autor apanha o seu" lê se como "este
+trabalho não se pode fazer sozinho", o que é falso, e desencorajador para quem o faça sem
+cinco papéis à volta.
+
+### Uma razão para os cinco papéis que ninguém tinha escrito
+
+Os papéis foram desenhados para separar responsabilidade sobre ficheiros, que é o que a
+tabela no topo deste documento descreve.
+
+Servem também para outra coisa: **produzirem uns para os outros o gatilho que nenhum
+produz para si.** É uma propriedade do desenho e não um efeito feliz, e também é
+observação do ARQ.
+
+### O que ela apanha, e que nenhuma outra regra nossa apanhava
+
+Oito casos, todos de 13 de novembro de 2026, nenhum deles a dar erro.
+
+| Onde vivia | Porque não provava | Sintoma |
+|---|---|---|
+| Item de verificação manual | Reciclar o pool e confirmar que a sessão sobrevive. Sem cookie de sessão não há nada para sobreviver, e a reciclagem do IIS é sobreposta, portanto o pedido é servido pelo processo antigo, que ainda tem as chaves em memória | Verde |
+| Três ficheiros de teste | Montam configuração de identidade contra um validador que já não a exige. Passam por não haver nada a validar | Verde |
+| Invariante de revisão | O HSTS continua desligado enquanto o certificado não for confiado. Não há certificado nem HSTS | Verde |
+| Requisito em prosa | O endereço tem de ser o definitivo, por três razões que morreram no mesmo dia. Um leitor cuidadoso verifica, encontra zero, e remove o requisito | Obsoleto |
+| Comentário em código | Justifica uma escolha com uma medição que, repetida, não confirma o que lhe foi atribuído. A decisão está certa e parece verificada | Obsoleto |
+| Configuração publicada | Uma secção de configuração de identidade entregue com o artefacto que ninguém lê. Quem instalar vai pedir credenciais por causa de campos vazios | Obsoleto |
+| Parágrafo com citação | Uma coluna é anulável, "como se confirma em `deploy/migracao.sql`". Esse ficheiro já não tem a coluna | Obsoleto |
+| Afirmação datada num ADR | "Verificado por leitura hoje", sobre código que mudou poucas horas depois. Não ficou errado, ficou desatualizado, que é indistinguível de correto para quem não for ao código | Obsoleto |
+
+**A distinção das duas colunas é do ARQ e é a que dói.** Prosa, comentários e
+configuração ficam obsoletos, e alguém que leia com atenção acaba por desconfiar. **Os
+testes ficam verdes**, e um teste verde é lido como prova, não como texto.
+
+**O que os oito têm em comum é que nenhum está partido.** Uma revisão atenta procura
+coisas partidas, e estas não estão. Um teste vermelho, um requisito sem dono ou um
+parágrafo apagado seriam todos mais fáceis de apanhar.
+
+### O mecanismo, que vale mais do que a pergunta
+
+Ninguém aprende a ter uma virtude lendo que outro a teve. O que se aprende é o gatilho:
+
+**Encontrar uma justificação morta não é corrigir uma, é varrer o resto, porque o que a
+matou provavelmente matou mais.** Os casos acima decaíram quase todos pela mesma decisão,
+a troca do fornecedor de identidade. Nenhum foi encontrado por alguém desconfiar dele em
+particular. Apareceu um, e isso desencadeou a procura dos outros no mesmo sítio.
+
+Depois de uma decisão que troca uma dependência, a varredura que falta não é procurar o
+que parte, que dá erro e aparece sozinho. É procurar **o que continua a dizer o que
+dizia**, que fica verde e só aparece se alguém o for procurar.
+
+### Uma regra de ordem, que anda com a pergunta
+
+**Numa varredura, as afirmações com citação verificam se primeiro e não por último.**
+
+A regra de confiança deste documento manda a confiança descer à medida que um achado se
+afasta da fonte. Uma citação faz o inverso: sobe a confiança de quem lê, enquanto o facto
+citado apodrece em silêncio. São as afirmações que mais custam quando estão erradas, e as
+únicas em que verificar é barato, porque a fonte está escrita ao lado.
+
+### Um caso em que a pergunta foi feita e respondida bem
+
+Vale pelo contraste, porque uma lista só de falhas ensina a reconhecer o erro e uma que
+mostre o acerto ensina o que fazer.
+
+A regra da ordem do HSTS ia ficar presa num registo substituído, onde ninguém procura
+regras em vigor. Quem escreveu a substituição nomeou o que a decisão invalidava, decidiu
+que aquela parte sobrevivia, e escreveu onde passava a viver, com a razão.
+
+A forma é essa: **nomear o que morre, decidir o que sobrevive, e dizer onde o que
+sobrevive passa a morar.**
+
+---
+
 ## Prompt do agente ARQ
 
 ```
@@ -146,7 +249,7 @@ e Docs/05-Plano-de-Entrega.md. Lê também os ADR em Docs/ADR/ que forem referid
 fase em que vais trabalhar.
 
 ÉS DONO DE
-- src/IdeaBoard.Web/
+- src/, os quatro projetos descritos em Docs/ADR/ADR-015
 - tests/IdeaBoard.Tests/, os testes de unidade e de integração
 
 NUNCA ALTERAS
@@ -173,9 +276,11 @@ para mudar o âmbito. Se te ocorrer uma funcionalidade que resolva um desses ris
 isso é uma proposta para um humano decidir, não trabalho para fazeres.
 
 DUAS REGRAS QUE NÃO SE NEGOCEIAM
-1. Nunca colocas código de autenticação de teste em src/IdeaBoard.Web, nem sequer
-   protegido por uma condição de ambiente. O handler de teste vive no projeto do QA.
-   A razão está em Docs/ADR/ADR-011.
+1. Nada alcançável a partir do src/IdeaBoard.Web referencia um host. É a invariante
+   que mantém o handler de identidade local fora do artefacto publicado, e a guarda do
+   Directory.Build.targets recusa a construção de quem a quebre. Não desactivas essa
+   guarda nem lhe acrescentas excepções. A razão está em Docs/ADR/ADR-015 e no
+   Docs/ADR/ADR-016, que substitui o ADR-011.
 2. A regra de um voto por pessoa é imposta pelo índice único na base de dados, e a
    violação desse índice é tratada como sucesso idempotente, nunca propagada como
    erro. A razão está em Docs/ADR/ADR-010.
@@ -470,8 +575,9 @@ INVARIANTES A CONFIRMAR EM TODAS AS FASES
   o motivo de ter saído fica escrito. Um ponto encerrado por deixar de se aplicar não é
   o mesmo que um ponto respondido, e confundir os dois faz parecer que houve uma
   conclusão onde só houve uma mudança de desenho.
-- A partir da Fase 5, o HSTS continua desligado enquanto o certificado não for
-  confiado.
+- Se o HTTPS voltar algum dia, certificado confiado primeiro e HSTS depois, nunca ao
+  contrário. Hoje não há certificado nem HSTS, portanto este invariante não tem nada a
+  verificar, e está aqui como regra de ordem e não como item a confirmar em cada fase.
 
 COMO FECHAS UMA FASE
 Duas saídas possíveis, e só duas.

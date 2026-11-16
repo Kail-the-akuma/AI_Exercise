@@ -33,7 +33,7 @@ cima da suposição errada.
 
 - .NET 10 (LTS), ASP.NET Core Razor Pages, renderização no servidor.
 - EF Core sobre SQLite.
-- `Microsoft.Identity.Web` para autenticação por Entra ID.
+- Autenticação integrada do Windows, servida pelo IIS, sobre HTTP.
 - xUnit em toda a solução, com `Microsoft.Playwright.Xunit.v3` nos testes ponta a ponta.
 
 Dependências externas são para minimizar. Antes de acrescentar um pacote, verificar o
@@ -72,14 +72,19 @@ conjunções e frases separadas.
 
 Três níveis com responsabilidades separadas, descritos em `Docs/07`.
 
-**Nunca colocar código de autenticação de teste dentro de `IdeaBoard.Web`.** O handler
-de teste vive apenas no projeto de testes ponta a ponta, nem sequer protegido por uma
-condição de ambiente. É a salvaguarda que garante que um atalho de autenticação não
-chega a produção.
+**Nada alcançável a partir do `IdeaBoard.Web` referencia um host.** É a invariante que
+mantém a identidade local fora do artefacto publicado, e a guarda do
+`Directory.Build.targets` recusa a construção de quem a quebre. Não desactivar essa
+guarda nem lhe acrescentar excepções.
 
-Uma suite verde não é prova de que a aplicação funciona. A entrada em sessão real
-contra o Entra ID não é coberta por testes automáticos e tem de ser verificada à mão,
-conforme a lista de `Docs/07`.
+Reparar que a invariante é sobre o fecho de referências e não sobre uma pasta. Uma
+proibição sobre um caminho deixa de proteger no dia em que o produto muda de sítio, e
+fica a dizer que protege.
+
+Uma suite verde não é prova de que a aplicação funciona. O desafio de autenticação do
+Windows, a consulta ao diretório e a criação do utilizador a partir de uma identidade
+verdadeira não são cobertos por testes automáticos, e só se verificam numa máquina em
+domínio, à mão, conforme a lista de `Docs/07`.
 
 ## Git
 
