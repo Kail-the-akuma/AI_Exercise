@@ -1,4 +1,5 @@
 @inject ISignedInDisplayName signedInDisplayName
+@inject INewVoteNotices newVoteNotices
 @{
     // The active tab is worked out from the path rather than from a flag each page sets,
     // so that a new page cannot forget to declare it and silently light up both tabs.
@@ -29,6 +30,9 @@
     // question that is allowed to come back empty rather than the one that refuses to.
     string? signedInName = await signedInDisplayName.TryGetAsync(Context.RequestAborted);
 
+    // Empty for the same people the name is empty for, and for everybody with nothing new.
+    NewVoteNotice newVotes = await newVoteNotices.ReadAsync(Context.RequestAborted);
+
     // The document title carries only the page name. There is deliberately no product
     // name anywhere in this layout: choosing one is a human decision that is still open,
     // and a placeholder in the interface would close it by simply being there long enough.
@@ -58,7 +62,23 @@
                     <a asp-page="/Recentes" aria-current="@recentCurrent">@UiText.RecentTab</a>
                 </li>
                 <li>
-                    <a asp-page="/Pessoal" aria-current="@personalCurrent">@UiText.PersonalTab</a>
+                    <a asp-page="/Pessoal" aria-current="@personalCurrent">
+                        @UiText.PersonalTab
+
+                        @*
+                            The notice lives on the way in to the page that clears it, which
+                            is what makes it honest: it goes away because somebody went and
+                            looked, and not because time passed.
+
+                            The number is spoken as a whole sentence rather than as a bare
+                            digit beside a link, because "3" read out after the name of a
+                            tab says nothing about what three is.
+                        *@
+                        @if (newVotes.HasAnything)
+                        {
+                            <span class="aviso-novos">@UiText.FormatIdeasWithNewVotes(newVotes.IdeaCount)</span>
+                        }
+                    </a>
                 </li>
             </ul>
 

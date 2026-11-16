@@ -189,6 +189,93 @@ public class PesquisaTests : ScenarioBase
         await Expect(bruno.GetByText(UiText.NoIdeasSupported)).ToHaveCountAsync(0);
     }
 
+
+    /// <summary>
+    /// A vote on your idea shows up as news on every page, and opening the personal page is
+    /// what makes it go away.
+    ///
+    /// Both halves matter. A notice that never clears stops meaning anything within a week,
+    /// and one that clears on a timer claims to have been seen by somebody who was not
+    /// there. This clears because a person went and looked.
+    /// </summary>
+    [Fact]
+    public async Task AVoteOnYourIdeaIsNewsUntilYouGoAndLook()
+    {
+        await StartCleanAsync();
+
+        IPage ana = await OpenAsAsync(People.AnaObjectId);
+
+        int ideaId = await SubmitIdeaAndReadIdAsync(ana, "Ideia da Ana", "Descricao.");
+
+        // Nothing has happened to it yet.
+        await ana.GotoAsync(Url("/"));
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToHaveCountAsync(0);
+
+        IPage bruno = await OpenAsAsync(People.BrunoObjectId);
+
+        await bruno.GotoAsync(Url($"/ideias/{ideaId}"));
+        await bruno.Locator("[data-vote-button]").ClickAsync();
+        await Expect(bruno.Locator("[data-vote-count]")).ToHaveTextAsync(UiText.FormatVoteCount(1));
+
+        // The news reaches Ana on whatever page she is on, because it lives in the layout.
+        await ana.GotoAsync(Url("/recentes"));
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToBeVisibleAsync();
+
+        // And the idea itself says how many of its votes are new to her.
+        await ana.GotoAsync(Url("/pessoal"));
+        await Expect(ana.GetByText(UiText.FormatNewVotes(1))).ToBeVisibleAsync();
+
+        // Having looked, it is no longer news, and it stays that way on a reload.
+        await ana.GotoAsync(Url("/"));
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToHaveCountAsync(0);
+
+        await ana.ReloadAsync();
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToHaveCountAsync(0);
+    }
+
+
+    /// <summary>
+    /// A request the browser made on its own does not clear the news.
+    ///
+    /// The link to the personal page is in the layout, so it is on every page, and a
+    /// browser that fetches it ahead of time would clear news that nobody read. Nothing
+    /// errors, nothing is logged, and the person simply never finds out. The request here
+    /// announces itself the way a real prefetch does.
+    /// </summary>
+    [Fact]
+    public async Task APrefetchOfThePersonalPageDoesNotClearTheNews()
+    {
+        await StartCleanAsync();
+
+        IPage ana = await OpenAsAsync(People.AnaObjectId);
+
+        int ideaId = await SubmitIdeaAndReadIdAsync(ana, "Ideia por descobrir", "Descricao.");
+
+        IPage bruno = await OpenAsAsync(People.BrunoObjectId);
+
+        await bruno.GotoAsync(Url($"/ideias/{ideaId}"));
+        await bruno.Locator("[data-vote-button]").ClickAsync();
+        await Expect(bruno.Locator("[data-vote-count]")).ToHaveTextAsync(UiText.FormatVoteCount(1));
+
+        await ana.GotoAsync(Url("/"));
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToBeVisibleAsync();
+
+        // The personal page is fetched exactly as a browser prefetching it would, carrying
+        // Ana's own session, and never shown to her.
+        IAPIResponse prefetch = await ana.Context.APIRequest.GetAsync(
+            Url("/pessoal"),
+            new APIRequestContextOptions
+            {
+                Headers = new Dictionary<string, string> { ["Sec-Purpose"] = "prefetch" },
+            });
+
+        Assert.True(prefetch.Ok, $"The prefetch answered {prefetch.Status}.");
+
+        // She never looked, so it is still news.
+        await ana.ReloadAsync();
+        await Expect(ana.GetByText(UiText.FormatIdeasWithNewVotes(1))).ToBeVisibleAsync();
+    }
+
     #endregion
 
 

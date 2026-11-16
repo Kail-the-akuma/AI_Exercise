@@ -15,19 +15,25 @@ public class PessoalModel : VotingPageModel
     #region Fields
 
     private readonly IIdeaService ideaService;
+    private readonly INewVoteNotices newVoteNotices;
 
     #endregion
 
 
     #region Construction
 
-    /// <summary>Creates the page over the idea and vote services.</summary>
-    public PessoalModel(IIdeaService ideaService, IVoteService voteService)
+    /// <summary>Creates the page over the idea, vote and notice services.</summary>
+    public PessoalModel(
+        IIdeaService ideaService,
+        IVoteService voteService,
+        INewVoteNotices newVoteNotices)
         : base(voteService)
     {
         ArgumentNullException.ThrowIfNull(ideaService);
+        ArgumentNullException.ThrowIfNull(newVoteNotices);
 
         this.ideaService = ideaService;
+        this.newVoteNotices = newVoteNotices;
     }
 
     #endregion
@@ -40,6 +46,16 @@ public class PessoalModel : VotingPageModel
 
     /// <summary>The ideas this person voted on, most recent vote first.</summary>
     public IReadOnlyList<IdeaListItem> VotedIdeas { get; private set; } = [];
+
+    /// <summary>
+    /// What this person had not seen when the page was asked for.
+    ///
+    /// It is read BEFORE the marker is cleared, because clearing it is what makes the
+    /// answer zero. A page that cleared first and read afterwards would be correct about
+    /// the database and useless to the person, who would be shown the news they came for
+    /// as nothing at all.
+    /// </summary>
+    public NewVoteNotice NewVotes { get; private set; } = new NewVoteNotice();
 
     #endregion
 
@@ -86,6 +102,69 @@ public class PessoalModel : VotingPageModel
     {
         MyIdeas = await ideaService.GetMineAsync(cancellationToken);
         VotedIdeas = await ideaService.GetVotedByMeAsync(cancellationToken);
+
+        NewVotes = await newVoteNotices.ReadAsync(cancellationToken);
+
+        AttachNewVoteCounts();
+
+        await ClearTheMarkerAsync(cancellationToken);
+    }
+
+
+    /// <summary>
+    /// Puts each idea's unseen vote count on the row that shows it, so the card can say how
+    /// many of its votes are news to this person.
+    ///
+    /// Only this page's own ideas carry it. An idea on the ranking belongs to somebody
+    /// else, and a count of votes that are new to its author is not a fact about whoever is
+    /// reading.
+    /// </summary>
+    private void AttachNewVoteCounts()
+    {
+        foreach (IdeaListItem item in MyIdeas)
+        {
+            if (!NewVotes.VoteCountByIdea.TryGetValue(item.Id, out int newVotes))
+            {
+                continue;
+            }
+
+            item.NewVoteCount = newVotes;
+        }
+    }
+
+
+    /// <summary>
+    /// Marks the news as read, which is a WRITE INSIDE A GET, and the three things that
+    /// make that acceptable here.
+    ///
+    /// It is a write inside a GET because the interface clears by the person arriving, and
+    /// that is the right choice: a marker cleared by a timer is a notice claiming to have
+    /// been seen by somebody who was not there. Having chosen it, the cost is paid openly
+    /// rather than ignored.
+    ///
+    /// ONE, it does not run for a request the browser made on its own. The link to this
+    /// page is in the layout and therefore on every page, so a prefetch of it would clear
+    /// news nobody read, silently. See RequestIntent, which also says what to do if that
+    /// turns out not to be enough.
+    ///
+    /// TWO, the write is conditional. The overwhelming majority of visits have nothing to
+    /// clear and cost no write at all, so a repeated GET is a GET that does nothing the
+    /// second time. That is as close to repeatable as this can be made while still clearing
+    /// anything.
+    ///
+    /// THREE, nothing downstream keeps a copy. A cached copy of a page whose whole job is
+    /// to be current would show stale news and would take the clearing with it.
+    /// </summary>
+    private async Task ClearTheMarkerAsync(CancellationToken cancellationToken)
+    {
+        Response.Headers.CacheControl = "no-store";
+
+        if (RequestIntent.IsSpeculative(Request))
+        {
+            return;
+        }
+
+        await newVoteNotices.MarkSeenAsync(cancellationToken);
     }
 
     #endregion

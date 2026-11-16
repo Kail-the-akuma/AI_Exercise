@@ -122,6 +122,39 @@ public static class UiText
     /// <summary>Names the handful of latest voters shown on a row.</summary>
     public const string RecentVotesLabel = "Últimos votos";
 
+
+    /// <summary>
+    /// How many votes one idea received since this person last looked. Shown on their own
+    /// ideas and nowhere else.
+    /// </summary>
+    public static string FormatNewVotes(int voteCount)
+    {
+        if (voteCount == 1)
+        {
+            return "1 voto novo";
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, "{0} votos novos", voteCount);
+    }
+
+
+    /// <summary>
+    /// How many of this person's ideas received votes they have not seen, which is what the
+    /// entry in the layout carries.
+    /// </summary>
+    public static string FormatIdeasWithNewVotes(int ideaCount)
+    {
+        if (ideaCount == 1)
+        {
+            return "1 ideia sua recebeu votos novos";
+        }
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            "{0} ideias suas receberam votos novos",
+            ideaCount);
+    }
+
     #endregion
 
 

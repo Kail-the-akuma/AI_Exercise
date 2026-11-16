@@ -105,6 +105,13 @@ public class IdeaBoardDbContext : DbContext
             .HasColumnName("firstSeenAt")
             .IsRequired();
 
+        // Nullable on purpose, and the null means something: this person has never opened
+        // the page that shows them the votes their ideas received. A default of "now" at
+        // the moment the column was added would silently declare that everybody had just
+        // read everything.
+        user.Property(entity => entity.LastNotificationsSeenAt)
+            .HasColumnName("lastNotificationsSeenAt");
+
         user.HasIndex(entity => entity.SubjectId)
             .IsUnique()
             .HasDatabaseName("IX_User_subjectId");
