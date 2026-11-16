@@ -24,15 +24,23 @@ else
     <ul class="lista-ideias">
         @foreach (IdeaListItem idea in Model)
         {
+            @*
+                The row is a grid of two columns, and the wrapper below is what gives the
+                left one something to be. The id and the vote form stay inside this same
+                <li>: four end to end scenarios reach the button and the count through the
+                id, so whatever happens inside here, this element goes on containing both.
+            *@
             <li class="ideia" id="ideia-@idea.Id">
-                <h2 class="ideia-titulo" id="ideia-titulo-@idea.Id">
-                    <a asp-page="/Detalhe" asp-route-id="@idea.Id">@idea.Title</a>
-                </h2>
+                <div class="ideia-corpo">
+                    <h2 class="ideia-titulo" id="ideia-titulo-@idea.Id">
+                        <a asp-page="/Detalhe" asp-route-id="@idea.Id">@idea.Title</a>
+                    </h2>
 
-                <p class="ideia-meta">
-                    <span class="ideia-autor">@idea.AuthorDisplayName</span>
-                    <time datetime="@(idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(idea.CreatedAt, displayTimeZone).ToString("d")</time>
-                </p>
+                    <p class="ideia-meta">
+                        <span class="ideia-autor">@idea.AuthorDisplayName</span>
+                        <time datetime="@(idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(idea.CreatedAt, displayTimeZone).ToString("d")</time>
+                    </p>
+                </div>
 
                 <partial name="_VoteButton"
                          model="@(new VoteButtonModel { IdeaId = idea.Id, HasVoted = idea.HasVoted, VoteCount = idea.VoteCount })" />
