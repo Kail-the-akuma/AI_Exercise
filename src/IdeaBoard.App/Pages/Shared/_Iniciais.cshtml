@@ -1,0 +1,46 @@
+@model string
+@{
+    // The initials of a name, and nothing else. They are a presentation of a name that is
+    // already on the screen beside them, derived from it and from no other source, which is
+    // what keeps this from becoming a second place where a person's identity is decided.
+    //
+    // A name is not guaranteed to have two words. This takes the first letter of the first
+    // word and of the last, settles for one letter when there is only one word, and renders
+    // nothing at all when there is no letter to take: an empty badge reads as a fault, and a
+    // name with no mark beside it reads as a name.
+
+    string FirstLetterOf(string word)
+    {
+        foreach (char character in word)
+        {
+            if (char.IsLetter(character))
+            {
+                return char.ToUpperInvariant(character).ToString();
+            }
+        }
+
+        return string.Empty;
+    }
+
+    string fullName = Model ?? string.Empty;
+    string[] words = fullName.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+
+    string initials = string.Empty;
+
+    if (words.Length > 0)
+    {
+        initials = FirstLetterOf(words[0]);
+    }
+
+    if (words.Length > 1)
+    {
+        initials = initials + FirstLetterOf(words[words.Length - 1]);
+    }
+}
+@if (initials.Length > 0)
+{
+    @* Hidden from assistive technology on purpose. The name itself is right next to this
+       and is what carries the meaning, so announcing the letters as well would read the
+       same person out twice, as "A R Ana Ribeiro". *@
+    <span class="iniciais" aria-hidden="true">@initials</span>
+}

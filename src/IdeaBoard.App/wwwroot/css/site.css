@@ -43,6 +43,15 @@
     --cor-erro: #D0011B;               /* error, 5.67:1 on white */
 
     /*
+        The secondary of the same company palette, used for the initials beside a name and
+        nowhere else so far. The primary belongs to things that act, links and buttons, and
+        a name is not one of those: borrowing the action colour for it would say the mark
+        is pressable.
+    */
+    --cor-secundaria: #375564;         /* secondary */
+    --cor-secundaria-fundo: #F5F6F7;   /* secondary-lightest */
+
+    /*
         The one colour deliberately kept out of the company palette. Its focus token,
         #00C3D9, measures 2.14:1 on white and 1.66:1 inside a filled button, under the 3:1
         that a focus indicator is held to, and the system also asks for it as an inset ring,
@@ -139,12 +148,29 @@ a
     text-decoration: none;
 }
 
+/*
+    Built to take a third tab without falling apart, because one is coming and the shape of
+    this bar is decided now rather than then.
+
+    Measured at 390: two tabs and the button share one line, three tabs push the button onto
+    a second one. That is the right thing to give up, because the tabs are the navigation and
+    the button is the way back to a form. What was wrong was how it gave up: the button
+    landed on the left, under nothing, reading as an accident. The auto margin below keeps it
+    against the right edge whether it shares the line or has one of its own, and the smaller
+    row gap keeps the two line version from eating the top of the screen.
+*/
 .navegacao
 {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--espaco);
+    column-gap: var(--espaco);
+    row-gap: 0.5rem;
+    margin-left: auto;
+}
+
+.navegacao > .botao
+{
     margin-left: auto;
 }
 
@@ -295,7 +321,6 @@ a
     column-gap: calc(var(--espaco) * 1.5);
     align-items: center;
     padding: calc(var(--espaco) * 1.15) 0;
-    border-bottom: 1px solid var(--cor-linha);
 }
 
 .ideia-corpo
@@ -400,6 +425,59 @@ a
     font-size: 1rem;
     font-weight: 400;
     margin-bottom: 0.5rem;
+}
+
+
+/*
+    The support bar, spanning the whole row under both columns, and the rule between rows
+    at the same time. The row's own border was removed for it: one line that measures and
+    separates beats two lines that compete.
+
+    With nothing voted on anywhere every bar comes through at zero, which leaves a plain
+    grey rule, which is what the list looked like before any of this. The empty board needs
+    no special case.
+*/
+.apoio
+{
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 0.875rem;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--cor-linha);
+    overflow: hidden;
+}
+
+.apoio::before
+{
+    content: "";
+    display: block;
+    width: var(--apoio);
+    height: 100%;
+    background: var(--cor-ligacao);
+}
+
+
+/*
+    The initials beside a name. Secondary colour, never the primary, because the primary is
+    what the eye has learned to read as something to press.
+*/
+.iniciais
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.125rem;
+    border-radius: 999px;
+    background: var(--cor-secundaria-fundo);
+    box-shadow: inset 0 0 0 1px var(--cor-secundaria);
+    color: var(--cor-secundaria);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
 }
 
 [data-vote-button]
