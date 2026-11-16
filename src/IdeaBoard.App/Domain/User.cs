@@ -55,4 +55,20 @@ public class User
 
     /// <summary>Instant of the first sign-in, in UTC.</summary>
     public DateTime FirstSeenAt { get; set; }
+
+    /// <summary>
+    /// When this person last looked at the votes their ideas had received, in UTC, or null
+    /// if they never have.
+    ///
+    /// Without a marker a notice can only do one of two wrong things: never clear, so it
+    /// stops meaning anything within a week, or clear on a timer, which is a notice
+    /// claiming to have been seen by somebody who was not there. Both lie, and the second
+    /// lies silently. The marker is what lets "new" mean new TO THIS PERSON rather than
+    /// recent in general.
+    ///
+    /// Null is the honest starting state and not a missing value. Somebody who has never
+    /// opened the page has never seen any of it, so every vote their ideas ever received
+    /// counts as new on their first visit, which is exactly what it is to them.
+    /// </summary>
+    public DateTime? LastNotificationsSeenAt { get; set; }
 }

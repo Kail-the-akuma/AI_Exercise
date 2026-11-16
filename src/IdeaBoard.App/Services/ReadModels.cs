@@ -62,6 +62,16 @@ public class IdeaListItem
     /// built.
     /// </summary>
     public IReadOnlyList<string> RecentVoterNames { get; set; } = [];
+
+    /// <summary>
+    /// How many of this idea's votes are news to the person looking, which is only ever
+    /// filled on the personal page and only for that person's own ideas.
+    ///
+    /// Zero everywhere else, and that is not a missing value. On the ranking an idea
+    /// belongs to somebody else, and a count of votes that are new to its author is not a
+    /// fact about the person reading the page.
+    /// </summary>
+    public int NewVoteCount { get; set; }
 }
 
 

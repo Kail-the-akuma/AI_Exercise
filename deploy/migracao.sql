@@ -46,3 +46,11 @@ VALUES ('20261113171845_EsquemaInicial', '10.0.14');
 
 COMMIT;
 
+BEGIN TRANSACTION;
+ALTER TABLE "User" ADD "lastNotificationsSeenAt" TEXT NULL;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261116185858_AvisoDeVotosNovos', '10.0.14');
+
+COMMIT;
+

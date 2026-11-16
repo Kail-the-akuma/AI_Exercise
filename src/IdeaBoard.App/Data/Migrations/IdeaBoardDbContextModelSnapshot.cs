@@ -81,6 +81,10 @@ namespace IdeaBoard.App.Data.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("firstSeenAt");
 
+                    b.Property<DateTime?>("LastNotificationsSeenAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("lastNotificationsSeenAt");
+
                     b.Property<string>("SubjectId")
                         .IsRequired()
                         .HasColumnType("TEXT")

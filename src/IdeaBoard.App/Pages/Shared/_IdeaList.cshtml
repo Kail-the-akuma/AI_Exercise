@@ -69,6 +69,15 @@ else
                         An idea nobody has voted on carries none, and then nothing is drawn
                         rather than an empty label standing on its own.
                     *@
+                    @*
+                        Only ever filled on the personal page, and only for this person's
+                        own ideas. Everywhere else it is zero and nothing is drawn.
+                    *@
+                    @if (idea.NewVoteCount > 0)
+                    {
+                        <p class="ideia-votos-novos">@UiText.FormatNewVotes(idea.NewVoteCount)</p>
+                    }
+
                     @if (idea.RecentVoterNames.Count > 0)
                     {
                         <p class="ideia-ultimos-votos">
