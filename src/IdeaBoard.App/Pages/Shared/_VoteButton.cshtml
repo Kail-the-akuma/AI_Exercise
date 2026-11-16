@@ -34,5 +34,19 @@
             id="@buttonId"
             data-vote-button
             aria-labelledby="@buttonId @titleId">@label</button>
+    @*
+        Announcing the new count after a vote is required by the Accessibility section of
+        Docs/02, and the attribute below is only half of what makes it happen.
+
+        A live region is announced when the content of a node that was ALREADY in the
+        document changes. The enhancement script satisfies that by writing into the
+        textContent of this very span, which is why it reads the wording out of the
+        server's answer instead of rebuilding the form around it.
+
+        Replace that script with one that re-renders this markup, and the region stops
+        announcing while every visible thing stays correct: the attribute is still here,
+        the count on screen is still right, and nothing errors. There is no way to see
+        this break, so it is written down instead.
+    *@
     <span data-vote-count aria-live="polite">@UiText.FormatVoteCount(Model.VoteCount)</span>
 </form>
