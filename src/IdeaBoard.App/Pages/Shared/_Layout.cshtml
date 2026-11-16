@@ -46,7 +46,13 @@
                 </li>
             </ul>
 
-            <a class="botao botao-principal" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+            @*
+                Secondary, and on every page, because the empty list has to carry a
+                prominent one of its own by Docs/02 and two of them side by side is one
+                too many. The header is the one that gives way: this is the way back to
+                the form from anywhere, not the invitation to use it.
+            *@
+            <a class="botao" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
         </nav>
     </header>
 
