@@ -97,10 +97,17 @@
 
     Licensed under the SIL Open Font License 1.1, whose text sits beside the file in
     wwwroot/fonts/OFL.txt.
+
+    THE LICENCE IS WHY IT IS THIS FACE AND NOT ANOTHER. The one chosen on looks carries a
+    Reserved Font Name, and the file a font host serves is a subset, which the licence
+    counts as a modified version, and a modified version may not keep the reserved name.
+    This one is licensed by its authors without a reserved name, so the question does not
+    arise. It is a little wider and a little more neutral than the face it replaced, and
+    that was the price.
 */
 @font-face
 {
-    font-family: "Source Sans 3";
+    font-family: "Public Sans";
     font-style: normal;
     font-weight: 300 700;
 
@@ -110,7 +117,7 @@
     */
     font-display: swap;
 
-    src: url("../fonts/source-sans-3-variable-latin.woff2") format("woff2");
+    src: url("../fonts/public-sans-variable-latin.woff2") format("woff2");
 }
 
 *,
@@ -161,7 +168,7 @@ body
         page while the file is in flight and for any glyph the latin subset does not
         have.
     */
-    font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -535,6 +542,17 @@ a
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
+
+    /*
+        What this holds still is the LEFT edge of the number, not the start of the bar.
+        The bar starts where the grid says, in a fixed track, and no width of any digit
+        reaches it: measured with a proportional face and this property switched off, the
+        seven bars still began at the same pixel.
+
+        The count is set against the bar, so its right edge is pinned and its left edge
+        is the one that moves. With proportional figures that edge wandered over 0.60px
+        across the rows whose wording is the same; with these it does not move at all.
+    */
     font-variant-numeric: tabular-nums;
 
     /*
