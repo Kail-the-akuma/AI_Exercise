@@ -7,6 +7,7 @@
     <h1 id="ideia-titulo-@Model.Idea.Id">@Model.Idea.Title</h1>
 
     <p class="ideia-meta">
+        <partial name="_Iniciais" model="@Model.Idea.AuthorDisplayName" />
         <span class="ideia-autor">@Model.Idea.AuthorDisplayName</span>
         <time datetime="@(Model.Idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(Model.Idea.CreatedAt, displayTimeZone).ToString("d")</time>
     </p>
@@ -34,6 +35,7 @@
             @foreach (IdeaVoter voter in Model.Idea.Voters)
             {
                 <li>
+                    <partial name="_Iniciais" model="@voter.DisplayName" />
                     <span class="votante-nome">@voter.DisplayName</span>
                     <time datetime="@(voter.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(voter.CreatedAt, displayTimeZone).ToString("d")</time>
                 </li>
