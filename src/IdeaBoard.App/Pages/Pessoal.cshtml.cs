@@ -15,25 +15,31 @@ public class PessoalModel : VotingPageModel
     #region Fields
 
     private readonly IIdeaService ideaService;
+
     private readonly INewVoteNotices newVoteNotices;
+
+    private readonly IBoardPeople boardPeople;
 
     #endregion
 
 
     #region Construction
 
-    /// <summary>Creates the page over the idea, vote and notice services.</summary>
+    /// <summary>Creates the page over the idea, vote, notice and people services.</summary>
     public PessoalModel(
         IIdeaService ideaService,
         IVoteService voteService,
-        INewVoteNotices newVoteNotices)
+        INewVoteNotices newVoteNotices,
+        IBoardPeople boardPeople)
         : base(voteService)
     {
         ArgumentNullException.ThrowIfNull(ideaService);
         ArgumentNullException.ThrowIfNull(newVoteNotices);
+        ArgumentNullException.ThrowIfNull(boardPeople);
 
         this.ideaService = ideaService;
         this.newVoteNotices = newVoteNotices;
+        this.boardPeople = boardPeople;
     }
 
     #endregion
@@ -56,6 +62,13 @@ public class PessoalModel : VotingPageModel
     /// as nothing at all.
     /// </summary>
     public NewVoteNotice NewVotes { get; private set; } = new NewVoteNotice();
+
+    /// <summary>
+    /// How many people have opened the board, which the cards write out under the count.
+    /// It is read here as well as on the two board tabs so that the same card says the
+    /// same thing on every page it appears on.
+    /// </summary>
+    public int ArrivedPeopleCount { get; private set; }
 
     #endregion
 
@@ -102,6 +115,7 @@ public class PessoalModel : VotingPageModel
     {
         MyIdeas = await ideaService.GetMineAsync(cancellationToken);
         VotedIdeas = await ideaService.GetVotedByMeAsync(cancellationToken);
+        ArrivedPeopleCount = await boardPeople.CountArrivedAsync(cancellationToken);
 
         NewVotes = await newVoteNotices.ReadAsync(cancellationToken);
 
