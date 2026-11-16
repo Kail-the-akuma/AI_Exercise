@@ -397,7 +397,130 @@ public class VotoTests : ScenarioBase
     #endregion
 
 
+    #region Visual state
+
+    /// <summary>
+    /// Voting with the script running leaves the button and the count dressed exactly as
+    /// the server would have drawn them.
+    ///
+    /// Two classes carry state that no wording carries: one says the idea has no support
+    /// at all, and one says this person has signed it. The script used to write the words
+    /// and leave both classes where the page had been rendered with them, so a button
+    /// could say "Votado" without the mark that distinguishes it while a count that had
+    /// just left zero kept the quiet treatment. Nothing errored and nothing looked broken,
+    /// and a reload was the only thing that put it right, which is why no scenario that
+    /// reloads can see this at all.
+    ///
+    /// The assertion compares the two renderings rather than naming the classes, so it
+    /// still holds the day either of them is renamed, and it fails the day the two paths
+    /// disagree. The pair of inequalities before it is what stops the comparison from
+    /// being satisfied by both paths writing nothing.
+    /// </summary>
+    [Fact]
+    public async Task VotingWithTheScriptLeavesTheSameStateTheServerWouldHaveDrawn()
+    {
+        await StartCleanAsync();
+
+        IPage ana = await OpenAsAsync(People.AnaObjectId);
+
+        await SubmitIdeaAndReadIdAsync(ana, "Ideia por apoiar", "Descricao.");
+
+        await Expect(VoteCount(ana)).ToHaveTextAsync(NoVotes);
+
+        string formBefore = await ReadClassesAsync(VoteForm(ana));
+        string buttonBefore = await ReadClassesAsync(VoteButton(ana));
+
+        await VoteButton(ana).ClickAsync();
+
+        await Expect(VoteCount(ana)).ToHaveTextAsync(OneVote);
+        await Expect(VoteButton(ana)).ToHaveTextAsync(UiText.VotedButton);
+
+        string formByScript = await ReadClassesAsync(VoteForm(ana));
+        string buttonByScript = await ReadClassesAsync(VoteButton(ana));
+
+        Assert.NotEqual(formBefore, formByScript);
+        Assert.NotEqual(buttonBefore, buttonByScript);
+
+        // The same state, this time drawn by the server from the database.
+        await ana.ReloadAsync();
+
+        await Expect(VoteButton(ana)).ToHaveTextAsync(UiText.VotedButton);
+
+        Assert.Equal(await ReadClassesAsync(VoteForm(ana)), formByScript);
+        Assert.Equal(await ReadClassesAsync(VoteButton(ana)), buttonByScript);
+    }
+
+
+    /// <summary>
+    /// Withdrawing with the script running does the same on the way back down.
+    ///
+    /// It is a separate scenario because it is the only way to reach the other half of the
+    /// defect. Taking a class off can only fail on a page that was rendered with it, and
+    /// in a session that voted a moment ago the script had never put it there, so the
+    /// failure was invisible until somebody arrived at a page the server had already drawn
+    /// in the voted state. The reload in the middle is what builds that page.
+    /// </summary>
+    [Fact]
+    public async Task WithdrawingWithTheScriptTakesTheStateBackOffAgain()
+    {
+        await StartCleanAsync();
+
+        IPage ana = await OpenAsAsync(People.AnaObjectId);
+
+        await SubmitIdeaAndReadIdAsync(ana, "Ideia a devolver ao zero", "Descricao.");
+
+        await VoteButton(ana).ClickAsync();
+        await Expect(VoteCount(ana)).ToHaveTextAsync(OneVote);
+
+        // A page the server drew in the voted state, and not one the script arrived at.
+        await ana.ReloadAsync();
+
+        await Expect(VoteButton(ana)).ToHaveTextAsync(UiText.VotedButton);
+
+        string formVoted = await ReadClassesAsync(VoteForm(ana));
+        string buttonVoted = await ReadClassesAsync(VoteButton(ana));
+
+        await VoteButton(ana).ClickAsync();
+
+        await Expect(VoteCount(ana)).ToHaveTextAsync(NoVotes);
+        await Expect(VoteButton(ana)).ToHaveTextAsync(UiText.VoteButton);
+
+        string formByScript = await ReadClassesAsync(VoteForm(ana));
+        string buttonByScript = await ReadClassesAsync(VoteButton(ana));
+
+        Assert.NotEqual(formVoted, formByScript);
+        Assert.NotEqual(buttonVoted, buttonByScript);
+
+        await ana.ReloadAsync();
+
+        await Expect(VoteButton(ana)).ToHaveTextAsync(UiText.VoteButton);
+
+        Assert.Equal(await ReadClassesAsync(VoteForm(ana)), formByScript);
+        Assert.Equal(await ReadClassesAsync(VoteButton(ana)), buttonByScript);
+    }
+
+    #endregion
+
+
     #region Helpers
+
+    /// <summary>The form the vote button is submitted with.</summary>
+    private static ILocator VoteForm(IPage page)
+    {
+        return page.Locator("[data-vote-form]");
+    }
+
+
+    /// <summary>
+    /// The classes on an element, sorted and joined, so that two renderings can be compared
+    /// without the comparison depending on the order each one happened to produce.
+    /// </summary>
+    private static async Task<string> ReadClassesAsync(ILocator element)
+    {
+        return await element.EvaluateAsync<string>(
+            "node => Array.from(node.classList).sort().join(' ')");
+    }
+
 
     /// <summary>The vote button on the page, wherever the page puts it.</summary>
     private static ILocator VoteButton(IPage page)

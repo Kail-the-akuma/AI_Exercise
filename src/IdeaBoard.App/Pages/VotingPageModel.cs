@@ -102,8 +102,14 @@ public abstract class VotingPageModel : PageModel
 
 
     /// <summary>
-    /// Turns the database state into everything the interface may show, wording included,
-    /// so that the script is left with nothing to compute.
+    /// Turns the database state into everything the interface may show, wording and visual
+    /// state included, so that the script is left with nothing to compute.
+    ///
+    /// The two flags the stylesheet needs are decided here and not in the browser. Neither
+    /// of them can be read back off what is on screen: the voted state is a fact about the
+    /// person and not about the wording, and no rule can look at the text of a count to
+    /// find out that it says none. That is also why the partial writes them from the model
+    /// rather than from the markup it just produced.
     /// </summary>
     public static VoteResponse BuildVoteResponse(VoteState state)
     {
@@ -123,6 +129,7 @@ public abstract class VotingPageModel : PageModel
             IdeaId = state.IdeaId,
             HasVoted = state.HasVoted,
             VoteCount = state.VoteCount,
+            HasNoVotes = state.VoteCount <= 0,
             VoteCountText = UiText.FormatVoteCount(state.VoteCount),
             ButtonText = buttonText,
             NextHandler = nextHandler,
