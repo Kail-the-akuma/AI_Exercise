@@ -13,9 +13,45 @@
 
     string buttonId = $"voto-{Model.IdeaId}";
     string titleId = $"ideia-titulo-{Model.IdeaId}";
+
+    // Two states the stylesheet needs and cannot work out on its own, because neither of
+    // them can be read off the wording: CSS cannot look at the text of the count to find
+    // out it says none, and the voted state has to be legible as more than a word.
+    string formClasses = "ideia-voto";
+    string buttonClasses = string.Empty;
+
+    if (Model.VoteCount <= 0)
+    {
+        formClasses = "ideia-voto sem-votos";
+    }
+
+    if (Model.HasVoted)
+    {
+        buttonClasses = "votado";
+    }
 }
-<form method="post" data-vote-form data-idea-id="@Model.IdeaId" asp-page-handler="@handler">
+<form class="@formClasses" method="post" data-vote-form data-idea-id="@Model.IdeaId" asp-page-handler="@handler">
     <input type="hidden" name="ideaId" value="@Model.IdeaId" />
+
+    @*
+        Announcing the new count after a vote is required by the Accessibility section of
+        Docs/02, and the attribute below is only half of what makes it happen.
+
+        A live region is announced when the content of a node that was ALREADY in the
+        document changes. The enhancement script satisfies that by writing into the
+        textContent of this very span, which is why it reads the wording out of the
+        server's answer instead of rebuilding the form around it.
+
+        Replace that script with one that re-renders this markup, and the region stops
+        announcing while every visible thing stays correct: the attribute is still here,
+        the count on screen is still right, and nothing errors. There is no way to see
+        this break, so it is written down instead.
+
+        It comes before the button because that is the order it is read in and the order it
+        is laid out in: how much support this idea has, then what you can do about it.
+    *@
+    <span data-vote-count aria-live="polite">@UiText.FormatVoteCount(Model.VoteCount)</span>
+
     @*
         The spoken name of this button is its own wording followed by the title of the idea
         it votes on, because on the ranking every one of these buttons reads as the same
@@ -31,22 +67,8 @@
         back to the wording alone, which is where this started.
     *@
     <button type="submit"
+            class="@buttonClasses"
             id="@buttonId"
             data-vote-button
             aria-labelledby="@buttonId @titleId">@label</button>
-    @*
-        Announcing the new count after a vote is required by the Accessibility section of
-        Docs/02, and the attribute below is only half of what makes it happen.
-
-        A live region is announced when the content of a node that was ALREADY in the
-        document changes. The enhancement script satisfies that by writing into the
-        textContent of this very span, which is why it reads the wording out of the
-        server's answer instead of rebuilding the form around it.
-
-        Replace that script with one that re-renders this markup, and the region stops
-        announcing while every visible thing stays correct: the attribute is still here,
-        the count on screen is still right, and nothing errors. There is no way to see
-        this break, so it is written down instead.
-    *@
-    <span data-vote-count aria-live="polite">@UiText.FormatVoteCount(Model.VoteCount)</span>
 </form>
