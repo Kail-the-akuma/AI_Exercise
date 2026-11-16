@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.Extensions.Options;
 using IdeaBoard.App.Pages;
@@ -122,6 +123,27 @@ public class PublishedHostTests
     #endregion
 
     #region Authorisation
+
+    /// <summary>
+    /// The two constants that name the Windows scheme carry the same value.
+    ///
+    /// This exists because the composition root says so in a comment, and a claim a reader
+    /// would trust without rechecking belongs in something that runs. If the two ever
+    /// diverge, the statement that choosing between them is not a hosting model decision
+    /// stops being true, and this is what says so.
+    ///
+    /// It is also a correction to the record. The comment it backs once carried a second
+    /// reason, that the other constant could not be used without an extra package, and that
+    /// reason was never measured and was false. A right decision resting on a wrong
+    /// measurement looks verified and is not.
+    /// </summary>
+    [Fact]
+    public void BothWindowsSchemeConstantsNameTheSameScheme()
+    {
+        Assert.Equal(IISServerDefaults.AuthenticationScheme, IISDefaults.AuthenticationScheme);
+        Assert.Equal("Windows", IISDefaults.AuthenticationScheme);
+    }
+
 
     /// <summary>
     /// The published host challenges with the scheme the WEB SERVER provides, and carries
