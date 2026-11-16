@@ -10,9 +10,29 @@
         handler = VotingPageModel.UnvoteHandlerName;
         label = UiText.VotedButton;
     }
+
+    string buttonId = $"voto-{Model.IdeaId}";
+    string titleId = $"ideia-titulo-{Model.IdeaId}";
 }
 <form method="post" data-vote-form data-idea-id="@Model.IdeaId" asp-page-handler="@handler">
     <input type="hidden" name="ideaId" value="@Model.IdeaId" />
-    <button type="submit" data-vote-button>@label</button>
+    @*
+        The spoken name of this button is its own wording followed by the title of the idea
+        it votes on, because on the ranking every one of these buttons reads as the same
+        single word. Somebody moving through the page button by button would hear "Votar"
+        once per idea with nothing to tell them apart, while somebody looking at the screen
+        has the heading directly above and never meets the problem. That is what makes this
+        one worth guarding: it cannot be caught by looking.
+
+        Both pages that render this partial put the id named here on their title element.
+        The button names itself first so that its visible wording stays the beginning of the
+        spoken name, which is what keeps the two the same thing. If a future caller renders
+        the partial with no such element, the missing reference is ignored and the name falls
+        back to the wording alone, which is where this started.
+    *@
+    <button type="submit"
+            id="@buttonId"
+            data-vote-button
+            aria-labelledby="@buttonId @titleId">@label</button>
     <span data-vote-count aria-live="polite">@UiText.FormatVoteCount(Model.VoteCount)</span>
 </form>

@@ -25,7 +25,7 @@ else
         @foreach (IdeaListItem idea in Model)
         {
             <li class="ideia" id="ideia-@idea.Id">
-                <h2 class="ideia-titulo">
+                <h2 class="ideia-titulo" id="ideia-titulo-@idea.Id">
                     <a asp-page="/Detalhe" asp-route-id="@idea.Id">@idea.Title</a>
                 </h2>
 
