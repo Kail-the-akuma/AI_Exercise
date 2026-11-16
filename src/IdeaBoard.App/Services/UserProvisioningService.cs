@@ -505,10 +505,17 @@ public class UserProvisioningService : IUserProvisioningService
     /// <summary>
     /// Works out the name to show for somebody who has no row yet.
     ///
-    /// The claims come first. When the sign-in already carries a name, which is the case
-    /// against Entra ID, nothing else is consulted and no directory is touched. The
-    /// directory is asked only when no name claim arrived, which is what happens under
-    /// Windows authentication, where the identity is an account name and not a name.
+    /// The claims come first. When the sign-in already carries a name, nothing else is
+    /// consulted and no directory is touched. That is the case on the hosts that are
+    /// never published, whose handler emits a name claim, and it is why running the
+    /// application locally never waits on a directory.
+    ///
+    /// The directory is asked only when no name claim arrived, which is what happens
+    /// under Windows authentication, where the identity is an account name and not a
+    /// name fit to show.
+    ///
+    /// The short circuit itself is unchanged and still live: only the host it used to be
+    /// attributed to is gone.
     ///
     /// There is deliberately no fall back to the identifier. An identifier shown as the
     /// author of an idea is just plausible enough to survive review and reach colleagues.
