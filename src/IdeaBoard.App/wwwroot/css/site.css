@@ -61,7 +61,56 @@
     --cor-foco: #0b63c5;
 
     --espaco: 1rem;
+
+    /*
+        Three radii, because one value meant for the edge of a field was doing duty for a
+        button and would have to do duty for the page surface as well. A surface that
+        curves as tightly as an input reads as an input that grew.
+    */
     --raio: 0.25rem;
+    --raio-medio: 0.625rem;
+    --raio-grande: 1rem;
+
+    /*
+        Elevation. The stylesheet already owned shadow as a way of drawing a one pixel
+        edge, inset, and owned none as a way of saying what is in front of what. These
+        two are that second thing, and both carry an offset and a soft blur: a shadow
+        with no offset is a halo, which is decoration and says nothing about light.
+    */
+    --sombra-pousada: 0 1px 2px rgba(24, 26, 26, 0.06), 0 10px 24px -14px rgba(24, 26, 26, 0.22);
+    --sombra-levantada: 0 2px 4px rgba(24, 26, 26, 0.09), 0 14px 30px -14px rgba(24, 26, 26, 0.26);
+
+    /* One duration and one easing, so that a state change is a change and not a jump. */
+    --transicao: 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+    The face is served by this application and never from another domain. A request to a
+    font host from an internal tool either fails on a closed network or tells whoever
+    answers it which page somebody here is reading, and neither is a trade worth making
+    for a file this small.
+
+    One variable file covers every weight the interface uses, 300 to 700, in the latin
+    subset the interface is written in. A glyph outside that subset, which in practice
+    means a name from the directory with a letter Portuguese does not use, falls back to
+    the system face for that glyph alone.
+
+    Licensed under the SIL Open Font License 1.1, whose text sits beside the file in
+    wwwroot/fonts/OFL.txt.
+*/
+@font-face
+{
+    font-family: "Source Sans 3";
+    font-style: normal;
+    font-weight: 300 700;
+
+    /*
+        The page is readable before the face arrives and stays readable if it never
+        does. Without this the first paint is blank text for as long as the file takes.
+    */
+    font-display: swap;
+
+    src: url("../fonts/source-sans-3-variable-latin.woff2") format("woff2");
 }
 
 *,
@@ -76,13 +125,43 @@ html
     font-size: 100%;
 }
 
+/*
+    The parts of a page nobody draws. The text selection, the caret, the scrollbar and
+    the offset of an underline all ship with browser defaults that belong to no design
+    system, and they are the cheapest thing here that says this page was built rather
+    than assembled.
+*/
+::selection
+{
+    background: rgba(0, 120, 133, 0.18);
+    color: var(--cor-texto);
+}
+
+html
+{
+    caret-color: var(--cor-destaque);
+    accent-color: var(--cor-destaque);
+    scrollbar-color: #b9bcbc var(--cor-fundo-suave);
+}
+
+/*
+    The page is the ground and the content sits on it. Everything used to be on one
+    plane, so nothing could be in front of anything, and the only way the layout could
+    say "this is the content" was by stopping.
+*/
 body
 {
     margin: 0;
     padding: 0;
-    background: var(--cor-fundo);
+    background: var(--cor-fundo-suave);
     color: var(--cor-texto);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /*
+        The system stack stays behind the served face, as the fallback that carries the
+        page while the file is in flight and for any glyph the latin subset does not
+        have.
+    */
+    font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -97,7 +176,8 @@ h3
 
 h1
 {
-    font-size: 1.625rem;
+    font-size: 1.875rem;
+    letter-spacing: -0.02em;
 }
 
 h2
@@ -113,6 +193,7 @@ p
 a
 {
     color: var(--cor-ligacao);
+    text-underline-offset: 0.18em;
 }
 
 /*
@@ -129,15 +210,24 @@ a
 
 /* Header and navigation */
 
+/*
+    The top surface rather than a grey band. It stays with the page because the list is
+    built to grow to dozens of rows and the way back to the form should not require
+    scrolling to the top to find it.
+*/
 .cabecalho
 {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--espaco);
     padding: var(--espaco);
-    border-bottom: 1px solid var(--cor-linha);
-    background: var(--cor-fundo-suave);
+    border-bottom: 0;
+    background: var(--cor-fundo);
+    box-shadow: var(--sombra-pousada);
 }
 
 .marca
@@ -190,6 +280,7 @@ a
     padding: 0.25rem 0;
     text-decoration: none;
     border-bottom: 3px solid transparent;
+    transition: color var(--transicao), border-color var(--transicao);
 }
 
 .separadores a:hover
@@ -207,17 +298,31 @@ a
 
 /* Buttons */
 
+/*
+    The edge used to come off --cor-linha, which measures 1.22:1 against what surrounds
+    it. A control whose edge is the only thing marking where it starts is held to 3:1,
+    and the comment on --cor-contorno-campo writes that rule down. It was being applied
+    to the fields and not to the buttons.
+*/
 .botao
 {
     display: inline-block;
     padding: 0.5rem 0.875rem;
-    border: 1px solid var(--cor-linha);
-    border-radius: var(--raio);
+    border: 1px solid var(--cor-contorno-campo);
+    border-radius: var(--raio-medio);
     background: var(--cor-fundo);
     color: var(--cor-ligacao);
     font: inherit;
     text-decoration: none;
     cursor: pointer;
+    transition: background var(--transicao), border-color var(--transicao), color var(--transicao), box-shadow var(--transicao);
+}
+
+.botao:hover
+{
+    background: var(--cor-fundo-suave);
+    border-color: var(--cor-destaque);
+    color: var(--cor-destaque);
 }
 
 .botao-principal
@@ -233,6 +338,16 @@ a
         print its label in the same colour as its own background.
     */
     color: #ffffff;
+    box-shadow: var(--sombra-pousada);
+}
+
+.botao-principal:hover
+{
+    background: var(--cor-destaque);
+    border-color: var(--cor-destaque);
+    color: #ffffff;
+    box-shadow: var(--sombra-levantada);
+    filter: brightness(1.12);
 }
 
 .botao-grande
@@ -244,11 +359,19 @@ a
 
 /* Content */
 
+/*
+    The content is a surface on the ground rather than the ground itself. It is also
+    wider than it was: at 48rem a 1280 screen carried 256px of nothing down each side,
+    which is margin when it is chosen and leftovers when it is not.
+*/
 .conteudo
 {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: calc(var(--espaco) * 1.5) var(--espaco) calc(var(--espaco) * 3) var(--espaco);
+    max-width: 52rem;
+    margin: calc(var(--espaco) * 1.5) auto calc(var(--espaco) * 3) auto;
+    border-radius: var(--raio-grande);
+    background: var(--cor-fundo);
+    box-shadow: var(--sombra-pousada);
+    padding: calc(var(--espaco) * 2) calc(var(--espaco) * 2) calc(var(--espaco) * 2.5) calc(var(--espaco) * 2);
 }
 
 
@@ -317,7 +440,7 @@ a
 .ideia
 {
     display: grid;
-    grid-template-columns: 5.5rem 12rem minmax(0, 1fr) auto;
+    grid-template-columns: 5.5rem 17rem minmax(0, 1fr) 6rem;
     column-gap: 0.75rem;
     row-gap: 0.5rem;
     align-items: start;
@@ -347,6 +470,7 @@ a
 .ideia-titulo a
 {
     text-decoration: none;
+    transition: color var(--transicao);
 }
 
 .ideia-titulo a:hover
@@ -421,15 +545,21 @@ a
     text-align: right;
 }
 
+/*
+    The track is fixed and the button fills it. Left to size itself the button is wider
+    on the rows that say "Votado" than on the rows that say "Votar", and the bar, which
+    takes what is left, then runs a different length on those rows.
+*/
 .lista-ideias .ideia-voto [data-vote-button]
 {
     grid-column: 4;
     grid-row: 1 / 3;
     align-self: center;
-    width: auto;
+    width: 100%;
     min-width: 0;
-    padding-left: 0.875rem;
-    padding-right: 0.875rem;
+    border-radius: var(--raio-medio);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 /*
@@ -479,7 +609,7 @@ a
     grid-row: 2;
     align-self: center;
     width: 100%;
-    height: 4px;
+    height: 6px;
     border-radius: 999px;
     background: var(--cor-linha);
     overflow: hidden;
@@ -543,6 +673,33 @@ a
         padding-left: 0.375rem;
         padding-right: 0.375rem;
     }
+
+    /*
+        On a phone the surface stops being an object on a ground and becomes the page
+        again. Two centimetres of tint down each side buy nothing there, and they cost
+        the bar the width it needs to be read as a length.
+    */
+    body
+    {
+        background: var(--cor-fundo);
+    }
+
+    .conteudo
+    {
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: calc(var(--espaco) * 1.25) var(--espaco) calc(var(--espaco) * 2.5) var(--espaco);
+    }
+
+    /*
+        And the header stops following the page. On a screen this short a bar that never
+        leaves is a bar that takes a fifth of what there is to read.
+    */
+    .cabecalho
+    {
+        position: static;
+    }
 }
 
 
@@ -559,9 +716,14 @@ a
     height: 1.5rem;
     margin-right: 0.125rem;
     border-radius: 999px;
-    background: var(--cor-secundaria-fundo);
-    box-shadow: inset 0 0 0 1px var(--cor-secundaria);
-    color: var(--cor-secundaria);
+
+    /*
+        Solid rather than a one pixel ring on a near white fill, which was the thinnest
+        mark on the page and the first thing to disappear at a glance. The colour is the
+        same secondary it always was, moved from the edge to the fill.
+    */
+    background: var(--cor-secundaria);
+    color: #ffffff;
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -595,7 +757,14 @@ a
 [data-vote-button].votado
 {
     background: var(--cor-fundo-suave);
-    box-shadow: inset 0 0 0 1px var(--cor-destaque);
+
+    /*
+        The fill alone measures 1.09:1 against white, which is a mark nobody can see.
+        The surface is pressed in instead, which is the one state in this interface that
+        is about something the person has already done, and the edge keeps the colour.
+    */
+    box-shadow: inset 0 1px 2px rgba(24, 26, 26, 0.14), inset 0 0 0 1px var(--cor-destaque);
+    color: var(--cor-destaque);
 }
 
 [data-vote-count]
@@ -694,10 +863,11 @@ a
     width: 100%;
     padding: 0.5rem;
     border: 1px solid var(--cor-contorno-campo);
-    border-radius: var(--raio);
+    border-radius: var(--raio-medio);
     background: var(--cor-fundo);
     color: var(--cor-texto);
     font: inherit;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
 }
 
 .campo textarea
@@ -737,4 +907,20 @@ a
     border-radius: var(--raio);
     background: var(--cor-fundo-suave);
     word-break: break-all;
+}
+
+
+/*
+    Motion is an enhancement and never a requirement. Somebody who has told their system
+    they want less of it gets the same interface with none, and nothing here depends on a
+    transition having run.
+*/
+@media (prefers-reduced-motion: reduce)
+{
+    *,
+    *::before,
+    *::after
+    {
+        transition: none !important;
+    }
 }
