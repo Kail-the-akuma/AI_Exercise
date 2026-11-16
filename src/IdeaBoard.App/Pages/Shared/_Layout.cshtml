@@ -74,9 +74,21 @@
                             digit beside a link, because "3" read out after the name of a
                             tab says nothing about what three is.
                         *@
+                        @*
+                            Said twice, and the reason the sentence stayed is the one
+                            written above it: a bare digit beside the name of a tab says
+                            nothing about what the digit counts.
+
+                            So the sentence is what a screen reader gets, in full, and the
+                            eye gets the number. Written the other way round the sentence
+                            lands inside a pill fifteen rem wide and breaks over three
+                            lines, and a notice that makes the navigation worse is a
+                            notice people learn to ignore.
+                        *@
                         @if (newVotes.HasAnything)
                         {
-                            <span class="aviso-novos">@UiText.FormatIdeasWithNewVotes(newVotes.IdeaCount)</span>
+                            <span class="aviso-novos" aria-hidden="true">@newVotes.IdeaCount</span>
+                            <span class="so-leitor">@UiText.FormatIdeasWithNewVotes(newVotes.IdeaCount)</span>
                         }
                     </a>
                 </li>
