@@ -36,11 +36,34 @@
     {
         initials = initials + FirstLetterOf(words[words.Length - 1]);
     }
+
+    // A colour of its own for each person, worked out from the name and from nothing
+    // else, so the same colleague carries the same mark on every screen. It says "this
+    // person" and never "this kind of idea": a coloured mark on a card is read as a
+    // category, and this board has no categories and is not getting any.
+    int personColour = 0;
+
+    foreach (char character in fullName)
+    {
+        personColour = personColour + character;
+    }
+
+    personColour = personColour % 6;
 }
 @if (initials.Length > 0)
 {
-    @* Hidden from assistive technology on purpose. The name itself is right next to this
-       and is what carries the meaning, so announcing the letters as well would read the
-       same person out twice, as "A R Ana Ribeiro". *@
-    <span class="iniciais" aria-hidden="true">@initials</span>
+    @*
+        Hidden from assistive technology on purpose. The name itself is right next to this
+        and is what carries the meaning, so announcing the letters as well would read the
+        same person out twice, as "A R Ana Ribeiro".
+
+        The number of letters is published because a name of one word gives one letter,
+        and beside two letter marks that circle reads lighter than the ones next to it.
+        The stylesheet corrects the size, and it cannot count characters, so the count has
+        to come from here.
+    *@
+    <span class="iniciais"
+          data-pessoa="@personColour"
+          data-letras="@initials.Length"
+          aria-hidden="true">@initials</span>
 }

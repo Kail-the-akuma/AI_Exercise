@@ -16,6 +16,21 @@
     There is no search here. The search narrows the board, and these two lists are already
     narrowed to one person.
 *@
+@*
+    Both notes belong to the page and not to either list. Drawn by each list they appeared
+    twice, which reads as though the second list were under different rules, and the
+    warning about a public vote is a rule about the whole board.
+*@
+@*
+    And only when there is at least one idea on the page. On the first day both lists are
+    empty, and a legend explaining a bar that is nowhere on screen explains nothing.
+*@
+@if (!Model.HasSubmittedNothing || !Model.HasVotedOnNothing)
+{
+    <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
+    <p class="legenda-apoio">@UiText.SupportBarLegend</p>
+}
+
 <section class="area-pessoal">
     <h2>@UiText.MyIdeasHeading</h2>
 
@@ -28,7 +43,7 @@
     }
     else
     {
-        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.MyIdeas })" />
+        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.MyIdeas, ShowNotes = false, ArrivedPeopleCount = Model.ArrivedPeopleCount })" />
     }
 </section>
 
@@ -43,6 +58,6 @@
     }
     else
     {
-        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.VotedIdeas })" />
+        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.VotedIdeas, ShowNotes = false, ArrivedPeopleCount = Model.ArrivedPeopleCount })" />
     }
 </section>
