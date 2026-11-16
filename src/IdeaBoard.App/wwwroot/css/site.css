@@ -14,6 +14,17 @@
     --cor-fundo: #ffffff;
     --cor-fundo-suave: #f4f5f7;
     --cor-linha: #d8dade;
+
+    /*
+        A separate line colour for the boundary of a form control, which carries a rule the
+        decorative separators do not. A control whose edge is the only thing marking where it
+        starts has to reach 3:1 against what surrounds it, so --cor-linha cannot serve here:
+        it sits at 1.40:1 on white, which is right for a rule between two rows and not enough
+        for the edge of a field. This value measures 3.66:1 on white and 3.36:1 on the soft
+        background, with headroom kept on purpose so a later change to either background does
+        not quietly drop it under the bar.
+    */
+    --cor-contorno-campo: #82868b;
     --cor-ligacao: #1a4f8a;
     --cor-destaque: #16467c;
     --cor-aviso-fundo: #fff6d6;
@@ -369,7 +380,7 @@ a
     display: block;
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid var(--cor-linha);
+    border: 1px solid var(--cor-contorno-campo);
     border-radius: var(--raio);
     background: var(--cor-fundo);
     color: var(--cor-texto);
