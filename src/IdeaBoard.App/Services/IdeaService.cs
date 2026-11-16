@@ -89,7 +89,7 @@ public class IdeaService : IIdeaService
 
         await MarkVotedAsync(items, cancellationToken);
 
-        AssignSupportPercent(items);
+        AssignSupportPercent(items, LeadingVoteCountOf(items));
 
         return items;
     }
@@ -105,16 +105,114 @@ public class IdeaService : IIdeaService
 
         await MarkVotedAsync(items, cancellationToken);
 
-        AssignSupportPercent(items);
+        AssignSupportPercent(items, LeadingVoteCountOf(items));
 
         return items;
+    }
+
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<IdeaListItem>> GetMineAsync(CancellationToken cancellationToken)
+    {
+        User signedInUser = await currentUser.GetAsync(cancellationToken);
+
+        List<IdeaListItem> items = await ProjectIdeas(
+                dbContext.Ideas.Where(idea => idea.AuthorUserId == signedInUser.Id))
+            .OrderByDescending(item => item.CreatedAt)
+            .ThenByDescending(item => item.Id)
+            .ToListAsync(cancellationToken);
+
+        await MarkVotedAsync(items, cancellationToken);
+
+        AssignSupportPercent(items, await ReadLeadingVoteCountAsync(cancellationToken));
+
+        return items;
+    }
+
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<IdeaListItem>> GetVotedByMeAsync(CancellationToken cancellationToken)
+    {
+        User signedInUser = await currentUser.GetAsync(cancellationToken);
+
+        // The votes are read first, and in their own order, because the order of this list
+        // is the order of the VOTES and not of the ideas. It cannot be recovered after the
+        // ideas are projected, since nothing in an idea records when somebody voted on it.
+        List<int> votedIdeaIds = await dbContext.Votes
+            .AsNoTracking()
+            .Where(vote => vote.UserId == signedInUser.Id)
+            .OrderByDescending(vote => vote.CreatedAt)
+            .ThenByDescending(vote => vote.Id)
+            .Select(vote => vote.IdeaId)
+            .ToListAsync(cancellationToken);
+
+        if (votedIdeaIds.Count == 0)
+        {
+            return [];
+        }
+
+        List<IdeaListItem> items = await ProjectIdeas(
+                dbContext.Ideas.Where(idea => votedIdeaIds.Contains(idea.Id)))
+            .ToListAsync(cancellationToken);
+
+        items = ArrangeByVoteOrder(items, votedIdeaIds);
+
+        // Nothing is asked about the vote state here, and that is not an oversight. Every
+        // idea on this list is on it BECAUSE the current person voted on it, so the answer
+        // is known before the question, and asking would be a query to confirm the filter
+        // that produced the list.
+        foreach (IdeaListItem item in items)
+        {
+            item.HasVoted = true;
+        }
+
+        AssignSupportPercent(items, await ReadLeadingVoteCountAsync(cancellationToken));
+
+        return items;
+    }
+
+
+    /// <summary>
+    /// Puts the ideas back in the order the votes came in, which the database returned them
+    /// out of. The vote order is walked once and each idea picked out of a map, so the cost
+    /// stays linear rather than searching the list per vote.
+    /// </summary>
+    private static List<IdeaListItem> ArrangeByVoteOrder(List<IdeaListItem> items, List<int> votedIdeaIds)
+    {
+        Dictionary<int, IdeaListItem> itemById = new Dictionary<int, IdeaListItem>(items.Count);
+
+        foreach (IdeaListItem item in items)
+        {
+            itemById[item.Id] = item;
+        }
+
+        List<IdeaListItem> arranged = new List<IdeaListItem>(items.Count);
+
+        foreach (int ideaId in votedIdeaIds)
+        {
+            if (!itemById.TryGetValue(ideaId, out IdeaListItem? item))
+            {
+                continue;
+            }
+
+            arranged.Add(item);
+        }
+
+        return arranged;
     }
 
 
     /// <summary>Projects every idea with its author and its aggregated vote count.</summary>
     private IQueryable<IdeaListItem> ProjectIdeas()
     {
-        return dbContext.Ideas
+        return ProjectIdeas(dbContext.Ideas);
+    }
+
+
+    /// <summary>The same projection over a narrower set of ideas.</summary>
+    private static IQueryable<IdeaListItem> ProjectIdeas(IQueryable<Idea> ideas)
+    {
+        return ideas
             .AsNoTracking()
             .Select(idea => new IdeaListItem
             {
@@ -156,27 +254,16 @@ public class IdeaService : IIdeaService
 
 
     /// <summary>
-    /// Works out how long each bar is against the leader of the same list, without asking
-    /// the database anything further: the counts are already in memory and the leader is
-    /// the largest of them.
+    /// Works out how long each bar is, given the count the bars are measured against.
     ///
-    /// The leader is taken from the list and not from the table because both tabs carry
-    /// every idea and neither of them pages, which the two page models state. The day a
-    /// page shows a subset, this has to read the maximum from the whole table instead, or
-    /// the bars will measure against whatever happens to be on screen.
+    /// The leading count is a parameter and not something worked out here, because where it
+    /// comes from depends on the list. That day was foreseen in a comment and has arrived:
+    /// the two main tabs carry every idea, so their own largest count IS the leading count
+    /// and costs nothing to find, while the personal tab shows a subset and has to ask the
+    /// table, or its bars would measure against whatever that person happens to have.
     /// </summary>
-    private static void AssignSupportPercent(List<IdeaListItem> items)
+    private static void AssignSupportPercent(List<IdeaListItem> items, int leaderVoteCount)
     {
-        int leaderVoteCount = 0;
-
-        foreach (IdeaListItem item in items)
-        {
-            if (item.VoteCount > leaderVoteCount)
-            {
-                leaderVoteCount = item.VoteCount;
-            }
-        }
-
         foreach (IdeaListItem item in items)
         {
             if (leaderVoteCount <= 0 || item.VoteCount <= 0)
@@ -190,6 +277,49 @@ public class IdeaService : IIdeaService
 
             item.SupportPercent = item.VoteCount * 100 / leaderVoteCount;
         }
+    }
+
+
+    /// <summary>
+    /// The largest count in a list that is known to hold every idea. No query: the counts
+    /// have already been read.
+    /// </summary>
+    private static int LeadingVoteCountOf(List<IdeaListItem> items)
+    {
+        int leaderVoteCount = 0;
+
+        foreach (IdeaListItem item in items)
+        {
+            if (item.VoteCount > leaderVoteCount)
+            {
+                leaderVoteCount = item.VoteCount;
+            }
+        }
+
+        return leaderVoteCount;
+    }
+
+
+    /// <summary>
+    /// The largest count in the WHOLE table, for the lists that show a subset.
+    ///
+    /// One command, whatever the size of the list, and the count is nullable on purpose:
+    /// an empty table has no maximum at all, and asking for one without saying so throws
+    /// rather than answering zero.
+    /// </summary>
+    private async Task<int> ReadLeadingVoteCountAsync(CancellationToken cancellationToken)
+    {
+        int? leadingVoteCount = await dbContext.Ideas
+            .AsNoTracking()
+            .Select(idea => (int?)idea.Votes.Count)
+            .MaxAsync(cancellationToken);
+
+        if (leadingVoteCount is null)
+        {
+            return 0;
+        }
+
+        return leadingVoteCount.Value;
     }
 
     #endregion
