@@ -39,6 +39,20 @@ public static class UiText
     #endregion
 
 
+    #region Support bar
+
+    /// <summary>
+    /// Said once above the list, because the bar is drawn against the idea leading the
+    /// same list and nothing else on screen says so. On the ranking the leader is the
+    /// first row and its full bar is its own explanation; on the recent tab the leader is
+    /// somewhere down the page and it is not.
+    /// </summary>
+    public const string SupportBarLegend =
+        "A barra mostra o apoio de cada ideia face à mais votada.";
+
+    #endregion
+
+
     #region Submission
 
     /// <summary>Shown next to the submit button, before the person submits.</summary>

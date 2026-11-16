@@ -21,6 +21,13 @@ else
        using a screen reader, for a rule that is the same for the whole page. *@
     <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
 
+    @*
+        What the bar in each row is measured against. It sits outside the list rather than
+        as its first item, because the end to end scenarios count the direct children of
+        this ul and expect that number to be the number of ideas.
+    *@
+    <p class="legenda-apoio">@UiText.SupportBarLegend</p>
+
     <ul class="lista-ideias">
         @foreach (IdeaListItem idea in Model)
         {
