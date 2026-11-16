@@ -89,6 +89,8 @@ public class IdeaService : IIdeaService
 
         await MarkVotedAsync(items, cancellationToken);
 
+        AssignSupportPercent(items);
+
         return items;
     }
 
@@ -102,6 +104,8 @@ public class IdeaService : IIdeaService
             .ToListAsync(cancellationToken);
 
         await MarkVotedAsync(items, cancellationToken);
+
+        AssignSupportPercent(items);
 
         return items;
     }
@@ -147,6 +151,44 @@ public class IdeaService : IIdeaService
         foreach (IdeaListItem item in items)
         {
             item.HasVoted = votedIdeaIdSet.Contains(item.Id);
+        }
+    }
+
+
+    /// <summary>
+    /// Works out how long each bar is against the leader of the same list, without asking
+    /// the database anything further: the counts are already in memory and the leader is
+    /// the largest of them.
+    ///
+    /// The leader is taken from the list and not from the table because both tabs carry
+    /// every idea and neither of them pages, which the two page models state. The day a
+    /// page shows a subset, this has to read the maximum from the whole table instead, or
+    /// the bars will measure against whatever happens to be on screen.
+    /// </summary>
+    private static void AssignSupportPercent(List<IdeaListItem> items)
+    {
+        int leaderVoteCount = 0;
+
+        foreach (IdeaListItem item in items)
+        {
+            if (item.VoteCount > leaderVoteCount)
+            {
+                leaderVoteCount = item.VoteCount;
+            }
+        }
+
+        foreach (IdeaListItem item in items)
+        {
+            if (leaderVoteCount <= 0 || item.VoteCount <= 0)
+            {
+                // Either nothing has been voted on at all, or this idea has not been. With
+                // no leader there is nothing to measure against, and an empty bar is the
+                // honest picture rather than a full one.
+                item.SupportPercent = 0;
+                continue;
+            }
+
+            item.SupportPercent = item.VoteCount * 100 / leaderVoteCount;
         }
     }
 

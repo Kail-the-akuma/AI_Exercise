@@ -1,3 +1,4 @@
+using IdeaBoard.App.Pages;
 using IdeaBoard.E2E.Fixtures;
 using Microsoft.Playwright;
 using Xunit;
@@ -67,13 +68,13 @@ public class RankingTests : ScenarioBase
         await Expect(ranked).ToHaveCountAsync(3);
 
         await Expect(ranked.Nth(0)).ToContainTextAsync("Ideia mais antiga");
-        await Expect(ranked.Nth(0)).ToContainTextAsync("2 votos");
+        await Expect(ranked.Nth(0)).ToContainTextAsync(UiText.FormatVoteCount(2));
 
         await Expect(ranked.Nth(1)).ToContainTextAsync("Ideia mais recente");
-        await Expect(ranked.Nth(1)).ToContainTextAsync("1 voto");
+        await Expect(ranked.Nth(1)).ToContainTextAsync(UiText.FormatVoteCount(1));
 
         await Expect(ranked.Nth(2)).ToContainTextAsync("Ideia do meio");
-        await Expect(ranked.Nth(2)).ToContainTextAsync("1 voto");
+        await Expect(ranked.Nth(2)).ToContainTextAsync(UiText.FormatVoteCount(1));
 
         // The other tab, on the same three ideas, in a different order. Asserted here and
         // not only in its own scenario, because two tabs that agreed would mean the main
@@ -118,7 +119,7 @@ public class RankingTests : ScenarioBase
 
         await ana.Locator($"#ideia-{first} [data-vote-button]").ClickAsync();
 
-        await Expect(ana.Locator($"#ideia-{first} [data-vote-count]")).ToHaveTextAsync("1 voto");
+        await Expect(ana.Locator($"#ideia-{first} [data-vote-count]")).ToHaveTextAsync(UiText.FormatVoteCount(1));
 
         // The position does not change under the person's hands, by design: the script
         // rewrites the button and the count and nothing else. The order is the server's
@@ -143,7 +144,7 @@ public class RankingTests : ScenarioBase
 
         // Waited for on purpose. Leaving the page while the request is still on its way
         // would leave the next step racing a vote that may not have been recorded.
-        await Expect(page.Locator("[data-vote-button]")).ToHaveTextAsync("Votado");
+        await Expect(page.Locator("[data-vote-button]")).ToHaveTextAsync(UiText.VotedButton);
     }
 
     #endregion

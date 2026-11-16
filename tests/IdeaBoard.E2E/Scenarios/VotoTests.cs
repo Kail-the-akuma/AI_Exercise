@@ -11,18 +11,22 @@ namespace IdeaBoard.E2E.Scenarios;
 /// Voting, withdrawing a vote, and the rule the whole product rests on: one vote per
 /// person, however many times the request arrives.
 ///
-/// The counts are asserted as the literal words the specification fixes, and not through
-/// the application's own formatter. Reading the number back from the code that wrote it
-/// would make every assertion here agree with whatever that code happens to say.
+/// The counts come from the application's own formatter and not from words copied into
+/// this file. The literal words the specification fixes are pinned in one place already,
+/// by the unit test over UiText, so a copy here would not be a second check on them. It
+/// would be a second place to keep up to date, and the first one to go quietly stale.
 /// </summary>
 [Collection(AppHostCollection.Name)]
 public class VotoTests : ScenarioBase
 {
-    #region Constants
+    #region Expected text
 
-    private const string NoVotes = "Sem votos";
-    private const string OneVote = "1 voto";
-    private const string TwoVotes = "2 votos";
+    // Named for how they read in the scenarios, and derived so that they cannot drift
+    // from what the pages actually render. The words themselves are checked against the
+    // specification by the unit test over UiText, which is where that check belongs.
+    private static readonly string NoVotes = UiText.FormatVoteCount(0);
+    private static readonly string OneVote = UiText.FormatVoteCount(1);
+    private static readonly string TwoVotes = UiText.FormatVoteCount(2);
 
     #endregion
 
