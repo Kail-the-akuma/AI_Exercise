@@ -304,28 +304,37 @@ a
 }
 
 /*
-    Two columns: what the idea is on the left, how much support it has on the right.
+    The row had two devices doing one job, a large count and a bar, and they competed.
+    The count won, which is the wrong winner on a page whose content is the ideas. A
+    length is compared without being read, so the bar keeps the job of showing how much
+    support an idea has and the number goes back to being a number.
 
-    The right column is deliberately narrow, narrow enough that every count wraps between
-    the number and the word, the short ones included. Widen it until "7 votos" fits on one
-    line and the column reads ragged, with some rows one line tall and others two.
-
-    The two columns are centred against each other rather than aligned to the top. The
-    support column is the taller of the two, and the difference would otherwise pile up as
-    dead space under the author's name.
+    Four columns, and three of them are fixed. Each row is its own grid, so a track sized
+    from its own content would make the bars start in different places and run to
+    different lengths, and a comparison drawn at a different scale on every line is not a
+    comparison. The slack is given to the third column, which is empty on the second row.
 */
 .ideia
 {
     display: grid;
-    grid-template-columns: 1fr 5.25rem;
-    column-gap: calc(var(--espaco) * 1.5);
-    align-items: center;
-    padding: calc(var(--espaco) * 1.15) 0;
+    grid-template-columns: 5.5rem 12rem minmax(0, 1fr) auto;
+    column-gap: 0.75rem;
+    row-gap: 0.5rem;
+    align-items: start;
+    padding: 0.875rem 0;
+
+    /*
+        The rule between rows is back. It was given up so that the bar could separate as
+        well as measure, and what happened is that the bar did the separating and stopped
+        reading as a measure, because a full width line under a block is a rule whatever
+        it was meant to be. Two lines only compete while they have the same shape.
+    */
+    border-bottom: 1px solid var(--cor-linha);
 }
 
 .ideia-corpo
 {
-    grid-column: 1;
+    grid-column: 1 / 4;
     grid-row: 1;
 }
 
@@ -377,37 +386,50 @@ a
 }
 
 /*
-    Inside a row it is the right hand column instead, with the count above the button.
+    Inside a row the form stops drawing a box of its own, so that the row can place the
+    count beside the bar that explains it and the button away from both, while all three
+    stay inside the form that is posted. The two hidden inputs are display:none already,
+    so neither of them takes a cell.
 
-    The count is the reason the list is in the order it is in, so it is read first and it
-    is the strongest thing in the row. It used to be the quietest, which made a page named
-    "Mais votadas" say nothing about how much anything was voted.
+    The script finds the count with form.querySelector, so the count has to go on living
+    inside this form. This is how it is placed elsewhere without being moved.
 */
 .lista-ideias .ideia-voto
 {
-    grid-column: 2;
-    grid-row: 1;
-    display: block;
-    text-align: right;
+    display: contents;
 }
 
 .lista-ideias .ideia-voto [data-vote-count]
 {
+    grid-column: 1;
+    grid-row: 2;
     display: block;
-    margin-bottom: 0.625rem;
+    margin-bottom: 0;
+    align-self: center;
     color: var(--cor-texto);
-    font-size: 1.75rem;
+    font-size: 0.9375rem;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.4;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
+
+    /*
+        Set against the bar rather than against the left margin, so that the number and
+        the length it stands for touch. The three wordings are different lengths, so one
+        of the two edges is ragged either way, and this is the edge that carries meaning.
+    */
+    text-align: right;
 }
 
 .lista-ideias .ideia-voto [data-vote-button]
 {
-    width: 100%;
+    grid-column: 4;
+    grid-row: 1 / 3;
+    align-self: center;
+    width: auto;
     min-width: 0;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
 }
 
 /*
@@ -421,28 +443,43 @@ a
 */
 .lista-ideias .ideia-voto.sem-votos [data-vote-count]
 {
+    margin-bottom: 0;
     color: var(--cor-texto-suave);
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 400;
-    margin-bottom: 0.5rem;
 }
 
 
 /*
-    The support bar, spanning the whole row under both columns, and the rule between rows
-    at the same time. The row's own border was removed for it: one line that measures and
-    separates beats two lines that compete.
+    The detail page said the count was the least important thing on the screen while the
+    list said it was the most. The same fact, read twice with opposite emphases, and
+    somebody moving between the two pages feels the disagreement without having a name
+    for it. They agree now.
+*/
+.ideia-detalhe [data-vote-count]
+{
+    color: var(--cor-texto);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
 
-    With nothing voted on anywhere every bar comes through at zero, which leaves a plain
-    grey rule, which is what the list looked like before any of this. The empty board needs
-    no special case.
+
+/*
+    Beside the number it explains, instead of underneath everything. The same track on
+    every row, and short enough that it reads as a measure of something rather than as
+    the edge of the block.
+
+    With nothing voted on anywhere every bar comes through at zero, which leaves a short
+    grey line beside the words "Sem votos", and the empty board needs no special case.
 */
 .apoio
 {
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 2;
-    margin-top: 0.875rem;
-    height: 3px;
+    align-self: center;
+    width: 100%;
+    height: 4px;
     border-radius: 999px;
     background: var(--cor-linha);
     overflow: hidden;
@@ -455,6 +492,57 @@ a
     width: var(--apoio);
     height: 100%;
     background: var(--cor-ligacao);
+}
+
+/*
+    For a line above the list saying what the bar is drawn against, which nothing on
+    screen says today. On the ranking the leader is the first row and its full bar is its
+    own explanation; on Recentes the leader is somewhere down the page and it is not.
+
+    The element does not exist yet, because the wording would be new interface text and
+    Docs/02 is what fixes those. The rule is harmless until the wording is decided, and
+    writing it here is what keeps the decision from needing a stylesheet change as well.
+*/
+.legenda-apoio
+{
+    margin: 0 0 0.75rem;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+/*
+    On a phone the bar gives up its fixed track and takes what is left, so that the three
+    columns still fit on one line. The button stays where it is, because a column of
+    seven full width buttons makes the repeated action the loudest thing on the page,
+    which is the mistake this whole arrangement exists to undo. It gains the height the
+    mobile platforms ask for instead.
+*/
+@media (max-width: 34rem)
+{
+    .ideia
+    {
+        /*
+            The button track is fixed here too. Left to size itself it is wider on the
+            rows that say "Votado" than on the rows that say "Votar", and the bar, which
+            takes what is left, then measures 181px on some rows and 168px on others.
+        */
+        grid-template-columns: 5.5rem minmax(0, 1fr) 5.5rem;
+        column-gap: 0.625rem;
+    }
+
+    .ideia-corpo
+    {
+        grid-column: 1 / 3;
+    }
+
+    .lista-ideias .ideia-voto [data-vote-button]
+    {
+        grid-column: 3;
+        width: 100%;
+        min-height: 2.75rem;
+        padding-left: 0.375rem;
+        padding-right: 0.375rem;
+    }
 }
 
 
@@ -531,6 +619,12 @@ a
 */
 .descricao
 {
+    /*
+        The page is capped at 48rem, which ran this text to 92 characters a line. The
+        field it is written in is capped at 40rem, so the box where a description is
+        composed was narrower than the page that shows it.
+    */
+    max-width: 36rem;
     white-space: pre-wrap;
     overflow-wrap: break-word;
 }
@@ -554,6 +648,12 @@ a
     gap: 0.5rem;
     padding: 0.375rem 0;
     border-bottom: 1px solid var(--cor-linha);
+}
+
+/* The list ended on a rule with nothing underneath it. */
+.lista-votantes li:last-child
+{
+    border-bottom: 0;
 }
 
 .votante-nome
