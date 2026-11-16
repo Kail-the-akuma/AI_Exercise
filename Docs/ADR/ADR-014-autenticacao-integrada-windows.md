@@ -1,6 +1,6 @@
 # ADR-014. Autenticação integrada do Windows, em substituição do Entra ID
 
-**Estado**: Aceite, com a decisão tomada e a implementação por fazer. **Data**: 13 de novembro de 2026.
+**Estado**: Aceite, com a implementação feita a 13 de novembro de 2026. **Data**: 13 de novembro de 2026.
 **Substitui**: [ADR-003](ADR-003-autenticacao-entra-id.md).
 
 ## Contexto
@@ -70,20 +70,33 @@ substituído em vez de resolvido.
 
 ## Estado da implementação, que não é o estado da decisão
 
-**A troca ainda não está feita no código.** Verificado por leitura hoje: tanto em `main`
-como em `origin/fase1/identidade-windows`, o `Program.cs` do `IdeaBoard.Web` continua a
-chamar `AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)` e
-`AddMicrosoftIdentityWebApp`, nas linhas 29 e 30. A palavra `negotiate` aparece em todo
-o código apenas em dois comentários e em nenhuma configuração.
+**A troca está feita.** Verificado por leitura em `origin/main`: o `Program.cs` do
+`IdeaBoard.Web` chama `AddAuthentication(IISDefaults.AuthenticationScheme)`, e as
+chamadas a `AddMicrosoftIdentityWebApp` e a `AddMicrosoftIdentityUI` desapareceram.
 
-O que já está feito é o que fica a jusante da identidade: o esquema da tabela de
-utilizadores, o resolvedor de nomes pelo diretório, o registo manual, e a proveniência
-do nome. O que falta é a troca do esquema de autenticação propriamente dita, retida à
-espera da decisão de HTTP contra HTTPS que pertence ao Hugo.
+**Quando este registo foi escrito, não estava.** Nessa altura o `Program.cs` ainda
+chamava `AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)`, e esta secção
+dizia o, porque a decisão estava tomada e o código ainda não a seguia. Ficou feita no
+mesmo dia, depois de o Hugo decidir HTTP, que era o que a retinha.
 
-Este registo descreve uma decisão tomada, e não uma implementação existente. A
-distinção está aqui escrita de propósito, porque um ADR que descreva como feito aquilo
-que está apenas decidido é documentação falsa no momento em que é escrita.
+Essa frase fica aqui registada em vez de apagada. Um ADR serve para mostrar o que se
+sabia na altura, e o que se sabia na altura era que a decisão andava à frente do código.
+
+E fica por uma segunda razão, que é a lição e não a história. **Esta secção descreveu
+durante algumas horas um estado que já não era verdade**, e falhou da forma que custa
+mais: não ficou errada, ficou desatualizada, que é indistinguível de correta para quem
+não for ao código verificar. É o mesmo defeito que este registo aponta noutros sítios, e
+aconteceu aqui dentro, no parágrafo que o nomeia.
+
+Daqui sai a única regra prática que esta secção deixa: **uma afirmação sobre estado de
+implementação dentro de um ADR tem data e tem de ser verificada contra o código a cada
+leitura.** As afirmações sobre a decisão não precisam, porque a decisão não muda sozinha.
+Se a distinção não for possível de manter, o estado não pertence a um ADR.
+
+Este registo descreve uma decisão tomada. A distinção entre decisão e implementação está
+aqui escrita de propósito, porque um ADR que descreva como feito aquilo que está apenas
+decidido é documentação falsa no momento em que é escrita, e um que descreva como por
+fazer aquilo que já está feito passa a ser falsa sem ninguém lhe tocar.
 
 ## O que sai junto com o pacote, e um teste que fica a passar pelo motivo errado
 
@@ -91,7 +104,7 @@ A saída do `Microsoft.Identity.Web.UI` leva consigo coisas que ninguém decidiu
 
 **O fim de sessão desaparece.** Não existe botão de terminar sessão em página nenhuma
 da aplicação, e o `Docs/02` não o menciona. A rota vinha do `AddMicrosoftIdentityUI()`,
-chamado no `Program.cs`, e sai com a biblioteca. Com autenticação integrada isto é o
+que era chamado no `Program.cs` e já não é. Com autenticação integrada isto é o
 comportamento normal e não um defeito, porque não há sessão aplicacional para terminar.
 O item manual do `Docs/07` que manda terminar sessão e confirmar que o acesso volta a
 pedir autenticação não fica por fazer, fica **sem objeto**.
@@ -159,9 +172,14 @@ de conta em domínio, e a conta sem nome de apresentação. Nada disto é exerci
 ambiente onde o código foi escrito, e está recolhido na lista de primeiro arranque em
 domínio.
 
-**O que esta decisão não decide.** HTTP contra HTTPS continua em aberto e pertence ao
-Hugo. Dos três fundamentos do ADR-013, dois caem inteiros com a saída do Entra ID. O
-terceiro, o tráfego em claro, não cai: muda de ator, porque deixa de haver cookie de
-sessão para roubar e passa a haver tokens antiforgery visíveis, numa aplicação onde as
-credenciais passam a ser ambientes e o antiforgery passa a importar mais do que
-importava. Essa análise não está confirmada e não é fundamento deste registo.
+**O que esta decisão não decidiu, e foi decidido a seguir.** Quando este registo foi
+escrito, HTTP contra HTTPS estava em aberto e pertencia ao Hugo. Dos três fundamentos do
+ADR-013, dois caíam inteiros com a saída do Entra ID, e o terceiro, o tráfego em claro,
+não caía: mudava de ator, porque deixa de haver cookie de sessão para roubar e passa a
+haver tokens antiforgery visíveis, numa aplicação onde as credenciais passam a ser
+ambientes e o antiforgery passa a importar mais do que importava.
+
+O Hugo decidiu HTTP no mesmo dia, e essa decisão está no
+[ADR-024](ADR-024-http-sem-certificado.md), que substitui o ADR-013 e trata lá o
+fundamento que mudou de ator, com a análise identificada como não confirmada e com a
+condição em que seria falsa.

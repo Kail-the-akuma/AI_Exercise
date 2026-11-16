@@ -22,7 +22,7 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-011](ADR-011-autenticacao-nos-testes-e2e.md) | Autenticação por handler de teste, fora do projeto web | Substituído pelo ADR-016 |
 | [ADR-012](ADR-012-chromium-apenas.md) | Testes ponta a ponta apenas em Chromium | Aceite |
 | [ADR-013](ADR-013-certificado-no-arranque.md) | Certificado emitido pela equipa no arranque, certificado confiado depois | Substituído pelo ADR-024 |
-| [ADR-014](ADR-014-autenticacao-integrada-windows.md) | Autenticação integrada do Windows, por Negotiate no IIS | Aceite, implementação por fazer |
+| [ADR-014](ADR-014-autenticacao-integrada-windows.md) | Autenticação integrada do Windows, por Negotiate no IIS | Aceite |
 | [ADR-015](ADR-015-estrutura-de-quatro-projetos.md) | Quatro projetos, com o produto numa biblioteca e dois hosts irmãos | Aceite |
 | [ADR-016](ADR-016-identidade-nos-testes-por-host-proprio.md) | Identidade nos testes por host próprio, em vez de esquema sobreposto | Aceite |
 | [ADR-017](ADR-017-xunit-v3.md) | xUnit v3 como único framework de teste da solução | Aceite |
