@@ -8,11 +8,13 @@
 
     string? nameError = null;
     string? nameDescribedBy = "aviso-visibilidade";
+    string? nameInvalid = null;
 
     if (nameEntry is not null && nameEntry.Errors.Count > 0)
     {
         nameError = nameEntry.Errors[0].ErrorMessage;
         nameDescribedBy = "erro-nome aviso-visibilidade";
+        nameInvalid = "true";
     }
 }
 <h1>@NameRegistrationText.PageTitle</h1>
@@ -26,7 +28,8 @@
                type="text"
                maxlength="@DisplayNameRules.MaximumLength"
                autocomplete="name"
-               aria-describedby="@nameDescribedBy" />
+               aria-describedby="@nameDescribedBy"
+               aria-invalid="@nameInvalid" />
         @if (nameError is not null)
         {
             <p class="erro" id="erro-nome">@nameError</p>
