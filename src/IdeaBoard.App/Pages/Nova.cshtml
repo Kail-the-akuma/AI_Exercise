@@ -15,16 +15,25 @@
     string? descriptionError = null;
     string? descriptionDescribedBy = null;
 
+    // Written as the string the attribute takes, or left null so that Razor omits the
+    // attribute altogether. The stylesheet hangs the red edge off this same attribute, so a
+    // field cannot come to look wrong without also announcing that it is wrong, nor the
+    // other way round. One source, two outputs, and no second flag to keep in step.
+    string? titleInvalid = null;
+    string? descriptionInvalid = null;
+
     if (titleEntry is not null && titleEntry.Errors.Count > 0)
     {
         titleError = titleEntry.Errors[0].ErrorMessage;
         titleDescribedBy = "erro-titulo";
+        titleInvalid = "true";
     }
 
     if (descriptionEntry is not null && descriptionEntry.Errors.Count > 0)
     {
         descriptionError = descriptionEntry.Errors[0].ErrorMessage;
         descriptionDescribedBy = "erro-descricao";
+        descriptionInvalid = "true";
     }
 }
 <h1>@UiText.SubmitIdeaButton</h1>
@@ -36,7 +45,8 @@
                type="text"
                maxlength="@IdeaLimits.TitleMaximumLength"
                autocomplete="off"
-               aria-describedby="@titleDescribedBy" />
+               aria-describedby="@titleDescribedBy"
+               aria-invalid="@titleInvalid" />
         @if (titleError is not null)
         {
             <p class="erro" id="erro-titulo">@titleError</p>
@@ -48,7 +58,8 @@
         <textarea asp-for="Description"
                   rows="12"
                   maxlength="@IdeaLimits.DescriptionMaximumLength"
-                  aria-describedby="@descriptionDescribedBy"></textarea>
+                  aria-describedby="@descriptionDescribedBy"
+                  aria-invalid="@descriptionInvalid"></textarea>
         @if (descriptionError is not null)
         {
             <p class="erro" id="erro-descricao">@descriptionError</p>

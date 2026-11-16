@@ -9,16 +9,46 @@
 
 :root
 {
-    --cor-texto: #1c1c1c;
-    --cor-texto-suave: #55585c;
-    --cor-fundo: #ffffff;
-    --cor-fundo-suave: #f4f5f7;
-    --cor-linha: #d8dade;
-    --cor-ligacao: #1a4f8a;
-    --cor-destaque: #16467c;
-    --cor-aviso-fundo: #fff6d6;
-    --cor-aviso-linha: #d8c378;
-    --cor-erro: #9a1b1b;
+    /*
+        The values come from the company design system. The token names stay in Portuguese,
+        as the rest of this file and of the markup, so the company name of each one is given
+        here instead: that keeps the provenance findable without a rename that would break
+        thirteen end to end scenarios for nobody's benefit.
+
+        Where the brand colour carries text, it is one of the dark steps and never the pure
+        primary. The pure #0096A7 measures 3.55:1 on white, which is enough for a large shape
+        and not enough for a word, and the dark steps exist in the system for exactly this.
+        Using the pure one as text would be using the system wrongly, not following it.
+    */
+    --cor-texto: #181A1A;              /* neutral-10, 17.48:1 on white */
+    --cor-texto-suave: #707373;        /* neutral-9, 4.78:1, the only step in the scale that clears 4.5 */
+    --cor-fundo: #FFFFFF;              /* neutral-0 */
+    --cor-fundo-suave: #F4F5F5;        /* neutral-1 */
+    --cor-linha: #DEDFDF;              /* neutral-4, separators only, which carry no contrast rule */
+
+    /*
+        A separate line colour for the boundary of a form control, which carries a rule the
+        decorative separators do not. A control whose edge is the only thing marking where it
+        starts has to reach 3:1 against what surrounds it, so --cor-linha cannot serve here:
+        it sits at 1.34:1 on white, which is right for a rule between two rows and not enough
+        for the edge of a field. Of the eleven neutral steps this is the lightest that clears
+        the bar, at 4.78:1 on white and 4.38:1 on the soft background.
+    */
+    --cor-contorno-campo: #707373;     /* neutral-9 */
+
+    --cor-ligacao: #007885;            /* primary-dark, 5.22:1 on white, 4.78:1 on the soft background */
+    --cor-destaque: #005A64;           /* primary-darker, 7.94:1 either as text or behind white */
+    --cor-aviso-fundo: #FFF0D7;        /* warning-light, 15.56:1 under the body colour */
+    --cor-aviso-linha: #FF9F00;        /* warning */
+    --cor-erro: #D0011B;               /* error, 5.67:1 on white */
+
+    /*
+        The one colour deliberately kept out of the company palette. Its focus token,
+        #00C3D9, measures 2.14:1 on white and 1.66:1 inside a filled button, under the 3:1
+        that a focus indicator is held to, and the system also asks for it as an inset ring,
+        which gives up the outer edge as well. The value below is the one already here, at
+        5.82:1. The rule itself has gone back to whoever owns it.
+    */
     --cor-foco: #0b63c5;
 
     --espaco: 1rem;
@@ -168,6 +198,14 @@ a
 {
     border-color: var(--cor-destaque);
     background: var(--cor-destaque);
+
+    /*
+        Written out rather than taken from --cor-fundo, which happens to hold the same value
+        today. This white is the label on a dark fill and has to stay white; --cor-fundo is
+        the colour of the page and would be the first thing a dark theme inverted. Tidying
+        one into the other reads as a simplification and is how this button would come to
+        print its label in the same colour as its own background.
+    */
     color: #ffffff;
 }
 
@@ -198,6 +236,26 @@ a
     background: var(--cor-aviso-fundo);
 }
 
+/*
+    The one that sits above a whole list of ideas is a standing note, not an alert about
+    anything that just happened, and a filled box the width of the page made it the loudest
+    thing on a page whose content is the ideas. It keeps its place before the first vote
+    button, which Docs/02 requires and an end to end scenario checks, and gives up the fill.
+
+    The two warnings that sit next to a single irreversible action, on the submission form
+    and on the name page, keep the box. Those are about what the next press does.
+*/
+.aviso-voto
+{
+    padding: 0 0 0 0.75rem;
+    border: 0;
+    border-left: 3px solid var(--cor-aviso-linha);
+    border-radius: 0;
+    background: none;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
 
 /* Empty state */
 
@@ -219,15 +277,36 @@ a
     list-style: none;
 }
 
+/*
+    Two columns: what the idea is on the left, how much support it has on the right.
+
+    The right column is deliberately narrow, narrow enough that every count wraps between
+    the number and the word, the short ones included. Widen it until "7 votos" fits on one
+    line and the column reads ragged, with some rows one line tall and others two.
+
+    The two columns are centred against each other rather than aligned to the top. The
+    support column is the taller of the two, and the difference would otherwise pile up as
+    dead space under the author's name.
+*/
 .ideia
 {
-    padding: var(--espaco) 0;
+    display: grid;
+    grid-template-columns: 1fr 5.25rem;
+    column-gap: calc(var(--espaco) * 1.5);
+    align-items: center;
+    padding: calc(var(--espaco) * 1.15) 0;
     border-bottom: 1px solid var(--cor-linha);
+}
+
+.ideia-corpo
+{
+    grid-column: 1;
+    grid-row: 1;
 }
 
 .ideia-titulo
 {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.125rem;
     font-size: 1.125rem;
 }
 
@@ -243,7 +322,7 @@ a
 
 .ideia-meta
 {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     color: var(--cor-texto-suave);
     font-size: 0.9375rem;
 }
@@ -261,11 +340,66 @@ a
 
 /* Vote button, whose markup the enhancement script depends on */
 
+/*
+    Outside a list row the form keeps the shape it always had, which is what the detail
+    page still uses.
+*/
 [data-vote-form]
 {
     display: flex;
     align-items: center;
     gap: 0.625rem;
+}
+
+/*
+    Inside a row it is the right hand column instead, with the count above the button.
+
+    The count is the reason the list is in the order it is in, so it is read first and it
+    is the strongest thing in the row. It used to be the quietest, which made a page named
+    "Mais votadas" say nothing about how much anything was voted.
+*/
+.lista-ideias .ideia-voto
+{
+    grid-column: 2;
+    grid-row: 1;
+    display: block;
+    text-align: right;
+}
+
+.lista-ideias .ideia-voto [data-vote-count]
+{
+    display: block;
+    margin-bottom: 0.625rem;
+    color: var(--cor-texto);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.lista-ideias .ideia-voto [data-vote-button]
+{
+    width: 100%;
+    min-width: 0;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+/*
+    An idea nobody has voted on does not shout. The large size means "this much support",
+    and no support is not a thing to say loudly, least of all repeated down the whole list
+    on the day before anybody has voted. That day is the first one the team sees, and the
+    emptiest board would otherwise be the most emphatic one.
+
+    The class comes from the partial, which already knows the count. CSS cannot read the
+    wording to find out that it says none.
+*/
+.lista-ideias .ideia-voto.sem-votos [data-vote-count]
+{
+    color: var(--cor-texto-suave);
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
 }
 
 [data-vote-button]
@@ -284,6 +418,18 @@ a
 [data-vote-button]:hover
 {
     background: var(--cor-fundo-suave);
+}
+
+/*
+    Having voted is carried by the word, which is what Docs/02 fixes, and now by colour as
+    well. The specification forbids colour on its own, not colour alongside the word, and
+    without it somebody scanning the list cannot see which ideas they already signed
+    without reading every button on the page.
+*/
+[data-vote-button].votado
+{
+    background: var(--cor-fundo-suave);
+    box-shadow: inset 0 0 0 1px var(--cor-destaque);
 }
 
 [data-vote-count]
@@ -369,7 +515,7 @@ a
     display: block;
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid var(--cor-linha);
+    border: 1px solid var(--cor-contorno-campo);
     border-radius: var(--raio);
     background: var(--cor-fundo);
     color: var(--cor-texto);
@@ -379,6 +525,24 @@ a
 .campo textarea
 {
     resize: vertical;
+}
+
+/*
+    A field that failed validation says so on its own edge, and not only through the message
+    underneath it. Until this rule existed the two looked identical, so the control carried
+    none of the state: the message beside it did all the work, and somebody who had already
+    read the message had nothing to look at to find the field it belonged to.
+
+    The hook is the aria attribute rather than a class of our own, so the red edge and the
+    announcement cannot come apart. The second ring is inset, which is the shape the company
+    design system gives this state, and it rides inside the border instead of moving the
+    field, so nothing reflows when an error appears.
+*/
+.campo input[aria-invalid="true"],
+.campo textarea[aria-invalid="true"]
+{
+    border-color: var(--cor-erro);
+    box-shadow: inset 0 0 0 1px var(--cor-erro);
 }
 
 .erro
