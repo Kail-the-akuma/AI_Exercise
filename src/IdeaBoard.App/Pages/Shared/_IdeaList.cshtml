@@ -55,9 +55,8 @@ else
 
                 @*
                     How much support this idea has against the one leading the same list,
-                    said in shape rather than in figures. It is also the rule between rows,
-                    because two horizontal lines per idea, one measuring and one separating,
-                    only get in each other's way.
+                    said in shape rather than in figures. It sits beside the count it stands
+                    for, and the rule between rows is the row's own border, not this.
 
                     IT GOES OUT OF DATE, AND NOTHING SHOWS IT.
 
@@ -67,11 +66,28 @@ else
                     agree with each other: both say what the board looked like when the page
                     arrived, while the count says what you just did.
 
-                    The error is bounded by one vote, which is 1/leader. Measured at the
-                    worst case, a tie at the top broken by a vote, it comes to 7 per cent
-                    and both bars are full anyway, so it cannot be seen. Keeping the bar
-                    live instead would be worse, not better: this row's bar would run longer
-                    than the one above it while sitting below it.
+                    The error is one vote measured against the leader, so 1/leader. Where
+                    the idea already had votes, that is a bar a little shorter than it
+                    should be and it still reads as a bar: with a leader at seven it is
+                    fourteen points.
+
+                    WHERE THE IDEA HAD NONE, IT IS NOT A SHORT BAR. The width stays at
+                    nought beside a count that has stopped saying none, so the row says
+                    nobody supported a thing that was just supported. On a board whose
+                    leader also has one vote the bar should be full and is empty, which is
+                    the whole range, not fourteen points of it.
+
+                    To see it, with JavaScript on, vote on any row reading "Sem votos" and
+                    look at the bar. It takes a page load to go away. This paragraph used to
+                    claim the error could not be seen, which was measured at the top of a
+                    mature list and written as though it held for the list.
+
+                    Keeping the bar live instead is not the free repair it looks like. The
+                    order of the rows would stay stale either way, so this row's bar would
+                    run longer than the one above it while sitting below it. And the server
+                    would have to send the percentage along with the count, which Docs/02
+                    does not allow. That is a decision about the specification, and it is
+                    open rather than settled.
                 *@
                 <div class="apoio" style="--apoio: @idea.SupportPercent%"></div>
             </li>
