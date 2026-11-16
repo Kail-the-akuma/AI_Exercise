@@ -9,6 +9,10 @@ namespace IdeaBoard.App.Pages;
 /// interface wording, and it would be one step away from working out the number too. With
 /// the text arriving ready, the script has nothing left to compute: it writes what the
 /// server produced, and a count the server did not produce cannot reach the screen.
+///
+/// The same rule covers the two states the stylesheet needs, which arrive as answers rather
+/// than as the values they were decided from. What the script puts on screen is decided
+/// here, wording and state alike, and the script chooses nothing.
 /// </summary>
 public class VoteResponse
 {
@@ -20,6 +24,16 @@ public class VoteResponse
 
     /// <summary>Votes the idea has right now, as the database reported them.</summary>
     public int VoteCount { get; set; }
+
+    /// <summary>
+    /// Whether the idea is to be shown as having no support at all.
+    ///
+    /// It travels as an answer and not as the count it is read from, for the same reason
+    /// the wording does. The threshold belongs to one place, and that place is the server:
+    /// a script that worked it out from the count would be a second opinion on what counts
+    /// as none, free to disagree with the partial the next time either one is touched.
+    /// </summary>
+    public bool HasNoVotes { get; set; }
 
     /// <summary>The count already worded, for example "Sem votos" or "3 votos".</summary>
     public string VoteCountText { get; set; } = string.Empty;
