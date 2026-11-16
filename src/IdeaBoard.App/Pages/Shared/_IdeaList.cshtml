@@ -37,6 +37,7 @@ else
                     </h2>
 
                     <p class="ideia-meta">
+                        <partial name="_Iniciais" model="@idea.AuthorDisplayName" />
                         <span class="ideia-autor">@idea.AuthorDisplayName</span>
                         <time datetime="@(idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(idea.CreatedAt, displayTimeZone).ToString("d")</time>
                     </p>
@@ -44,6 +45,28 @@ else
 
                 <partial name="_VoteButton"
                          model="@(new VoteButtonModel { IdeaId = idea.Id, HasVoted = idea.HasVoted, VoteCount = idea.VoteCount })" />
+
+                @*
+                    How much support this idea has against the one leading the same list,
+                    said in shape rather than in figures. It is also the rule between rows,
+                    because two horizontal lines per idea, one measuring and one separating,
+                    only get in each other's way.
+
+                    IT GOES OUT OF DATE, AND NOTHING SHOWS IT.
+
+                    Docs/02 fixes that with JavaScript on, a vote changes only the button
+                    and the count. The bar is neither, so it keeps the width the server sent
+                    until the next page load, and so does the position of this row. The two
+                    agree with each other: both say what the board looked like when the page
+                    arrived, while the count says what you just did.
+
+                    The error is bounded by one vote, which is 1/leader. Measured at the
+                    worst case, a tie at the top broken by a vote, it comes to 7 per cent
+                    and both bars are full anyway, so it cannot be seen. Keeping the bar
+                    live instead would be worse, not better: this row's bar would run longer
+                    than the one above it while sitting below it.
+                *@
+                <div class="apoio" style="--apoio: @idea.SupportPercent%"></div>
             </li>
         }
     </ul>
