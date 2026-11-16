@@ -2,8 +2,9 @@
 
 **Versão 2, 13 de novembro de 2026.**
 
-Sete fases, da zero à seis. Cada uma entrega algo verificável, e nenhuma depende de
-trabalho de uma fase posterior.
+Sete fases, da zero à seis, das quais a última está encerrada por ter deixado de ter
+objeto. Cada uma entrega algo verificável, e nenhuma depende de trabalho de uma fase
+posterior.
 
 Não há estimativas de duração neste documento. A equipa que construir fixa as, e
 números inventados nesta fase só serviriam para ser citados mais tarde como
@@ -27,19 +28,19 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 O **endereço é o nome curto do servidor com porta**, e não o nome qualificado. A forma
 está decidida e o valor concreto ainda não, porque o servidor ainda não está escolhido.
 
-> **Pré requisitos de identidade, pendentes de ADR.**
+> **Os pré requisitos de identidade saíram desta tabela por deixarem de existir.**
 > A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
-> Windows por Negotiate no IIS. Os pré requisitos que esta tabela listava por causa do
-> Entra ID, o registo de aplicação e o spike do client secret, deixaram de existir, e
-> por isso saíram daqui em vez de ficarem marcados como em aberto.
+> integrada do Windows, registada em
+> [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md), e o transporte passou a HTTP
+> sem certificado, registado em [ADR-024](ADR/ADR-024-http-sem-certificado.md).
 >
-> Os pré requisitos do desenho novo ficam por escrever até existir o ADR que substitui o
-> [ADR-003](ADR/ADR-003-autenticacao-entra-id.md). Até lá esta secção está incompleta de
-> propósito, e isso é preferível a estar completa e errada.
+> Com isso deixaram de existir o registo de aplicação no Entra ID, o spike do client
+> secret e o certificado HTTPS. Os três saíram daqui, e saíram por não terem objeto e não
+> por terem sido resolvidos.
 >
-> O mesmo vale para a linha do certificado, que saiu desta tabela porque depende da
-> decisão de HTTP contra HTTPS, que também está em aberto. Ninguém emite certificado
-> antes dessa decisão estar fechada.
+> **O que entrou no lugar foi menos e não mais.** A Fase 0 deixou de depender da equipa
+> de identidade por inteiro. O que resta dela depende da infraestrutura, para o servidor
+> e as pastas, e da equipa, para o endereço e os valores alvo.
 
 ### O identificador de código ficou decidido, o nome de produto não
 
@@ -64,41 +65,52 @@ Fica registado que foi encerrado por deixar de se aplicar, e não por ter sido
 respondido. O que substitui esta subsecção depende do ADR que substitui o
 [ADR-003](ADR/ADR-003-autenticacao-entra-id.md), e é do ARQ.
 
-### O certificado no arranque, e o nome que ele carrega
+### O endereço tem de ser o definitivo desde o primeiro dia
 
-A aplicação arranca com um certificado emitido pela própria equipa, da autoridade
-certificadora interna se existir, auto assinado se não existir. Decisão e consequências
-em [ADR-013](ADR/ADR-013-certificado-no-arranque.md).
+Este requisito sobreviveu a duas mudanças de desenho e as suas três razões originais
+morreram todas. Fica aqui com a razão que resta, porque sem ela um leitor cuidadoso
+verifica os destinos antigos, encontra zero, e remove o requisito por obsoleto.
 
-Isto retira a dependência da infraestrutura do caminho crítico, ao preço de um aviso de
-segurança no browser até o certificado definitivo chegar. O Entra ID continua a
-funcionar sem qualquer alteração, porque quem liga à aplicação é o browser e não o
-Entra ID.
+As razões antigas eram o certificado, o URI de redirecionamento do registo do Entra ID
+e o certificado de substituição. Não há certificado e não há registo de aplicação.
 
-**O nome DNS tem de ser o definitivo desde o primeiro dia.** O mesmo nome entra no
-certificado, no URI de redirecionamento do registo do Entra ID e, mais tarde, no
-certificado de substituição. Emitir o certificado de arranque para um nome provisório
-obrigaria a repetir o registo da aplicação no dia da troca, que é precisamente o
-trabalho que esta decisão procura evitar.
+**A razão que sobrevive é o início de sessão automático.** A forma do endereço determina
+em que zona de segurança o browser coloca o site, e a zona determina se a autenticação
+integrada acontece sem pedir credenciais. Um nome sem pontos é colocado na zona de
+intranet local por omissão. Isso aplica se quando o parque não tem lista de servidores
+de autenticação definida por política, e havendo lista é ela que governa, passando a
+decidir o nome constar dela.
 
-É também o único destes dois itens que continua a depender da infraestrutura, porque o
-registo DNS não é a equipa de desenvolvimento que o cria.
+O endereço decidido é o **nome curto do servidor com porta**, que é a forma favorável a
+esta zona. O valor concreto fica por preencher.
+
+Mudar o endereço depois obriga a mudar a comunicação de lançamento, os atalhos e os
+marcadores de toda a gente, o que é razão bastante por si só.
+
+O registo de DNS, se for preciso, continua a depender da infraestrutura, porque não é a
+equipa de desenvolvimento que o cria.
 
 ---
 
 ## Fase 1. Esqueleto, autenticação e andaime dos testes
 
-**Entrega**: uma aplicação que não faz nada, mas que autentica uma pessoa real contra
-o Entra ID, regista a no banco local, e tem uma suite de testes capaz de a arrancar e
-navegar nela.
+**Entrega**: uma aplicação que não faz nada, mas que reconhece uma pessoa real pela
+identidade que o IIS fornece, cria a linha dela localmente, e tem uma suite de testes
+capaz de a arrancar e navegar nela.
 
-- Solução com os três projetos descritos em [01](01-Arquitetura.md).
-- Início e fim de sessão com `Microsoft.Identity.Web`.
+- Solução com os projetos descritos em [01](01-Arquitetura.md), conforme
+  [ADR-015](ADR/ADR-015-estrutura-de-quatro-projetos.md).
+- Esquema de autenticação do IIS registado, conforme
+  [ADR-014](ADR/ADR-014-autenticacao-integrada-windows.md).
 - Política de autorização de fallback a exigir autenticação em tudo.
-- `UserProvisioningService` com o upsert do utilizador local.
+- Criação do utilizador local, com resolução do nome pelo diretório e registo manual
+  quando a consulta não devolve nada, conforme
+  [ADR-022](ADR/ADR-022-resolucao-e-substituicao-do-nome.md).
 - Persistência das chaves de Data Protection configurada desde já.
-- Projetos de teste com o fixture de arranque, o handler de autenticação de teste e um
-  cenário mínimo que abre a aplicação autenticada e confirma que carrega.
+- Projetos de teste com o fixture de arranque sobre o host local, sem handler de
+  autenticação de teste, conforme
+  [ADR-016](ADR/ADR-016-identidade-nos-testes-por-host-proprio.md), e um cenário mínimo
+  que abre a aplicação autenticada e confirma que carrega.
 
 ### Porque é que os testes nascem agora
 
@@ -165,16 +177,15 @@ da equipa de desenvolvimento para recolher reação antes de estar completa.
 **Entrega**: aplicação a correr no servidor interno, verificada, com conteúdo no dia
 em que abre.
 
-- Publicação em IIS conforme [06](06-Operacao-e-Publicacao.md).
-- Certificado de arranque emitido e associado ao site, **com HSTS desligado**. A razão
-  está em [ADR-013](ADR/ADR-013-certificado-no-arranque.md) e não é opcional.
-- Aviso à equipa, na comunicação de lançamento, de que o browser vai mostrar um aviso
-  de segurança e porquê. Uma pessoa que encontra um aviso destes sem explicação assume
-  que a ligação foi intercetada, e tem razão em assumir.
+- Publicação em IIS conforme [06](06-Operacao-e-Publicacao.md), com autenticação Windows
+  ativada no site e o acesso anónimo desligado.
+- Endereço fixado no valor concreto, com a forma já decidida em
+  [ADR-024](ADR/ADR-024-http-sem-certificado.md).
 - Migração aplicada por script, com backup prévio.
 - Suite completa verde.
-- **Verificação manual do início de sessão real contra o Entra ID**, que nenhum teste
-  automático cobre. A lista está em [07](07-Plano-de-Verificacao.md).
+- **Verificação manual numa máquina em domínio**, que nenhum teste automático cobre,
+  porque nada disto é exercitável no ambiente onde o código foi escrito. A lista está em
+  [07](07-Plano-de-Verificacao.md).
 - Backup diário configurado e um restauro ensaiado pelo menos uma vez.
 - Consultas das métricas de sucesso guardadas e corridas uma vez, para confirmar que
   devolvem o que se espera com dados reais.
@@ -194,25 +205,24 @@ das espontâneas, portanto convém registar quais foram, fora da plataforma.
 
 ---
 
-## Fase 6. Substituição do certificado
+## Fase 6. Encerrada, por ter deixado de ter objeto
 
-A única coisa nesta documentação que é trabalho adiado em vez de trabalho excluído.
-Fica como fase própria, e não como nota de rodapé, porque tem dono, tem passos
-definidos e tem uma data a partir da qual deixa de ser aceitável adiar.
+Esta fase existia para substituir o certificado de arranque por um certificado confiado
+e só depois ativar o HSTS. Com a decisão de
+[HTTP sem certificado](ADR/ADR-024-http-sem-certificado.md) não há certificado para
+substituir, e a fase não tem trabalho nenhum.
 
-**Entrega**: certificado confiado pelas máquinas da organização, aviso de segurança
-eliminado, HSTS ativado.
+**Fica aqui encerrada com o motivo, e não apagada.** Era a única coisa nesta
+documentação descrita como trabalho adiado em vez de trabalho excluído, e apagá la
+deixaria quem a procurasse sem saber se foi feita, se foi cancelada, ou se alguém se
+esqueceu dela.
 
-- Pedido do certificado à infraestrutura, para o mesmo nome DNS já em uso.
-- Substituição da associação no IIS. A aplicação não muda, o registo no Entra ID não
-  muda, e o nome não muda.
-- **Só depois disto, ativar o HSTS.** Pela ordem inversa, o site fica inacessível.
-- Confirmar o início de sessão sem aviso, a partir de uma máquina que nunca aceitou a
-  exceção do certificado anterior.
-
-O prazo é a decidir com a equipa no lançamento. O que não pode acontecer é ficar sem
-prazo nenhum, porque um aviso de segurança que dura meses deixa de ser notado, que é
-exatamente o efeito que esta decisão quer evitar.
+**Encerrada por deixar de se aplicar não é o mesmo que concluída.** Se o HTTPS voltar
+algum dia, o trabalho desta fase volta com ele, e volta com a regra de ordem intacta:
+certificado confiado primeiro, HSTS depois, nunca ao contrário. Essa regra está em
+[04](04-Requisitos-Nao-Funcionais-e-Seguranca.md) e no
+[ADR-024](ADR/ADR-024-http-sem-certificado.md), e não aqui, porque uma fase encerrada
+não é sítio onde alguém vá procurar uma regra em vigor.
 
 ---
 
