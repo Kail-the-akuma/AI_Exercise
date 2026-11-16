@@ -9,27 +9,46 @@
 
 :root
 {
-    --cor-texto: #1c1c1c;
-    --cor-texto-suave: #55585c;
-    --cor-fundo: #ffffff;
-    --cor-fundo-suave: #f4f5f7;
-    --cor-linha: #d8dade;
+    /*
+        The values come from the company design system. The token names stay in Portuguese,
+        as the rest of this file and of the markup, so the company name of each one is given
+        here instead: that keeps the provenance findable without a rename that would break
+        thirteen end to end scenarios for nobody's benefit.
+
+        Where the brand colour carries text, it is one of the dark steps and never the pure
+        primary. The pure #0096A7 measures 3.55:1 on white, which is enough for a large shape
+        and not enough for a word, and the dark steps exist in the system for exactly this.
+        Using the pure one as text would be using the system wrongly, not following it.
+    */
+    --cor-texto: #181A1A;              /* neutral-10, 17.48:1 on white */
+    --cor-texto-suave: #707373;        /* neutral-9, 4.78:1, the only step in the scale that clears 4.5 */
+    --cor-fundo: #FFFFFF;              /* neutral-0 */
+    --cor-fundo-suave: #F4F5F5;        /* neutral-1 */
+    --cor-linha: #DEDFDF;              /* neutral-4, separators only, which carry no contrast rule */
 
     /*
         A separate line colour for the boundary of a form control, which carries a rule the
         decorative separators do not. A control whose edge is the only thing marking where it
         starts has to reach 3:1 against what surrounds it, so --cor-linha cannot serve here:
-        it sits at 1.40:1 on white, which is right for a rule between two rows and not enough
-        for the edge of a field. This value measures 3.66:1 on white and 3.36:1 on the soft
-        background, with headroom kept on purpose so a later change to either background does
-        not quietly drop it under the bar.
+        it sits at 1.34:1 on white, which is right for a rule between two rows and not enough
+        for the edge of a field. Of the eleven neutral steps this is the lightest that clears
+        the bar, at 4.78:1 on white and 4.38:1 on the soft background.
     */
-    --cor-contorno-campo: #82868b;
-    --cor-ligacao: #1a4f8a;
-    --cor-destaque: #16467c;
-    --cor-aviso-fundo: #fff6d6;
-    --cor-aviso-linha: #d8c378;
-    --cor-erro: #9a1b1b;
+    --cor-contorno-campo: #707373;     /* neutral-9 */
+
+    --cor-ligacao: #007885;            /* primary-dark, 5.22:1 on white, 4.78:1 on the soft background */
+    --cor-destaque: #005A64;           /* primary-darker, 7.94:1 either as text or behind white */
+    --cor-aviso-fundo: #FFF0D7;        /* warning-light, 15.56:1 under the body colour */
+    --cor-aviso-linha: #FF9F00;        /* warning */
+    --cor-erro: #D0011B;               /* error, 5.67:1 on white */
+
+    /*
+        The one colour deliberately kept out of the company palette. Its focus token,
+        #00C3D9, measures 2.14:1 on white and 1.66:1 inside a filled button, under the 3:1
+        that a focus indicator is held to, and the system also asks for it as an inset ring,
+        which gives up the outer edge as well. The value below is the one already here, at
+        5.82:1. The rule itself has gone back to whoever owns it.
+    */
     --cor-foco: #0b63c5;
 
     --espaco: 1rem;
@@ -179,6 +198,14 @@ a
 {
     border-color: var(--cor-destaque);
     background: var(--cor-destaque);
+
+    /*
+        Written out rather than taken from --cor-fundo, which happens to hold the same value
+        today. This white is the label on a dark fill and has to stay white; --cor-fundo is
+        the colour of the page and would be the first thing a dark theme inverted. Tidying
+        one into the other reads as a simplification and is how this button would come to
+        print its label in the same colour as its own background.
+    */
     color: #ffffff;
 }
 
