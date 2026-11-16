@@ -348,7 +348,7 @@ public class PersonalListsTests
 
         // And the ranking, which holds every idea, agrees about the same idea. The two
         // numbers coming from different code paths is exactly why this is asserted.
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         foreach (IdeaListItem item in ranking)
         {

@@ -1,0 +1,48 @@
+@page "/pessoal"
+@model PessoalModel
+@{
+    ViewData["Title"] = UiText.PersonalTab;
+}
+<h1>@UiText.PersonalTab</h1>
+
+@*
+    Two lists and not one, and the reason is not tidiness.
+
+    An idea can be in both, because a person may vote on an idea of their own. The stronger
+    reason is the first day: this page can be empty in two different ways, and on the day
+    the board opens everybody is in both at once. One list could only say "empty", and the
+    two sentences below could not be told apart even by somebody who wanted to.
+
+    There is no search here. The search narrows the board, and these two lists are already
+    narrowed to one person.
+*@
+<section class="area-pessoal">
+    <h2>@UiText.MyIdeasHeading</h2>
+
+    @if (Model.HasSubmittedNothing)
+    {
+        <div class="estado-vazio">
+            <p>@UiText.NoIdeasSubmitted</p>
+            <a class="botao botao-principal botao-grande" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+        </div>
+    }
+    else
+    {
+        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.MyIdeas })" />
+    }
+</section>
+
+<section class="area-pessoal">
+    <h2>@UiText.SupportedIdeasHeading</h2>
+
+    @if (Model.HasVotedOnNothing)
+    {
+        <div class="estado-vazio">
+            <p>@UiText.NoIdeasSupported</p>
+        </div>
+    }
+    else
+    {
+        <partial name="_IdeaList" model="@(new IdeaListView { Items = Model.VotedIdeas })" />
+    }
+</section>

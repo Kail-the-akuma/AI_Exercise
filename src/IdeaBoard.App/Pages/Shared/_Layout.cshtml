@@ -1,3 +1,4 @@
+@inject ISignedInDisplayName signedInDisplayName
 @{
     // The active tab is worked out from the path rather than from a flag each page sets,
     // so that a new page cannot forget to declare it and silently light up both tabs.
@@ -15,6 +16,18 @@
     {
         recentCurrent = "page";
     }
+
+    string? personalCurrent = null;
+
+    if (string.Equals(currentPath, "/pessoal", StringComparison.OrdinalIgnoreCase))
+    {
+        personalCurrent = "page";
+    }
+
+    // Null on the two pages that exist before somebody has a row: the one that asks them to
+    // register a name, and the error page. The layout is drawn on both, so it asks the
+    // question that is allowed to come back empty rather than the one that refuses to.
+    string? signedInName = await signedInDisplayName.TryGetAsync(Context.RequestAborted);
 
     // The document title carries only the page name. There is deliberately no product
     // name anywhere in this layout: choosing one is a human decision that is still open,
@@ -44,6 +57,9 @@
                 <li>
                     <a asp-page="/Recentes" aria-current="@recentCurrent">@UiText.RecentTab</a>
                 </li>
+                <li>
+                    <a asp-page="/Pessoal" aria-current="@personalCurrent">@UiText.PersonalTab</a>
+                </li>
             </ul>
 
             @*
@@ -53,6 +69,20 @@
                 the form from anywhere, not the invitation to use it.
             *@
             <a class="botao" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+
+            @*
+                Who you are signed in as. Only the name is available here, and that is on
+                purpose: the row behind it also carries the account name, which the data
+                model says is never rendered in the interface, and a layout that could reach
+                it would be one edit away from showing it.
+            *@
+            @if (signedInName is not null)
+            {
+                <p class="identificacao">
+                    <partial name="_Iniciais" model="@signedInName" />
+                    <span class="identificacao-nome">@signedInName</span>
+                </p>
+            }
         </nav>
     </header>
 
