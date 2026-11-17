@@ -152,7 +152,15 @@
 
                                 <p class="aviso aviso-permanencia">@UiText.ConfirmDeleteComment</p>
 
-                                <button class="botao" type="submit">@UiText.ConfirmDeleteCommentButton</button>
+                                @*
+                                    The one press in this application that destroys
+                                    something, and it used to be dressed exactly like the
+                                    cancel standing next to it. The sentence above says
+                                    which is which, and a sentence is read once: the second
+                                    time somebody deletes a comment they are reading the
+                                    buttons.
+                                *@
+                                <button class="botao botao-destrutivo" type="submit">@UiText.ConfirmDeleteCommentButton</button>
                                 <a class="botao" asp-page="/Detalhe" asp-route-id="@Model.Idea.Id">@UiText.CancelEditLink</a>
                             </form>
                         }

@@ -370,6 +370,36 @@ a
     filter: brightness(1.12);
 }
 
+/*
+    THE ONLY PRESS IN THIS APPLICATION THAT DESTROYS ANYTHING.
+
+    It stood beside its own cancel in the same clothes. Two identical buttons where one
+    keeps and one destroys is a coin toss dressed as a choice, and the warning above them
+    does not save it: a warning is read the first time and skipped every time after, so by
+    the second deletion somebody is reading the buttons and not the sentence.
+
+    THE EDGE AND THE LABEL, NOT A FILL, which is how this stylesheet already marks a field
+    that failed. Filled, this would be the loudest and most inviting thing on screen, which
+    is backwards for the one action that cannot be undone, and it would also outrank the
+    warning that explains it. The plain button beside it stays the way out.
+
+    The fill arrives on hover, when the press is already being aimed. White on the error
+    colour measures 5.67:1, and the literal is written out for the same reason it is on the
+    principal button: it is a label on a dark fill and has to stay white.
+*/
+.botao-destrutivo
+{
+    border-color: var(--cor-erro);
+    color: var(--cor-erro);
+}
+
+.botao-destrutivo:hover
+{
+    background: var(--cor-erro);
+    border-color: var(--cor-erro);
+    color: #ffffff;
+}
+
 .botao-grande
 {
     padding: 0.75rem 1.25rem;
