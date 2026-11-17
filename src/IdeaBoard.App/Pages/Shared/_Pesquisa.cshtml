@@ -1,0 +1,35 @@
+@model string
+@*
+    The search, as a plain form submitted with GET.
+
+    It is GET and not POST because the term belongs in the address. Everything here works
+    with the browser's scripting turned off, so there is no live filtering and there is
+    nothing to type into that updates as you go. What there is instead is better: the
+    address after a search IS the search, so it can be bookmarked, reloaded, and sent to
+    somebody else, and the back button does what it looks like it does.
+
+    The form has no action of its own, so it posts back to the page it is on, which is what
+    keeps one partial serving both tabs.
+*@
+<form class="pesquisa" method="get" role="search">
+    <label class="pesquisa-etiqueta" for="campo-procura">@UiText.SearchLabel</label>
+
+    <span class="pesquisa-controlos">
+        <input class="pesquisa-campo"
+               type="search"
+               id="campo-procura"
+               name="@IdeaSearch.QueryParameterName"
+               value="@Model" />
+
+        <button class="botao" type="submit">@UiText.SearchButton</button>
+
+        @*
+            Only offered once there is something to clear. A link rather than a button
+            because it goes somewhere, which is this same page without the term.
+        *@
+        @if (IdeaSearch.Clean(Model) is not null)
+        {
+            <a class="botao" href="@Context.Request.Path">@UiText.ClearSearchButton</a>
+        }
+    </span>
+</form>

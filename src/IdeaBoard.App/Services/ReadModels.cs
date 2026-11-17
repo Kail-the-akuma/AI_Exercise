@@ -40,6 +40,38 @@ public class IdeaListItem
     /// there.
     /// </summary>
     public int SupportPercent { get; set; }
+
+    /// <summary>
+    /// How many of the latest voters a row carries at most. It is small on purpose: this is
+    /// a sign of life on a card and not the list of who voted, which lives on the idea's own
+    /// page and is complete there.
+    /// </summary>
+    public const int RecentVoterLimit = 4;
+
+    /// <summary>
+    /// The names of the last few people to vote, most recent vote first, at most
+    /// <see cref="RecentVoterLimit"/> of them.
+    ///
+    /// Nothing here is private that was not already public. The warning that a vote is
+    /// public is on screen before every button that casts one, and the full list of voters
+    /// has always been on the idea's own page. What changes is where the names appear, not
+    /// who may see them.
+    ///
+    /// The list is empty for an idea nobody has voted on, which is not the same shape as a
+    /// row that was never asked: both read as empty, and only the service knows which it
+    /// built.
+    /// </summary>
+    public IReadOnlyList<string> RecentVoterNames { get; set; } = [];
+
+    /// <summary>
+    /// How many of this idea's votes are news to the person looking, which is only ever
+    /// filled on the personal page and only for that person's own ideas.
+    ///
+    /// Zero everywhere else, and that is not a missing value. On the ranking an idea
+    /// belongs to somebody else, and a count of votes that are new to its author is not a
+    /// fact about the person reading the page.
+    /// </summary>
+    public int NewVoteCount { get; set; }
 }
 
 

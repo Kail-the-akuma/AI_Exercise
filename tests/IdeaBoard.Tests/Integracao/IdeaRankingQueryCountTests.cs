@@ -6,12 +6,23 @@ using Xunit;
 namespace IdeaBoard.Tests.Integracao;
 
 /// <summary>
-/// Whether the vote state of a whole list is resolved in one go.
+/// Whether the per row work of a whole list is resolved in one go, for every list the
+/// product has.
 ///
 /// This is the one place in the product where asking the database once per row is easy to
 /// write and impossible to see: the page looks identical either way, and only the number of
 /// commands tells them apart. So the commands are counted, and the count is compared
 /// between a short list and a long one. A count that grows with the list is the defect.
+///
+/// There are now two such questions per list, the vote state of the person looking and the
+/// latest voters of every row, and the second is the more tempting one to ask per row
+/// because the obvious way to write it reads perfectly well. The limits below are the
+/// MEASURED counts and not round numbers with room in them, so that one query added without
+/// noticing turns this red.
+///
+/// A limit alone does not protect the second question, which is why the measurement also
+/// asserts that the names came back: deleting that query LOWERS the count and would satisfy
+/// any ceiling.
 /// </summary>
 public class IdeaRankingQueryCountTests
 {
@@ -57,15 +68,96 @@ public class IdeaRankingQueryCountTests
 
         // One pass to warm the connection and the compiled query, so that what is counted
         // afterwards is the cost of the page and not the cost of the first page ever.
-        await service.GetRankingAsync(Cancellation);
+        await service.GetRankingAsync(null, Cancellation);
 
         counter.Reset();
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(ideaCount, ranking.Count);
 
+        // The count above is satisfied by a list that fetched nothing per row, so the thing
+        // whose cost is being measured is checked to have actually happened.
+        AssertRecentVotersCameBack(ranking);
+
         return counter.ExecutedCommandCount;
+    }
+
+
+    /// <summary>
+    /// The same fixture as above, with the ideas written BY the person doing the looking,
+    /// so that both personal lists come back full rather than empty.
+    /// </summary>
+    private static async Task<int> MeasurePersonalCommandsAsync(int ideaCount, bool votedList)
+    {
+        using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
+
+        CountingCommandInterceptor counter = new CountingCommandInterceptor();
+
+        await using IdeaBoardDbContext context = database.CreateContext(counter);
+
+        User reader = TestData.NewUser("Ana Dias");
+        User other = TestData.NewUser("Bruno Lima");
+
+        context.Users.Add(reader);
+        context.Users.Add(other);
+        await context.SaveChangesAsync(Cancellation);
+
+        List<Idea> ideas = SeedIdeas(context, reader, ideaCount);
+        await context.SaveChangesAsync(Cancellation);
+
+        SeedVotes(context, ideas, reader, other);
+        await context.SaveChangesAsync(Cancellation);
+
+        IdeaService service = new IdeaService(context, new FakeCurrentUser(reader), TimeProvider.System);
+
+        await ReadPersonalListAsync(service, votedList);
+
+        counter.Reset();
+
+        IReadOnlyList<IdeaListItem> list = await ReadPersonalListAsync(service, votedList);
+
+        Assert.NotEmpty(list);
+
+        return counter.ExecutedCommandCount;
+    }
+
+
+    private static async Task<IReadOnlyList<IdeaListItem>> ReadPersonalListAsync(IdeaService service, bool votedList)
+    {
+        if (votedList)
+        {
+            return await service.GetVotedByMeAsync(Cancellation);
+        }
+
+        return await service.GetMineAsync(Cancellation);
+    }
+
+
+    /// <summary>
+    /// Fails unless at least one row carries the latest voters, and no row carries more of
+    /// them than the limit allows.
+    /// </summary>
+    private static void AssertRecentVotersCameBack(IReadOnlyList<IdeaListItem> items)
+    {
+        bool anyNames = false;
+
+        foreach (IdeaListItem item in items)
+        {
+            Assert.True(
+                item.RecentVoterNames.Count <= IdeaListItem.RecentVoterLimit,
+                "A row carries more recent voters than the limit allows.");
+
+            if (item.RecentVoterNames.Count > 0)
+            {
+                anyNames = true;
+            }
+        }
+
+        Assert.True(
+            anyNames,
+            "No row carried any recent voter, so what is being measured is a list that "
+            + "never fetched them.");
     }
 
 
@@ -156,7 +248,7 @@ public class IdeaRankingQueryCountTests
 
         IdeaService service = new IdeaService(context, new FakeCurrentUser(reader), TimeProvider.System);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         HashSet<int> expectedVotedIds = new HashSet<int>();
 
@@ -171,6 +263,55 @@ public class IdeaRankingQueryCountTests
         }
 
         Assert.Equal(3, expectedVotedIds.Count);
+    }
+
+    #endregion
+
+
+    #region Personal lists
+
+    /// <summary>
+    /// The submitted list costs the same for three ideas and for thirty.
+    ///
+    /// It carries one cost the two main tabs do not: the bars on a list that shows a subset
+    /// have to be measured against the whole table, so there is a command here that the
+    /// ranking does not pay. What matters is that it is ONE command and not one per row,
+    /// and the only way to see that is to compare two sizes.
+    /// </summary>
+    [Fact]
+    public async Task TheSubmittedListCostsTheSameNumberOfCommandsWhateverItsSize()
+    {
+        int costOfThree = await MeasurePersonalCommandsAsync(3, false);
+        int costOfThirty = await MeasurePersonalCommandsAsync(30, false);
+
+        Assert.Equal(costOfThree, costOfThirty);
+        Assert.True(
+            costOfThirty <= 4,
+            string.Concat(
+                "The submitted list should cost a small, fixed number of commands. It cost ",
+                costOfThirty.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "."));
+    }
+
+
+    /// <summary>
+    /// The voted list costs the same for three ideas and for thirty, and costs LESS than it
+    /// looks like it should: every row on it was voted on by definition, so the question
+    /// the other lists ask the database is already answered by the filter.
+    /// </summary>
+    [Fact]
+    public async Task TheVotedListCostsTheSameNumberOfCommandsWhateverItsSize()
+    {
+        int costOfThree = await MeasurePersonalCommandsAsync(3, true);
+        int costOfThirty = await MeasurePersonalCommandsAsync(30, true);
+
+        Assert.Equal(costOfThree, costOfThirty);
+        Assert.True(
+            costOfThirty <= 4,
+            string.Concat(
+                "The voted list should cost a small, fixed number of commands. It cost ",
+                costOfThirty.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "."));
     }
 
     #endregion

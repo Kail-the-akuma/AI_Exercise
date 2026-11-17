@@ -18,4 +18,15 @@ public class VoteButtonModel
 
     /// <summary>Votes the idea has right now, as the server counted them.</summary>
     public int VoteCount { get; set; }
+
+    /// <summary>
+    /// The search the person is looking at this row through, carried so that voting does
+    /// not throw them back to the whole board.
+    ///
+    /// It travels inside the form rather than on its address because the form's action is
+    /// built from the page's route values, which a query string is not part of. Without it
+    /// the term is lost on the way to the server and the redirect after a vote has nothing
+    /// to put back. Null on every page that has no search.
+    /// </summary>
+    public string? SearchTerm { get; set; }
 }

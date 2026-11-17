@@ -70,6 +70,94 @@ public static class UiText
     #endregion
 
 
+    #region Search
+
+    /// <summary>
+    /// Names the search box. The search is a plain form submitted with GET, so this label
+    /// is what a screen reader reads out for the field, and the address afterwards is the
+    /// whole state of the search.
+    /// </summary>
+    public const string SearchLabel = "Procurar por título ou por quem propôs";
+
+    /// <summary>The button that runs the search.</summary>
+    public const string SearchButton = "Procurar";
+
+    /// <summary>The button that drops the term and goes back to the whole board.</summary>
+    public const string ClearSearchButton = "Limpar";
+
+    /// <summary>
+    /// Shown instead of the list when a search matched nothing.
+    ///
+    /// It is a different sentence from the empty board on purpose. Telling somebody whose
+    /// search found nothing that there are no ideas yet, and inviting them to be the first
+    /// to propose one, is false on a board with two hundred ideas in it.
+    /// </summary>
+    public const string NoSearchResults =
+        "Nenhuma ideia corresponde a esta procura.";
+
+    #endregion
+
+
+    #region Personal area
+
+    /// <summary>Names the third tab, and the entry to it in the layout.</summary>
+    public const string PersonalTab = "As minhas ideias e votos";
+
+    /// <summary>Heading of the list of ideas the person proposed.</summary>
+    public const string MyIdeasHeading = "Ideias que propus";
+
+    /// <summary>Heading of the list of ideas the person voted on.</summary>
+    public const string SupportedIdeasHeading = "Ideias que apoiei";
+
+    /// <summary>
+    /// Shown when the person has proposed nothing. It is kept apart from the sentence
+    /// below because on the first day everybody is in both states at once, and one
+    /// sentence could not say which.
+    /// </summary>
+    public const string NoIdeasSubmitted = "Ainda não propôs nenhuma ideia.";
+
+    /// <summary>Shown when the person has voted on nothing.</summary>
+    public const string NoIdeasSupported = "Ainda não apoiou nenhuma ideia.";
+
+    /// <summary>Names the handful of latest voters shown on a row.</summary>
+    public const string RecentVotesLabel = "Últimos votos";
+
+
+    /// <summary>
+    /// How many votes one idea received since this person last looked. Shown on their own
+    /// ideas and nowhere else.
+    /// </summary>
+    public static string FormatNewVotes(int voteCount)
+    {
+        if (voteCount == 1)
+        {
+            return "1 voto novo";
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, "{0} votos novos", voteCount);
+    }
+
+
+    /// <summary>
+    /// How many of this person's ideas received votes they have not seen, which is what the
+    /// entry in the layout carries.
+    /// </summary>
+    public static string FormatIdeasWithNewVotes(int ideaCount)
+    {
+        if (ideaCount == 1)
+        {
+            return "1 ideia sua recebeu votos novos";
+        }
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            "{0} ideias suas receberam votos novos",
+            ideaCount);
+    }
+
+    #endregion
+
+
     #region Counts
 
     /// <summary>
@@ -89,6 +177,25 @@ public static class UiText
         }
 
         return string.Format(CultureInfo.CurrentCulture, "{0} votos", voteCount);
+    }
+
+
+    /// <summary>
+    /// How many people have arrived at the board, said in a way that cannot be read as the
+    /// size of the team.
+    ///
+    /// The number counts people who have opened the application at least once, so a
+    /// caption reading "of 8 people" beside a count of votes would quietly claim that eight
+    /// is everybody. The wording says what the eight are.
+    /// </summary>
+    public static string FormatArrivedPeople(int peopleCount)
+    {
+        if (peopleCount == 1)
+        {
+            return "de 1 pessoa no quadro";
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, "de {0} pessoas no quadro", peopleCount);
     }
 
     #endregion
