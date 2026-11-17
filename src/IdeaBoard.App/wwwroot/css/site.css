@@ -904,6 +904,166 @@ a
 }
 
 
+/* Comments */
+
+/*
+    The third panel of the detail page, and it had to become one rather than merely look
+    like one.
+
+    Without this it was the only block on the page sitting straight on the tinted ground,
+    and that is not only a matter of looks. Everything quiet inside it, the dates and the
+    two actions, is --cor-texto-suave, which measures 4.78:1 on white and 4.38:1 on the
+    tint. The panel is what holds that text above the floor, which is the same reason the
+    note further up this file gives for the other two blocks.
+*/
+.comentarios
+{
+    margin-top: calc(var(--espaco) * 1.5);
+    padding: calc(var(--espaco) * 1.5);
+    border: 1px solid var(--cor-linha);
+    border-radius: var(--raio);
+    background: var(--cor-fundo);
+}
+
+/* The empty state, which is the only paragraph this section owns directly. */
+.comentarios > p
+{
+    margin-bottom: 0;
+    color: var(--cor-texto-suave);
+}
+
+.lista-comentarios
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/*
+    One remark per row, separated by the row's own bottom edge rather than by a line drawn
+    between items. That is what lets the last one give the rule up, so the list does not
+    end on a rule with nothing underneath it, the same way the voters list does not.
+*/
+.comentario
+{
+    padding: var(--espaco) 0;
+    border-bottom: 1px solid var(--cor-linha);
+}
+
+.comentario:first-child
+{
+    padding-top: 0;
+}
+
+.comentario:last-child
+{
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+/*
+    Name, date and the edited marker on one line, in the hierarchy this interface already
+    uses for a line like it: the name in the body colour at 700, everything else quiet and
+    a step smaller. Before this the three were the same size and the same colour, and there
+    was nothing to tell a person from a date.
+*/
+.comentario-meta
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.375rem;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+.comentario-autor
+{
+    color: var(--cor-texto);
+    font-weight: 700;
+}
+
+/* The same comma a list row puts after the name of whoever proposed the idea. */
+.comentario-autor::after
+{
+    content: ",";
+}
+
+/*
+    Set apart by a dot instead of running on after the date, where it read as part of it.
+    It stays quiet on purpose: it answers a question only somebody already reading closely
+    thinks to ask.
+*/
+.comentario-editado::before
+{
+    content: "\00B7";
+    margin-right: 0.375rem;
+}
+
+/*
+    Capped shorter than the panel. A remark is read in a column of several, one after
+    another, and across the full width of the wide panel a line of one ran to about ninety
+    characters, which is where the eye starts losing the return.
+
+    Plain text with the line breaks kept, like the description above it. Razor encodes the
+    value and no comment is ever written to the page as markup.
+*/
+.comentario-texto
+{
+    margin: 0;
+    max-width: 36rem;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/*
+    The two links were touching, and two underlined words with nothing between them read
+    as one. They are separated, and they take the size of the meta line above rather than
+    the size of the body, because what they offer belongs to this one comment and not to
+    the page.
+*/
+.comentario-acoes
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem var(--espaco);
+    margin: 0.625rem 0 0 0;
+    font-size: 0.9375rem;
+}
+
+/*
+    The confirmation step reuses this class on a form, so the warning that belongs to it
+    takes a line of its own instead of standing in the row beside the two buttons that
+    answer it.
+*/
+.comentario-acoes .aviso
+{
+    flex: 1 0 100%;
+    margin: 0;
+}
+
+/* The form that opens over one comment, which is not a new comment and is not spaced like
+   one. */
+.comentario .formulario
+{
+    margin-top: 0.75rem;
+}
+
+/*
+    The box for a new comment is not another comment, so a rule separates it from the list
+    rather than space alone. Without it the label sat directly under the last remark and
+    read as belonging to it.
+*/
+.comentarios > .formulario
+{
+    margin-top: var(--espaco);
+    padding-top: calc(var(--espaco) * 1.25);
+    border-top: 1px solid var(--cor-linha);
+}
+
+
 /* Submission form */
 
 .formulario
@@ -1712,6 +1872,43 @@ a
         justify-content: center;
         align-items: start;
         column-gap: calc(var(--espaco) * 1.5);
+        row-gap: calc(var(--espaco) * 1.5);
+    }
+
+    /*
+        PLACED BY HAND, and the reason is a hole somebody would otherwise try to close with
+        a negative margin.
+
+        Left to place itself, the comments panel took the second row of the left column,
+        and that row was as tall as the voters panel standing beside it in the first. What
+        came out was the article, then a gap the height of the whole voter list, then the
+        comments, with nothing in between. The panel on the right spans both rows instead,
+        so neither column decides the other's height.
+    */
+    .conteudo:has(.ideia-detalhe) > .ideia-detalhe
+    {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .conteudo:has(.ideia-detalhe) > .votantes
+    {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+
+        /*
+            The stacked layout needs that margin to stand off the article above it. Here
+            there is nothing above it, and the margin was pushing the panel down the page
+            so that it started lower than the title it sits beside.
+        */
+        margin-top: 0;
+    }
+
+    .conteudo:has(.ideia-detalhe) > .comentarios
+    {
+        grid-column: 1;
+        grid-row: 2;
+        margin-top: 0;
     }
 
     /*
