@@ -1504,17 +1504,34 @@ a
         landmark at all, and fixed positioning does not care where an element sits in the
         document.
     */
+    /*
+        THE TWO NUMBERS THE BUTTON IS MADE OF, NAMED, because something else has to be
+        able to compute a clearance from them. Written as literals in two places they
+        drift apart, and the thing that goes wrong when they do is a control nobody can
+        press, which is not a thing a stylesheet usually breaks.
+
+        The height is set rather than left to the padding, so that the clearance below is
+        true by construction instead of true by measurement. It is the height the button
+        already had.
+    */
+    :root
+    {
+        --flutuante-margem: calc(var(--espaco) * 1.5);
+        --flutuante-altura: 3.125rem;
+    }
+
     .botao-submeter
     {
         position: fixed;
-        right: calc(var(--espaco) * 1.5);
-        bottom: calc(var(--espaco) * 1.5);
+        right: var(--flutuante-margem);
+        bottom: var(--flutuante-margem);
         z-index: 30;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
         margin: 0;
-        padding: 0.75rem 1.125rem;
+        height: var(--flutuante-altura);
+        padding: 0 1.125rem;
         border: 1px solid var(--cor-destaque);
         border-radius: 999px;
         background: var(--cor-destaque);
@@ -1626,7 +1643,24 @@ a
         border-radius: 0;
         background: none;
         box-shadow: none;
-        padding: calc(var(--espaco) * 2) calc(var(--espaco) * 2) calc(var(--espaco) * 3) calc(var(--espaco) * 2);
+
+        /*
+            THE FOOT OF THE PAGE CLEARS THE FLOATING BUTTON, and the figure is the button's
+            own: how far it sits off the bottom, how tall it is, and a gap.
+
+            A fixed element covers a band at the foot of the window whatever the scroll, so
+            somewhere there is always something behind it. Everywhere except one place that
+            costs a scroll to undo. At the very bottom of the page there is no scroll left,
+            so anything under the button there cannot be got at by any means at all.
+
+            This is what makes that band empty. Before it, the only reason the bottom row's
+            vote buttons escaped was that a card happens to carry 72px of its own below
+            them, which is a number nobody chose for this and nobody would think to keep.
+        */
+        padding: calc(var(--espaco) * 2)
+                 calc(var(--espaco) * 2)
+                 calc(var(--flutuante-margem) + var(--flutuante-altura) + var(--espaco))
+                 calc(var(--espaco) * 2);
     }
 
     /*
