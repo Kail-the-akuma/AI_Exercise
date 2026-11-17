@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication;
@@ -147,11 +149,18 @@ public class PublishedHostTests
     /// the bold could have been missing from the publish output and this would have gone
     /// on passing, having proved something true about the other file.
     ///
-    /// WHAT THIS STILL CANNOT SEE. A file that is served whole and is not a loadable font.
-    /// The four bytes below are a signature and not a parse, and a woff2 can carry that
-    /// signature and still be refused by the browser: it happened here, to a file whose
-    /// only fault was that its length was not a multiple of four. That gap is covered in
-    /// the end to end suite, which has a real browser to ask.
+    /// THE FILE'S OWN LENGTH IS CHECKED AGAINST WHAT ARRIVED. A woff2 header carries the
+    /// total size of the file in bytes 8 to 11, and the two faces here declare 25080 and
+    /// 24488, each equal to its length on disk, measured. Comparing them is what separates
+    /// "begins like a font" from "is the whole file": a body cut short by a proxy, by a
+    /// partial copy into the publish output or by a connection that ended early keeps the
+    /// signature intact and loses nothing a signature check can see.
+    ///
+    /// WHAT THIS STILL CANNOT SEE. A file that is complete and is not a loadable font. The
+    /// checks below are a signature and a length, not a parse, and a woff2 can be whole and
+    /// still be refused by the browser: it happened here, to a file whose only fault was
+    /// that its length was not a multiple of four. That gap is covered in the end to end
+    /// suite, which has a real browser to ask.
     /// </summary>
     [Fact]
     public async Task EveryTypeFaceTheStylesheetAsksForIsServedAndIsAFont()
@@ -212,6 +221,27 @@ public class PublishedHostTests
                     fontPath,
                     " answered with 200 but does not begin with the woff2 signature, so it "
                     + "is not the type face."));
+
+            Assert.True(
+                body.Length >= 12,
+                string.Concat(
+                    "What came back from ",
+                    fontPath,
+                    " is too short to hold a woff2 header, so its declared length cannot "
+                    + "even be read."));
+
+            uint declaredLength = BinaryPrimitives.ReadUInt32BigEndian(body.AsSpan(8, 4));
+
+            Assert.True(
+                declaredLength == (uint)body.Length,
+                string.Concat(
+                    "The type face at ",
+                    fontPath,
+                    " says in its own header that it is ",
+                    declaredLength.ToString(CultureInfo.InvariantCulture),
+                    " bytes long and ",
+                    body.Length.ToString(CultureInfo.InvariantCulture),
+                    " arrived, so what was served is not the whole file."));
         }
     }
 
