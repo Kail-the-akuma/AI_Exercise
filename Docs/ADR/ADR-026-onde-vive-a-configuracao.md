@@ -54,9 +54,9 @@ uma saída**. Editar a cópia do servidor é trabalho que a publicação seguint
 continua a ser verdade e é mais forte agora do que era, porque antes perdia se uma edição
 e agora perde se uma decisão versionada.
 
-O `Docs/06` ainda diz que este ficheiro é gerado pela publicação, numa secção acima da que
-descreve a decisão. Não é corrigido aqui, porque esse documento não é deste registo, e
-está entregue a quem o mantém.
+O `Docs/06` dizia o contrário, numa secção acima da que descreve a decisão, e foi
+corrigido pelo DOC a 17 de novembro de 2026. Diz agora que o ficheiro não é gerado, que
+está versionado e que a publicação o transforma.
 
 ## A fronteira que tem de ficar escrita: isto não é sítio para segredos
 
@@ -112,22 +112,32 @@ no primeiro pedido, visível e sem explicação.
 quem configura o servidor, e é por isso que o `anonymousAuthentication` está lá escrito a
 `false` de forma explícita em vez de ficar entregue a um valor por omissão.
 
-**E aqui está a lacuna, que fica escrita por ser do tipo que passa despercebido.** Três
-sítios no código dizem que a detecção desta falha passou para a lista de verificação
-manual: o comentário no `StartupConfigurationValidator`, o do `StartupGuardTests` e o do
-`PublishedHostTests`. **A lista do `Docs/07` não tem esse item.** Tem três itens sobre a
-configuração que chega ao host e três sobre autenticação real, e nenhum deles pergunta se
-a autenticação anónima está desligada. Procurado de duas maneiras, por termo em toda a
-documentação e por leitura da própria lista.
+**Quatro sítios apontam para a lista de verificação manual como sendo o que ficou no
+lugar da guarda**: os comentários no `StartupConfigurationValidator`, no
+`StartupGuardTests` e no `PublishedHostTests`, e o cabeçalho do próprio
+`src/IdeaBoard.Web/web.config`.
 
-O que existe mesmo é o `deploy/provisionar.ps1`, que liga uma, desliga a outra, relê as
-duas do IIS no fim e pára o script se não ficaram como devia. É melhor do que uma caixa
-para assinalar, e tem um limite que convém não confundir: **corre uma vez, no
-provisionamento.** Ninguém volta a verificar no dia em que alguém mexer nas definições do
-site no gestor do IIS.
+**A lista não tinha esse item, e durante um dia os quatro apontaram para um sítio onde não
+estava nada.** Escrito aqui em primeiro lugar como lacuna aberta, a 17 de novembro de 2026,
+e fechado pelo DOC no mesmo dia: o `Docs/07` ganhou, no topo da secção da autenticação
+real, um item a mandar ler as duas definições no gestor do IIS e a não confiar em terem
+sido postas uma vez.
 
-Fechar a lacuna é acrescentar o item ao `Docs/07`, e não é feito aqui porque esse documento
-não é deste registo.
+Fica registado em vez de apagado porque é a razão de o item existir, e porque a forma da
+falha interessa mais do que a falha. **Um apontador para uma lista não falha quando a lista
+não tem o item.** Fica a dizer que alguém trata disto, com quatro sítios a confirmarem se
+uns aos outros, e cada um deles a ser lido por quem presume que o anterior verificou.
+
+O `deploy/provisionar.ps1` liga uma definição, desliga a outra, relê as duas do IIS no fim
+e pára o script se não ficaram como devia. É melhor do que uma caixa para assinalar, e tem
+um limite que convém não confundir: **corre uma vez, no provisionamento.** O item do
+`Docs/07` existe para o dia em que alguém mexer nas definições do site pelo gestor do IIS,
+que é quando ninguém está a pensar nisto.
+
+**E a contagem esteve errada aqui, em três em vez de quatro.** O que escapou foi o
+`web.config`, que é o ficheiro de que este registo trata. Não escapou por a procura ter
+excluído a extensão: escapou por a procura não ter sido feita, com os três sítios contados
+a partir dos ficheiros que já estavam abertos. Apanhado pelo DOC e confirmado pelo ORQ.
 
 ## Alternativas consideradas
 
