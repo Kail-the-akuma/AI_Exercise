@@ -26,8 +26,13 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 | Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
 O endereço é **`http://SERVIDOR-APP/IdeaBoard`**, nome curto e não nome qualificado, e sem
-porta, por a aplicação ir dentro de um site que já serve na porta 80. A forma estava
-decidida desde o início e o valor ficou fechado a 17 de novembro de 2026.
+porta, por a aplicação ir dentro de um site que já serve na porta 80.
+
+**O nome curto estava decidido desde o início. A forma sem porta e o valor fecharam a 17
+de novembro de 2026.** A distinção não é pedantismo: a 13 de novembro a forma decidida era
+nome curto **com** porta, e o sem porta só apareceu com a entrada no site alheio. Ver
+[ADR-024](ADR/ADR-024-http-sem-certificado.md), emendado nessa data, e
+[ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md).
 
 > **Os pré requisitos de identidade saíram desta tabela por deixarem de existir.**
 > A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
@@ -93,6 +98,14 @@ marcadores de toda a gente, o que é razão bastante por si só.
 
 O registo de DNS, se for preciso, continua a depender da infraestrutura, porque não é a
 equipa de desenvolvimento que o cria.
+
+**E é ele a saída da convivência no site alheio**, que é a razão por que esta dependência
+futura fica escrita num plano e não só num registo. A aplicação vive dentro de um site de
+outra equipa, com o que isso traz de herança de configuração e de gente que a pode partir
+sem lhe tocar, conforme [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md). Se
+essa convivência vier a custar mais do que o que está lá escrito, o caminho de saída é um
+nome próprio na porta 80, e o que ele custa é um registo de DNS e uma comunicação à
+equipa, e não mudança de arquitetura nenhuma.
 
 ---
 

@@ -457,6 +457,7 @@ a diferença entre esta instalação e um site próprio.
 | Que o pool ficou com as aplicações de 32 bits ligadas | A definição foi posta e não ficou. Nesse estado a aplicação arrancaria em silêncio como processo de 32 bits |
 | Que a aplicação não aparece no site depois de criada, ou ficou no pool errado | O script releu o que criou e não bateu certo. Sem pool próprio não há o limite de um processo de trabalho |
 | Que a autenticação não ficou como devia | O script releu o que escreveu e não bateu certo. Verificar à mão antes de continuar |
+| Que uma secção de autenticação continua trancada | O `OverrideModeEffective` diz `Deny`. A mensagem nomeia as duas formas confirmadas de destrancar. Correr uma e repetir |
 | Que o artefacto leva identidade local | É a invariante do `CLAUDE.md`. Não se publica assim, e o problema está na construção e não na publicação |
 | Que o artefacto leva uma base de dados | A base vive em `C:\IdeaBoard\data` e nunca na pasta da aplicação, senão a publicação seguinte apaga a |
 | Que falta uma variável no `web.config`, ou que está vazia | A aplicação recusa arrancar sem elas, e é melhor descobrir isso aqui do que no servidor |
@@ -506,19 +507,72 @@ apagar seja o que for, o `publicar.ps1` recusa um destino dentro de `C:\IdeaBoar
 a raiz de uma unidade, e recusa uma pasta que tenha ficheiros mas não tenha o
 `IdeaBoard.Web.dll`. Uma pasta vazia ou inexistente passa, por ser a primeira cópia.
 
-### Um passo que ninguém conseguiu verificar, e fica dito como tal
+### O destrancamento da autenticação, que agora se relê
 
 O `provisionar.ps1` destranca as secções de autenticação ao nível da **aplicação**, com
 `-Location Site/IdeaBoard`, porque o IIS as tranca ao nível do servidor por omissão e uma
 aplicação cujo `web.config` as traga responde 500.19 em vez de arrancar.
 
-**Isto não foi verificado numa máquina com IIS.** Fica escrito aqui por isso mesmo, e não
-como afirmação de que funciona.
+**Escrever e nunca reler era a lacuna, e fechou a 18 de novembro de 2026.** As duas
+aplicações vizinhas desta máquina fecham a nos guias delas, que exigem o
+`OverrideModeEffective` a dizer `Allow` antes de se fazer o que quer que seja.
 
-O sintoma pelo qual se saberá é um **500.19 cuja mensagem fala de uma secção que não pode
-ser usada neste caminho**. Distingue se dos outros 500.19 pela mensagem e não pelo código,
-e é nesse passo do `provisionar.ps1` que se mexe. O script também o diz, a amarelo, no
-momento em que o faz.
+#### A armadilha é que este servidor não nos pode dizer se a nossa chamada fez alguma coisa
+
+O desbloqueio global já foi corrido aqui uma vez, pela equipa do RepositorioVizinhoA, com
+`appcmd unlock config`. **Portanto a aplicação arranca quer a nossa escrita tenha pegado
+quer não**, e um passo que não faz nada passa despercebido precisamente na única máquina
+onde não é preciso.
+
+O dia em que isso se nota é o dia em que alguém instala isto num servidor limpo, e nessa
+altura já ninguém se lembra deste passo. É essa a razão de serem lidos **dois** valores e
+não um:
+
+| Valor | O que diz |
+|---|---|
+| `OverrideModeEffective` | O que de facto se aplica a este alvo |
+| `OverrideMode` | O que a **nossa** entrada diz, na nossa própria localização |
+
+`Allow` e `Allow` quer dizer que a nossa entrada está a fazer o trabalho. `Allow` com
+outra coisa qualquer quer dizer que vem herdado do desbloqueio global e que **a nossa
+chamada não mudou nada**, o que aqui é aviso e não falha, e num servidor limpo seria
+falha.
+
+#### Os três desfechos, e nenhum é silencioso
+
+**`OverrideModeEffective` a dizer `Deny`: o script pára.** Continuar seria provisionar
+algo que não arranca. O guia do RepositorioVizinhoA traz duas formas confirmadas de destrancar, e
+a mensagem de paragem nomeia as duas: o `appcmd unlock config` sobre a secção, ou o
+`Set-WebConfiguration` com `-PSPath MACHINE/WEBROOT/APPHOST`. Correr uma delas e repetir.
+
+**Efectivo a `Allow` com a nossa entrada a dizer outra coisa: aviso a amarelo.** É o caso
+que esta máquina provavelmente dá. Aqui não faz mal e o site arranca, e num servidor limpo
+faria, porque este passo não estaria a destrancar nada.
+
+**A releitura a falhar: nem uma coisa nem outra, e dito a cheio.** Uma leitura que não
+responde não é prova de que a escrita falhou, e parar aí deixaria uma máquina com o pool,
+as pastas e a aplicação já criados. O script diz alto que não conseguiu responder e
+continua, com o sintoma à frente para quem tiver de voltar ao assunto.
+
+#### Uma medição dos vizinhos que é sobre outra chamada, e não sobre a nossa
+
+O guia do RepositorioVizinhoA regista, a 7 de setembro de 2026, que o `Set-WebConfiguration`
+contra `IIS:\` **sem `-Location`** falha em silêncio a destrancar, e que o alvo de que
+precisa é `MACHINE/WEBROOT/APPHOST`.
+
+**Essa medição não é sobre a chamada que fazemos.** A deles não leva `-Location` e a nossa
+leva, e escrever numa entrada de localização não é a mesma coisa que destrancar na raiz. A
+nossa pode muito bem estar certa como está.
+
+Fica escrito por uma razão prática: é a releitura que vai dizer, e é por isso que **não se
+muda a chamada por palpite**. Uma correcção aplicada a partir de uma medição sobre outra
+coisa é indistinguível de uma correcção certa, até ao dia em que não é.
+
+#### O sintoma, se tudo isto falhar
+
+Um **500.19 cuja mensagem fala de uma secção que não pode ser usada neste caminho**.
+Distingue se dos outros 500.19 pela mensagem e não pelo código, e é nesse passo do
+`provisionar.ps1` que se mexe.
 
 ### A republicação de uma aplicação já instalada
 
