@@ -366,16 +366,103 @@ Write-Done "WebAdministration carregado"
 
 Write-Step "A confirmar os pre requisitos do servidor"
 
-# Both of these produce the same error from the site, 500.19 or 502, so a site created
+# These produce the same error from the site, 500.19, 500.30 or 502, so a site created
 # without them looks broken for a reason that has nothing to do with the application.
-$modulePath = Join-Path $env:SystemRoot "System32\inetsrv\aspnetcorev2.dll"
 
-if (-not (Test-Path -LiteralPath $modulePath))
+<#
+    ASKED OF IIS AND NOT OF THE DISK, and that distinction cost a trip to the server.
+
+    This used to test for System32\inetsrv\aspnetcorev2.dll and stopped the installation
+    on SERVIDOR-APP saying the module was missing. It was not missing: on that machine it
+    lives under %ProgramFiles%\IIS\Asp.Net Core Module\V2, which Get-WebGlobalModule
+    reports as the module's image. Measured there, from a 64 bit console, so it was not
+    file system redirection either.
+
+    Testing a path is guessing where somebody else put something. IIS knows where its own
+    modules are, and the very next check in this block was already asking it properly.
+#>
+$coreModule = Get-WebGlobalModule | Where-Object { $_.Name -eq "AspNetCoreModuleV2" }
+
+if ($null -eq $coreModule)
 {
-    Stop-WithReason "Falta o ASP.NET Core Module v2. Instalar o Hosting Bundle do .NET 10 e correr primeiro o verificar-servidor.ps1."
+    Stop-WithReason "Falta o ASP.NET Core Module v2, que o IIS nao tem registado. Instalar o Hosting Bundle do .NET 10 e correr primeiro o verificar-servidor.ps1."
 }
 
-Write-Done "ASP.NET Core Module v2 presente"
+Write-Done "ASP.NET Core Module v2 registado no IIS"
+
+# Printed and never used as a condition, because where the file sits varies between servers
+# and the answer that matters came from IIS above.
+if ($null -ne $coreModule.Image)
+{
+    Write-Host ("   Imagem do modulo: " + $coreModule.Image) -ForegroundColor DarkGray
+}
+
+<#
+    THE RUNTIME, which nothing here checked at all until it bit.
+
+    This application is published framework dependent, so the server has to have the
+    ASP.NET Core shared framework of the major version it was built for. SERVIDOR-APP had
+    8.0.34 and only that. Without this check the provisioning would have completed, the
+    site would have been created, and the application would have failed afterwards with a
+    500.30 or a 502.5, neither of which says a word about runtime versions and both of
+    which send whoever reads them looking in the wrong place.
+
+    The folders under the shared framework are read instead of running dotnet, because on
+    a server dotnet is often not on the PATH, and the 64 bit location is the one that is
+    read because the pool is 64 bit and an x86 runtime would not serve it.
+#>
+$requiredMajor = 10
+
+$dotnetRoot = $env:ProgramW6432
+
+if ([string]::IsNullOrEmpty($dotnetRoot))
+{
+    $dotnetRoot = $env:ProgramFiles
+}
+
+$sharedPath = Join-Path $dotnetRoot "dotnet\shared\Microsoft.AspNetCore.App"
+
+$installedMajors = New-Object System.Collections.ArrayList
+$installedNames = New-Object System.Collections.ArrayList
+
+if (Test-Path -LiteralPath $sharedPath)
+{
+    foreach ($version in (Get-ChildItem -LiteralPath $sharedPath -Directory))
+    {
+        [void] $installedNames.Add($version.Name)
+
+        $major = 0
+
+        if ([int]::TryParse(($version.Name -split "\.")[0], [ref] $major))
+        {
+            [void] $installedMajors.Add($major)
+        }
+    }
+}
+
+$highestMajor = 0
+
+foreach ($major in $installedMajors)
+{
+    if ($major -gt $highestMajor)
+    {
+        $highestMajor = $major
+    }
+}
+
+if ($highestMajor -lt $requiredMajor)
+{
+    $found = "nenhuma"
+
+    if ($installedNames.Count -gt 0)
+    {
+        $found = ($installedNames -join ", ")
+    }
+
+    Stop-WithReason "Falta o runtime ASP.NET Core $requiredMajor. Em $sharedPath esta: $found. Esta aplicacao e publicada dependente da framework, portanto precisa do runtime instalado no servidor, e as outras aplicacoes desta maquina nao o exigem por serem publicadas self-contained, que leva o runtime dentro do proprio artefacto. O servidor ja servir ASP.NET Core ha meses nao responde a esta pergunta. Instalar o Hosting Bundle do .NET $requiredMajor e repetir."
+}
+
+Write-Done ("Runtime ASP.NET Core presente: " + ($installedNames -join ", "))
 
 $windowsAuthModule = Get-WebGlobalModule | Where-Object { $_.Name -eq "WindowsAuthenticationModule" }
 
