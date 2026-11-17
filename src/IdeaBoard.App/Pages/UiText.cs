@@ -193,8 +193,18 @@ public static class UiText
     /// </summary>
     public const string ConfirmDeleteComment = "Apagar este comentário? Não é possível recuperá-lo.";
 
-    /// <summary>The button that goes through with the removal.</summary>
-    public const string ConfirmDeleteCommentButton = "Apagar";
+    /// <summary>
+    /// The button that goes through with the removal.
+    ///
+    /// IT SAYS WHAT IT DESTROYS, and the word is not the one on the link that opened this
+    /// step. Both said "Apagar", and the second one stood beside a "Cancelar" built to
+    /// look exactly like it, so the pair offered no way to tell them apart but the
+    /// sentence above, which is read once and skipped ever after.
+    ///
+    /// It also answers the question in that sentence using the question's own words,
+    /// which is the thing a confirmation is for.
+    /// </summary>
+    public const string ConfirmDeleteCommentButton = "Apagar o comentário";
 
     /// <summary>Marks a comment that was changed after it was written.</summary>
     public const string EditedMarker = "editado";

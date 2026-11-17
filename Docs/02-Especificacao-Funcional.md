@@ -365,6 +365,15 @@ Mostra a palavra e não uma segunda data, porque a data que situa o comentário 
 **Apagar não tem volta**, e por isso o primeiro toque pergunta antes de fazer. A pergunta
 é "Apagar este comentário? Não é possível recuperá lo.", e só a confirmação apaga.
 
+**Os dois botões da pergunta não se parecem, e não dizem o mesmo.** O que apaga diz
+"Apagar o comentário", que são as palavras da própria pergunta, e traz a cor de erro no
+contorno e no texto. O que desiste diz "Cancelar" e fica como qualquer outro botão.
+
+Os dois já estiveram iguais, e o que os distinguia era só a frase por cima. Uma frase lê
+se da primeira vez: à segunda vez que alguém apaga um comentário está a ler os botões. A
+cor não é o fundo do botão de propósito, porque cheio seria a coisa mais visível e mais
+convidativa do ecrã, que é ao contrário do que se quer da única acção que não se desfaz.
+
 O passo existe por duas razões, e nenhuma delas é hábito. A aplicação funciona sem
 JavaScript, portanto não há diálogo do browser para pôr no caminho. E a ligação que abre a
 pergunta só muda o que está desenhado, de modo que nada é apagado por um pedido que o
@@ -504,7 +513,7 @@ Acrescentados a 17 de novembro de 2026, com os comentários.
 | Ligação de cancelar | Cancelar |
 | Ligação de apagar | Apagar |
 | Pergunta antes de apagar | Apagar este comentário? Não é possível recuperá-lo. |
-| Botão que confirma o apagar | Apagar |
+| Botão que confirma o apagar | Apagar o comentário |
 | Marca de comentário mudado | editado |
 
 ---
