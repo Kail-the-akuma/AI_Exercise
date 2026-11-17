@@ -45,7 +45,7 @@ um ficheiro, e esse caminho deixa o ficheiro no modo por omissão. É exatamente
 verificação ganha o seu lugar, e é um caminho que nenhum teste local percorre.
 
 **Essa última frase é a que ganhou corroboração de fora, e não a escolha do WAL.** O
-documento de instalação do RepositorioVizinhoA, lido a 18 de novembro de 2026, regista que a 13 de
+documento de instalação do RepositorioVizinhoA, lido a 17 de novembro de 2026, regista que a 13 de
 outubro de 2026 a aplicação deles **criou em silêncio a base de dados que lhe faltava**, no
 caminho errado, correu as migrações nela, e só se notou por uma mensagem noutra parte do
 produto. É afirmação deles e não medição nossa.

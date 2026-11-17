@@ -157,7 +157,7 @@ browser com autenticação ambiente desligada pediu uma página e **o IIS respon
 `WWW-Authenticate: Negotiate, NTLM` antes de o pedido chegar à aplicação**. Não houve pedido
 seguinte, portanto o que recusou foi o servidor e não o código.
 
-A afirmação continua a ser deles e não nossa, lida no documento deles a 18 de novembro de
+A afirmação continua a ser deles e não nossa, lida no documento deles a 17 de novembro de
 2026 e não medida aqui. O que ela acrescenta é que a exclusão escrita acima não é uma
 previsão: já aconteceu, naquela máquina, e com a forma de autenticação que vamos usar.
 

@@ -25,7 +25,7 @@ migrações nela, e responder que a pessoa não tinha conta. Perderam a maior pa
 investigar e a excluir, uma a uma, teorias sobre Kerberos, SPN duplicados, replicação do
 Active Directory e políticas de restrição de NTLM, todas reais e nenhuma relacionada.
 
-Lido no documento deles a 18 de novembro de 2026, e é afirmação deles e não medição nossa.
+Lido no documento deles a 17 de novembro de 2026, e é afirmação deles e não medição nossa.
 Fica aqui porque **é exactamente a falha que esta decisão existe para impedir**, com a
 forma completa: nada falhou, nada ficou vermelho, e o sintoma apareceu noutro sítio
 disfarçado de outra coisa. Uma decisão justificada por raciocínio passou a ter um incidente
@@ -146,7 +146,7 @@ que o processo abriu de facto. Se aparecerem ao lado do ficheiro que esperamos, 
 está a ser lido e escrito. Se aparecerem noutro sítio, ou não aparecerem em sítio nenhum, a
 aplicação está noutro ficheiro.
 
-Proposta do papel de QA, relatada pelo ORQ a 18 de novembro de 2026. Fica escrita aqui ao
+Proposta do papel de QA, relatada pelo ORQ a 17 de novembro de 2026. Fica escrita aqui ao
 lado do limite de propósito, porque um limite sem o que o cobre lê se como trabalho em
 dívida.
 
