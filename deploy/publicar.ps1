@@ -59,13 +59,22 @@ param(
     [ValidateSet("Publish", "Copy", "All")]
     [string] $Action = "All",
 
-    # Left empty here and worked out in the body, never in this default. Inside a
-    # parameter default $PSScriptRoot is EMPTY when the script is started as a new process
-    # with powershell.exe -file, and it holds the right path only when the script is called
-    # from inside a session that is already open. Measured both ways, with this file.
+    # Left empty here and worked out in the body, never in this default.
     #
-    # Which matters because -file is exactly how Windows starts a .ps1 from the shell: the
-    # registry command behind "Executar com o PowerShell" is
+    # THE CONDITION IS AN ADVANCED SCRIPT STARTED WITH -file, AND IT TAKES BOTH. In a
+    # parameter default of an advanced script, $PSScriptRoot is EMPTY when the script is
+    # started as a new process with powershell.exe -file. A plain script resolves it
+    # correctly with -file, and an advanced one resolves it correctly when called from a
+    # session that is already open. Measured, all four ways.
+    #
+    # What makes a script advanced is [CmdletBinding()] OR a single [Parameter()] attribute
+    # on any parameter, and this file has both. Naming only -file would be worse than
+    # saying nothing: somebody with a plain script would work around a problem they do not
+    # have, and somebody with an advanced one would try it from an open console, watch it
+    # resolve, and conclude they were safe. It is somebody else's double click that breaks.
+    #
+    # Which is why it mattered here: -file is exactly how Windows starts a .ps1 from the
+    # shell, the registry command behind "Executar com o PowerShell" being
     # "powershell.exe" "-file" " %1 ". So computing it here killed the script inside its own
     # parameter block, before one line of the report, in the very way of starting it that
     # the pause at the end exists to serve.
@@ -89,8 +98,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Here and not in the parameter default, for the reason written there. In the body
-# $PSScriptRoot holds the script's own folder however the script was started.
+# Here and not in the parameter default, for the reason written there: in the default of an
+# advanced script started with -file it comes out empty. In the body it holds the script's
+# own folder whatever the script is and however it was started.
 if ($RepositoryRoot -eq "")
 {
     $RepositoryRoot = Split-Path -Parent $PSScriptRoot
