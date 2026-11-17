@@ -90,26 +90,29 @@
     answers it which page somebody here is reading, and neither is a trade worth making
     for a file this small.
 
-    One variable file covers every weight the interface uses, 300 to 700, in the latin
-    subset the interface is written in. A glyph outside that subset, which in practice
-    means a name from the directory with a letter Portuguese does not use, falls back to
-    the system face for that glyph alone.
+    TWO FILES AND NOT ONE, because these are static instances and not a variable face.
+    Four hundred and seven hundred are the only weights there are. Nothing asks for six
+    hundred any more: with no six hundred in the family the browser rounds the request up
+    and draws the seven, so the rules that used to say six hundred were describing
+    something that never reached the screen.
 
-    Licensed under the SIL Open Font License 1.1, whose text sits beside the file in
-    wwwroot/fonts/OFL.txt.
+    THE NAME IS OURS AND THE DRAWINGS ARE NOT. These are Lato, cut down to a latin subset
+    by somebody else, and renamed because condition 3 of the SIL Open Font License forbids
+    a modified version from carrying the reserved name. "IdeaBoard Sans" is a face that
+    exists nowhere else and that no font host will ever serve, which is the point and not
+    an accident. The copyright of the people who drew it travels inside both files and in
+    wwwroot/fonts/OFL.txt beside them, which the same licence requires. ADR-025 carries
+    the whole reasoning, and it is worth reading before anybody renames anything back.
 
-    THE LICENCE IS WHY IT IS THIS FACE AND NOT ANOTHER. The one chosen on looks carries a
-    Reserved Font Name, and the file a font host serves is a subset, which the licence
-    counts as a modified version, and a modified version may not keep the reserved name.
-    This one is licensed by its authors without a reserved name, so the question does not
-    arise. It is a little wider and a little more neutral than the face it replaced, and
-    that was the price.
+    A glyph outside the latin subset, which in practice means a name from the directory
+    with a letter Portuguese does not use, falls back to the system face for that glyph
+    alone.
 */
 @font-face
 {
-    font-family: "Public Sans";
+    font-family: "IdeaBoard Sans";
     font-style: normal;
-    font-weight: 300 700;
+    font-weight: 400;
 
     /*
         The page is readable before the face arrives and stays readable if it never
@@ -117,7 +120,17 @@
     */
     font-display: swap;
 
-    src: url("../fonts/public-sans-variable-latin.woff2") format("woff2");
+    src: url("../fonts/ideaboard-sans-400-latin.woff2") format("woff2");
+}
+
+@font-face
+{
+    font-family: "IdeaBoard Sans";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+
+    src: url("../fonts/ideaboard-sans-700-latin.woff2") format("woff2");
 }
 
 *,
@@ -168,7 +181,7 @@ body
         page while the file is in flight and for any glyph the latin subset does not
         have.
     */
-    font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "IdeaBoard Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -494,7 +507,7 @@ a
 
 .ideia-autor
 {
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .ideia-autor::after
@@ -756,7 +769,7 @@ a
     background: var(--cor-fundo);
     color: var(--cor-destaque);
     font: inherit;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     min-width: 6rem;
 }
@@ -873,7 +886,7 @@ a
     flex: 1 1 auto;
     min-width: 0;
     overflow-wrap: break-word;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 
@@ -907,7 +920,7 @@ a
 {
     display: block;
     margin-bottom: 0.25rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .campo input,
@@ -951,7 +964,7 @@ a
 {
     margin: 0.375rem 0 0 0;
     color: var(--cor-erro);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .correlacao
@@ -1030,7 +1043,7 @@ a
     margin-bottom: 0.375rem;
     color: var(--cor-texto);
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .pesquisa-controlos
@@ -1139,7 +1152,7 @@ a
 .identificacao-nome
 {
     color: var(--cor-texto);
-    font-weight: 600;
+    font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1293,7 +1306,7 @@ a
         border-radius: var(--raio);
         background: none;
         color: #ffffff;
-        font-weight: 600;
+        font-weight: 700;
         box-shadow: none;
     }
 
@@ -1346,7 +1359,7 @@ a
         border-radius: 999px;
         background: var(--cor-destaque);
         color: #ffffff;
-        font-weight: 600;
+        font-weight: 700;
         box-shadow: 0 6px 20px -6px rgba(24, 26, 26, 0.45);
         transition: box-shadow var(--transicao), filter var(--transicao);
     }

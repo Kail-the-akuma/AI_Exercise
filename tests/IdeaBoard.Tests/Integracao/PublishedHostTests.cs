@@ -140,9 +140,21 @@ public class PublishedHostTests
     /// The first four bytes are checked as well, because a 200 is not proof of a font. A
     /// request that falls through to something else, or a rewrite that answers every
     /// unknown path with a page, both return 200 with a body that is not a type face.
+    ///
+    /// EVERY FACE THE STYLESHEET DECLARES, and not the first one. This used to take the
+    /// first match and stop, which was right while one variable file covered every weight.
+    /// It stopped being right the day the sheet started declaring a regular and a bold:
+    /// the bold could have been missing from the publish output and this would have gone
+    /// on passing, having proved something true about the other file.
+    ///
+    /// WHAT THIS STILL CANNOT SEE. A file that is served whole and is not a loadable font.
+    /// The four bytes below are a signature and not a parse, and a woff2 can carry that
+    /// signature and still be refused by the browser: it happened here, to a file whose
+    /// only fault was that its length was not a multiple of four. That gap is covered in
+    /// the end to end suite, which has a real browser to ask.
     /// </summary>
     [Fact]
-    public async Task TheTypeFaceTheStylesheetAsksForIsServedAndIsAFont()
+    public async Task EveryTypeFaceTheStylesheetAsksForIsServedAndIsAFont()
     {
         using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
 
@@ -168,58 +180,67 @@ public class PublishedHostTests
 
         string css = await stylesheet.Content.ReadAsStringAsync(Cancellation);
 
-        string fontPath = ResolveFirstFontUrl(css, stylesheetPath);
+        List<string> fontPaths = ResolveFontUrls(css, stylesheetPath);
 
-        using HttpResponseMessage font = await client.GetAsync(fontPath, Cancellation);
+        foreach (string fontPath in fontPaths)
+        {
+            using HttpResponseMessage font = await client.GetAsync(fontPath, Cancellation);
 
-        Assert.NotEqual(HttpStatusCode.TemporaryRedirect, font.StatusCode);
-        Assert.NotEqual(HttpStatusCode.Found, font.StatusCode);
+            Assert.NotEqual(HttpStatusCode.TemporaryRedirect, font.StatusCode);
+            Assert.NotEqual(HttpStatusCode.Found, font.StatusCode);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            font.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.OK,
+                font.StatusCode);
 
-        byte[] body = await font.Content.ReadAsByteArrayAsync(Cancellation);
+            byte[] body = await font.Content.ReadAsByteArrayAsync(Cancellation);
 
-        Assert.True(
-            body.Length > 0,
-            string.Concat("The type face at ", fontPath, " came back empty."));
+            Assert.True(
+                body.Length > 0,
+                string.Concat("The type face at ", fontPath, " came back empty."));
 
-        // The signature every woff2 file begins with. A body that is not one means the
-        // request was answered by something that is not the file.
-        Assert.True(
-            body.Length >= 4
-            && body[0] == (byte)'w'
-            && body[1] == (byte)'O'
-            && body[2] == (byte)'F'
-            && body[3] == (byte)'2',
-            string.Concat(
-                "What came back from ",
-                fontPath,
-                " answered with 200 but does not begin with the woff2 signature, so it is "
-                + "not the type face."));
+            // The signature every woff2 file begins with. A body that is not one means the
+            // request was answered by something that is not the file.
+            Assert.True(
+                body.Length >= 4
+                && body[0] == (byte)'w'
+                && body[1] == (byte)'O'
+                && body[2] == (byte)'F'
+                && body[3] == (byte)'2',
+                string.Concat(
+                    "What came back from ",
+                    fontPath,
+                    " answered with 200 but does not begin with the woff2 signature, so it "
+                    + "is not the type face."));
+        }
     }
 
 
     /// <summary>
-    /// The address of the first type face the stylesheet asks for, resolved the way a
+    /// The address of every type face the stylesheet asks for, each resolved the way a
     /// browser resolves it: relative to the stylesheet it was written in.
     /// </summary>
-    private static string ResolveFirstFontUrl(string css, string stylesheetPath)
+    private static List<string> ResolveFontUrls(string css, string stylesheetPath)
     {
-        Match match = Regex.Match(css, @"src:\s*url\(\s*[""']?([^""')]+)[""']?\s*\)");
+        MatchCollection matches = Regex.Matches(css, @"src:\s*url\(\s*[""']?([^""')]+)[""']?\s*\)");
 
         Assert.True(
-            match.Success,
+            matches.Count > 0,
             "The stylesheet declares no type face at all, so either the face was dropped "
             + "or this test is looking for the wrong thing.");
 
-        string declared = match.Groups[1].Value.Trim();
-
         Uri stylesheetUri = new Uri(new Uri("http://localhost"), stylesheetPath);
-        Uri fontUri = new Uri(stylesheetUri, declared);
+        List<string> paths = new List<string>();
 
-        return fontUri.AbsolutePath;
+        foreach (Match match in matches)
+        {
+            string declared = match.Groups[1].Value.Trim();
+            Uri fontUri = new Uri(stylesheetUri, declared);
+
+            paths.Add(fontUri.AbsolutePath);
+        }
+
+        return paths;
     }
 
     #endregion

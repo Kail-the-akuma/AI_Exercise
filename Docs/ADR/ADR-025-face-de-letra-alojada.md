@@ -1,7 +1,6 @@
 # ADR-025. Uma face de letra alojada no repositório e servida pela aplicação
 
-**Estado**: Aceite quanto a alojar a face e a servi la pela aplicação. A escolha da face
-está em revisão desde 17 de novembro de 2026. **Data**: 17 de novembro de 2026.
+**Estado**: Aceite, e a escolha da face fechou. **Data**: 17 de novembro de 2026.
 
 ## Contexto
 
@@ -29,13 +28,66 @@ do sistema da empresa, ao lado de uma face que não é a desse sistema. As duas 
 eram verdadeiras em separado e falsas juntas, que é a forma em que isto passa por uma
 revisão.
 
-**O Hugo decidiu trocar para Lato**, e a troca está a ser feita com a licença verificada
-antes, que foi o que mordeu à primeira. Até ela entrar, este registo **não diz qual é a
-face final**, e descreve o que está no repositório hoje.
+**O Hugo decidiu trocar para Lato**, e a troca foi feita com a licença verificada antes,
+que foi o que mordeu à primeira. A secção seguinte é o que essa verificação encontrou, e é
+a razão de a folha de estilos pedir hoje um nome que não existe em lado nenhum.
 
 **Proveniência.** O conteúdo do design system, incluindo a Lato e os três pesos, foi
 verificado pelo ORQ contra o documento da empresa. Esse documento não está neste
 repositório, e a palavra Lato não aparece em ficheiro nenhum dele, confirmado hoje.
+
+## A folha pede um nome que não existe, e isto é porquê
+
+**Os desenhos são Lato. O nome não é, e não pode ser.**
+
+Os ficheiros vieram do `RepositorioVizinhoA`, que é o outro projeto do Hugo onde a Lato já estava
+a ser servida. A tabela de nomes dentro deles traz a identidade original completa, incluindo
+`Version 1.104; Western+Polish opensource` e o aviso com `Reserved Font Name "Lato"`.
+
+**Essa tabela não prova nada**, e é a parte que vale o registo. Qualquer ferramenta de
+subconjunto copia a tabela de nomes tal e qual, por isso um ficheiro cortado continua a
+dizer que é o original com todas as palavras do original. Quem parar na tabela de nomes
+conclui que tem o kit completo e está enganado.
+
+**O que decide é a contagem.** Medidos por dentro, os dois ficheiros têm 228 glifos e 218
+pontos de código cada um, e **não têm uma única letra polaca**: faltam `ą ć ę ł ń ś ź ż`.
+Um ficheiro que se anuncia como Western+Polish e não tem polaco nenhum é um subconjunto a
+usar o nome do original. Para português não falta nada, portanto o problema nunca foi de
+cobertura.
+
+**A consequência é da licença e foi verificada na fonte autoritativa**, o FAQ da SIL em
+`openfontlicense.org/ofl-faq/`, e não de memória. A entrada 2.6 diz que fazer subconjunto
+de uma webfont é modificação e que isso não permite usar o Nome Reservado. A 2.8 dá o único
+teste que deixaria mantê lo, e o primeiro critério dele é suportar o mesmo inventário
+completo de caracteres, que um subconjunto falha por definição. A 5.3 estende a proibição a
+tudo o que identifique a face a quem a usa, o que apanha a `font-family` da folha de
+estilos. A saída limpa existe e está na 2.2.1, converter o original sem lhe mexer, e não é
+o caso destes ficheiros.
+
+**Decisão do Hugo, tomada com isto à frente: usar estes ficheiros com outro nome.** O nome
+é `IdeaBoard Sans`.
+
+**Renomear não é mudar o CSS.** É o nome interno que identifica a face ao sistema, por isso
+a troca foi feita dentro dos ficheiros, na tabela de nomes, e não só na folha de estilos.
+Os campos que apresentam a face passaram a dizer `IdeaBoard Sans`: família, nome completo,
+identificador único, nome PostScript.
+
+**O que ficou lá dentro, porque a licença manda.** O aviso de direitos do
+`tyPoland Lukasz Dziedzic`, incluindo a frase do Nome Reservado, que é atribuição e não
+identificação, e é precisamente o que a condição 1 obriga a conservar. A descrição da
+licença, o fabricante, o desenhador e o endereço dele.
+
+**O que saiu, e não foi por descuido.** A marca registada, que dizia
+`Lato is a trademark of tyPoland Lukasz Dziedzic`. Mantida, passaria a ler se como uma marca
+sobre um nome que este ficheiro já não usa, e a licença não obriga a conservá la. E a string
+de versão deixou de prometer polaco, porque era falsa para estes bytes: diz agora
+`Version 1.104; Latin subset`, que guarda a versão de origem sem afirmar o que lá não está.
+
+**Um ficheiro woff2 tem de acabar num múltiplo de quatro bytes.** Isto aparece aqui porque
+custou meia hora e porque falha da pior maneira: a primeira versão do ficheiro bold calhou
+em múltiplo de quatro e carregou, e a regular calhou um byte ao lado e o Chromium recusou a
+com `Invalid font data`, saída do mesmo código no mesmo minuto. Uma regra que só morde
+conforme a aritmética calha é a que se despacha como ficheiro estragado.
 
 ## Isto não é autorização para adoptar o design system da empresa
 
@@ -52,12 +104,27 @@ adoptar o resto não foi tomada.
 
 ## Decisão
 
-**Public Sans**, variável, subconjunto latino, num ficheiro `woff2` de 26 832 bytes, com
-o `OFL.txt` dela ao lado, em `src/IdeaBoard.App/wwwroot/fonts/`.
+**IdeaBoard Sans**, que são os desenhos da Lato num subconjunto latino feito por outra
+pessoa e renomeado por nós, em dois ficheiros `woff2` em
+`src/IdeaBoard.App/wwwroot/fonts/`:
 
-Declarada em `@font-face` com o intervalo de peso 300 a 700 num único ficheiro, com
+| ficheiro | peso | bytes |
+|---|---|---|
+| `ideaboard-sans-400-latin.woff2` | 400 | 25 080 |
+| `ideaboard-sans-700-latin.woff2` | 700 | 24 488 |
+
+Com o `OFL.txt` ao lado. O corpo desse ficheiro foi descarregado da SIL e é byte a byte o
+texto oficial da versão 1.1, de 26 de fevereiro de 2007, com o cabeçalho de direitos da
+Lato por cima e uma frase a dizer que estes ficheiros são um subconjunto renomeado.
+
+Declarados em duas regras `@font-face` com a mesma família e pesos 400 e 700, ambas com
 `font-display: swap`, e com a pilha do sistema declarada a seguir na regra do `body`:
-`"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+`"IdeaBoard Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+
+**Não há peso 600, e nove regras pediam um.** Com 400 e 700 na família, o navegador arredonda
+um pedido de 600 para cima e desenha o 700, medido e confirmado. As nove regras passaram a
+dizer 700, que é o que já estava a ir para o ecrã, para a folha deixar de descrever uma
+coisa que nunca acontecia.
 
 **Servida pela própria aplicação e nunca por CDN.**
 
@@ -91,15 +158,21 @@ utilizador.
 
 A declaração de copyright da Source Sans 3 traz `with Reserved Font Name 'Source'`.
 
-A da Public Sans, verificada no `OFL.txt` que está no repositório, é
-`Copyright 2015 The Public Sans Project Authors` e **não indica nome reservado nenhum**,
-o que pela definição da própria licença significa que não há Nome Reservado a respeitar.
+A da Public Sans era `Copyright 2015 The Public Sans Project Authors` e **não indicava nome
+reservado nenhum**, o que pela definição da própria licença significa que não havia Nome
+Reservado a respeitar. Foi por isso que ela entrou, e é por isso que esteve certa enquanto
+esteve cá.
 
-**Proveniência das duas verificações, porque não são iguais.** A da Public Sans fiz a eu,
-no ficheiro que acompanha a fonte. A da Source Sans 3 foi feita pelo ORQ no `OFL.txt`
-dessa fonte, e corroborei a por fontes secundárias, incluindo a declaração de
-empacotamento da Debian. Não li esse ficheiro de licença, porque a fonte foi rejeitada e
-não está no repositório.
+A da Lato traz `with Reserved Font Name "Lato"`, que é o caso que a Source Sans 3 tinha
+feito evitar. A diferença entre as duas é que desta vez a face não foi rejeitada: foi
+renomeada, por decisão do Hugo, porque o motivo que manda nela é aproximar do design system
+da empresa e esse motivo pede estes desenhos e não outros.
+
+**Proveniência das três verificações, porque não são iguais.** A da Public Sans fiz a eu,
+no ficheiro que acompanhava a fonte. A da Source Sans 3 foi feita pelo ORQ no `OFL.txt`
+dessa fonte, e corroborei a por fontes secundárias, incluindo a declaração de empacotamento
+da Debian. Não li esse ficheiro de licença, porque a fonte foi rejeitada e nunca esteve no
+repositório. A da Lato fiz a eu, dentro dos próprios ficheiros e contra o FAQ da SIL.
 
 ## O `.gitattributes`, que não é zelo
 
@@ -127,15 +200,13 @@ E tem esta consequência: **um 404 na face é indistinguível de um recurso a fu
 página fica com a pilha do sistema, que é exatamente o que se desenhou para acontecer, e
 ninguém é avisado de nada.
 
-**Verificado hoje: nenhum teste pede a face ao host.** O
-`tests/IdeaBoard.Tests/Integracao/PublishedHostTests.cs` prova que a folha de estilos da
-biblioteca é servida sob o prefixo `_content`, e não há asserção equivalente para o
-`woff2`. A face pode deixar de ser servida, por renomeação do projeto, por um erro de
-caminho ou por o ficheiro não chegar à publicação, e a suite fica verde e a página fica
-bonita.
+Quando isto foi escrito, nenhum teste pedia a face ao host: a face podia deixar de ser
+servida, por renomeação do projeto, por um erro de caminho ou por não chegar à publicação,
+e a suite ficava verde e a página ficava bonita.
 
 É o mesmo problema de compilar, arrancar e servir que o ADR-015 descreve, agravado por o
-sintoma ter sido desenhado para não existir.
+sintoma ter sido desenhado para não existir. **Já há dois testes a cobri lo**, e estão
+descritos nas consequências, no fim deste registo.
 
 ## Alternativas consideradas
 
@@ -155,31 +226,59 @@ antes de trazer uma face** parece zelo a quem chegue e veja só o resultado, e �
 de uma face que já tinha sido escolhida e teve de ser deitada fora. Um procedimento sem
 a história que o produziu é o primeiro candidato a ser saltado por quem tem pressa.
 
-**Instâncias estáticas em vez da face variável.** Um ficheiro por peso em vez de um
-ficheiro para o intervalo de 300 a 700. Posta de lado porque seriam vários pedidos para
-cobrir o mesmo, ou menos pesos disponíveis para poupar pedidos, e o ficheiro variável
-custa 26,8 KB uma vez.
+**Public Sans.** Esteve no repositório de 16 a 17 de novembro de 2026, variável, subconjunto
+latino, 26 832 bytes. Saiu por não ser a face do design system da empresa, que é o motivo
+registado acima, e não por defeito nenhum dela. Fica aqui porque foi a escolha certa pelo
+critério que existia na altura, e porque quem comparar os dois commits merece saber que não
+houve erro a corrigir.
+
+**Instâncias estáticas em vez da face variável.** Era uma alternativa quando havia um
+ficheiro variável para escolher, e deixou de ser: os ficheiros que a empresa usa são
+estáticos, portanto dois pedidos de cerca de 25 KB em vez de um de 26,8 KB. É o custo da
+decisão e não uma opção dentro dela.
+
+**Pedir à empresa o kit licenciado da Lato.** Seria o caminho que dispensava renomear, e
+está por fazer e não por rejeitar. Se esse kit aparecer, a troca é substituir os ficheiros,
+repor os nomes originais e apagar metade deste registo.
+
+**Converter o original completo para woff2 sem lhe mexer.** A entrada 2.2.1 do FAQ permite
+manter o nome nesse caso. Posta de lado por duas razões práticas: o original está atrás de
+uma barreira de consentimento no site do autor, e esta máquina não tem codificador de woff2
+nenhum. O custo em bytes **não foi medido**, e por isso não aparece aqui número nenhum.
 
 ## Consequências
 
 **Boas.** A aparência deixa de depender do que cada máquina tem instalado. Não há pedido
-para fora, portanto não há dependência de rede externa nem terceiro a observar. A licença
-permite subconjunto e mudança de formato sem condição de nome por cumprir.
+para fora, portanto não há dependência de rede externa nem terceiro a observar. A face é a
+do design system da empresa, que era o motivo de tudo isto.
 
-**Más.** Um pedido de 26,8 KB, que já vem comprimido e não encolhe mais no transporte.
-Mais um ficheiro binário no repositório, com a regra de `.gitattributes` que ele obriga a
-manter.
+**A letra é mais estreita, e isso ganha se.** Medido no navegador sobre um título típico:
+476,9 px contra 520,5 px da Public Sans a 700 e 20px, e 373,1 contra 408,3 no corpo a 400 e
+16px. São cerca de 8,5 por cento. Cabe mais título antes de a linha partir, não menos.
+
+**Más.** Dois pedidos de cerca de 25 KB em vez de um de 26,8 KB, porque são instâncias
+estáticas e não uma face variável. Mais dois ficheiros binários no repositório, com a regra
+de `.gitattributes` que eles obrigam a manter.
+
+**E uma que não é de desenho: o nome não existe fora deste repositório.** Quem procurar
+`IdeaBoard Sans` não encontra nada, e quem quiser substituir os ficheiros não tem onde ir
+buscar os mesmos. É o preço de a condição 3 da licença proibir o nome verdadeiro, e é por
+isso que este registo diz quais são os desenhos.
 
 O subconjunto é latino. Um glifo fora dele cai para a pilha do sistema no meio do texto,
 o que é o comportamento correto e nota se.
 
-**O que fica por fazer, e não é meu.** Uma asserção que peça a face ao host publicado,
-como a que já existe para a folha de estilos. Enquanto não existir, esta decisão não tem
-nada que a verifique, e o modo de falha dela foi desenhado para não se ver.
+**O que ficava por fazer está feito, e por duas vias e não uma.** O
+`tests/IdeaBoard.Tests/Integracao/PublishedHostTests.cs` pede ao host publicado todas as
+faces que a folha declara, e já não só a primeira, porque com dois ficheiros a primeira
+podia estar certa e a segunda ausente.
 
-**O que fica por fechar.** A face. O motivo está registado e a troca para Lato está a ser
-feita. Quando entrar, este registo passa a descrever a face que o motivo implica, guarda
-as duas escolhas anteriores como história, e o estado deixa de ter a revisão em cima.
+E o `tests/IdeaBoard.E2E/Scenarios/TipografiaTests.cs` manda um navegador verdadeiro
+carregá las. Isto não é zelo a dobrar: um woff2 traz a assinatura nos primeiros quatro bytes
+e tudo o que pode estar mal nele está no resto, por isso o teste de host dá verde a um
+ficheiro corrompido. Deu, durante esta troca, ao ficheiro que não acabava em múltiplo de
+quatro. O navegador é a única coisa aqui que sabe mesmo responder à pergunta.
 
-Até lá, tudo o que está escrito sobre alojar, servir, comprimir, versionar e verificar
-vale tal e qual, porque nada disso depende de qual é a face.
+Nenhum dos dois nomeia a face. Um lê os endereços da folha de estilos, o outro lê o
+conjunto de faces do próprio documento, e os dois continuam verdadeiros depois da próxima
+renomeação.
