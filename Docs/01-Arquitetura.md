@@ -1,6 +1,6 @@
 # 01. Arquitetura
 
-**Versão 2, 13 de novembro de 2026.**
+**Versão 3, 17 de novembro de 2026.**
 
 Pressupõe a leitura de [BRIEFING.md](../BRIEFING.md). Este documento descreve a forma
 do sistema. As funcionalidades estão em [02](02-Especificacao-Funcional.md), os dados
@@ -237,5 +237,6 @@ indisponibilidade até alguém a resolver. É aceitável para uma ferramenta int
 participação voluntária.
 
 **Crescimento da lista.** O briefing nota que acima de cerca de cinquenta ideias a
-navegação se degrada, sem pesquisa nem categorias. A arquitetura não resolve isso, por
-decisão, e o sinal fica para observação depois do lançamento.
+navegação se degrada, sem pesquisa nem categorias. Desde 16 de novembro de 2026 há
+procura por título e por quem propôs, que mitiga em parte esse risco. As categorias
+continuam fora do âmbito, e o sinal fica para observação depois do lançamento.

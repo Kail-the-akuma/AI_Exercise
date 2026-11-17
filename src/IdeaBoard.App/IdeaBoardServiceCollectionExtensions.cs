@@ -229,6 +229,7 @@ public static class IdeaBoardServiceCollectionExtensions
         services.AddScoped<IIdeaService, IdeaService>();
         services.AddScoped<IBoardPeople, BoardPeople>();
         services.AddScoped<INewVoteNotices, NewVoteNotices>();
+        services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<ISignedInDisplayName, SignedInDisplayName>();
         services.AddScoped<IVoteService, VoteService>();
     }

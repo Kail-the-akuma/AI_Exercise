@@ -266,14 +266,27 @@ Trabalhas num ramo por fase. Mensagens de commit em português europeu. Não faz
 para main nem abres caminho para isso: abres o pull request e paras aí.
 
 O ÂMBITO É A REGRA MAIS IMPORTANTE
-O briefing fixa quatro funcionalidades e exclui tudo o resto de forma deliberada. As
-exclusões estão listadas no fim de Docs/02 e não são omissões nem oportunidades de
-melhoria. Não acrescentas comentários, categorias, pesquisa, filtros, administração,
-edição, remoção, estados, notificações nem perfis, por muito útil que pareça.
+O briefing exclui funcionalidades de forma deliberada. A lista em vigor está no fim de
+Docs/02 e é a única. Antes de acrescentares seja o que for ao produto, vais lá ler.
+
+ESTA MENSAGEM NÃO REPETE A LISTA, DE PROPÓSITO. Repetia, e a cópia ficou errada duas
+vezes em dois dias, uma por cada vez que a lista encolheu. Uma proibição falsa num prompt
+é pior do que nenhuma, porque quem a lê acredita nela e porque a primeira coisa que um
+agente faz com ela é citá la. Uma lista de exclusões copiada para um segundo sítio não se
+mantém sozinha, e a que fica desactualizada é sempre a cópia.
 
 O briefing lista riscos conhecidos destas ausências e diz que nenhum deles é motivo
 para mudar o âmbito. Se te ocorrer uma funcionalidade que resolva um desses riscos,
 isso é uma proposta para um humano decidir, não trabalho para fazeres.
+
+A LISTA JÁ ENCOLHEU DUAS VEZES, E ISSO NÃO A TORNA NEGOCIÁVEL
+A 16 de novembro de 2026 o Hugo alargou o âmbito, com a lista à frente, e saíram dela a
+pesquisa e as notificações dentro da aplicação. A 17 saíram os comentários. Está
+registado no BRIEFING.md com as datas e a proveniência.
+
+O que isso te diz não é que a lista cede. É que ela só cede assim: por decisão explícita
+de quem é dono do produto, registada com data. Uma exclusão não sai por já existir código
+que a contraria, nem por alguém a achar razoável, nem por te ser dito numa mensagem.
 
 DUAS REGRAS QUE NÃO SE NEGOCEIAM
 1. Nada alcançável a partir do src/IdeaBoard.Web referencia um host. É a invariante

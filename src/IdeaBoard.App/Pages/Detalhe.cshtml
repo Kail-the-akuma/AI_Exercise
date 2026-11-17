@@ -2,6 +2,23 @@
 @model DetalheModel
 @{
     ViewData["Title"] = Model.Idea.Title;
+
+    // Read straight from the model state, the same way the submission form does it, so
+    // that the message is rendered beside the box AND tied to it for a screen reader. The
+    // attribute is left null when there is nothing to point at, because an empty
+    // description reference is announced as nothing at all.
+    ModelStateEntry? commentEntry = ModelState[CommentLimits.TextField];
+
+    string? commentError = null;
+    string? commentDescribedBy = null;
+    string? commentInvalid = null;
+
+    if (commentEntry is not null && commentEntry.Errors.Count > 0)
+    {
+        commentError = commentEntry.Errors[0].ErrorMessage;
+        commentDescribedBy = "erro-comentario";
+        commentInvalid = "true";
+    }
 }
 <article class="ideia-detalhe" id="ideia-@Model.Idea.Id">
     <h1 id="ideia-titulo-@Model.Idea.Id">@Model.Idea.Title</h1>
@@ -41,5 +58,152 @@
                 </li>
             }
         </ul>
+    }
+</section>
+
+
+@*
+    What people said about this idea, oldest first, which is the order a conversation is
+    read in.
+
+    Everything here works with the browser's scripting turned off, like the rest of the
+    application. Editing is a link that opens a form over one comment, and removing is a
+    link that asks first and then a form that does it. Neither of them is a button that
+    acts on a link being followed, so nothing is changed by a browser fetching a page on
+    its own.
+*@
+<section class="comentarios" id="comentarios" aria-labelledby="titulo-comentarios">
+    <h2 id="titulo-comentarios">@UiText.CommentsHeading</h2>
+
+    @if (Model.Idea.Comments.Count == 0)
+    {
+        <p>@UiText.NoComments</p>
+    }
+    else
+    {
+        <ul class="lista-comentarios">
+            @foreach (IdeaComment comment in Model.Idea.Comments)
+            {
+                <li class="comentario" id="comentario-@comment.Id">
+                    <p class="comentario-meta">
+                        <partial name="_Iniciais" model="@comment.AuthorDisplayName" />
+                        <span class="comentario-autor">@comment.AuthorDisplayName</span>
+                        <time datetime="@(comment.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(comment.CreatedAt, displayTimeZone).ToString("d")</time>
+
+                        @*
+                            Said plainly rather than by showing two dates, because the
+                            second date answers a question nobody asked and the first one
+                            is what places the comment in the conversation.
+                        *@
+                        @if (comment.WasEdited)
+                        {
+                            <span class="comentario-editado">@UiText.EditedMarker</span>
+                        }
+                    </p>
+
+                    @if (Model.EditingCommentId == comment.Id && comment.IsMine)
+                    {
+                        @*
+                            The form is drawn over the comment being changed. The identifier
+                            travels in a hidden field, and it decides nothing: the service
+                            looks the comment up by identifier and by author together, so a
+                            request naming somebody else's comment finds nothing to change.
+                        *@
+                        <form method="post" class="formulario" asp-page-handler="EditComment">
+                            <input type="hidden" name="commentId" value="@comment.Id" />
+
+                            <div class="campo">
+                                <label for="texto-@comment.Id">@UiText.CommentLabel</label>
+                                <textarea id="texto-@comment.Id"
+                                          name="Text"
+                                          rows="4"
+                                          maxlength="@CommentLimits.TextMaximumLength"
+                                          aria-describedby="@commentDescribedBy"
+                                          aria-invalid="@commentInvalid">@comment.Text</textarea>
+                                @if (commentError is not null)
+                                {
+                                    <p class="erro" id="erro-comentario">@commentError</p>
+                                }
+                            </div>
+
+                            <button class="botao botao-principal" type="submit">@UiText.SaveCommentButton</button>
+                            <a class="botao" asp-page="/Detalhe" asp-route-id="@Model.Idea.Id">@UiText.CancelEditLink</a>
+                        </form>
+                    }
+                    else
+                    {
+                        @* Plain text with the line breaks kept. Razor encodes the value,
+                           and no user content is ever written as raw markup. *@
+                        <p class="comentario-texto">@comment.Text</p>
+                    }
+
+                    @*
+                        These controls are drawn only for the person who wrote the comment,
+                        and that is a courtesy and NEVER the protection. Anybody can send
+                        the request without the page; what stops them is the service, which
+                        refuses it.
+                    *@
+                    @if (comment.IsMine && Model.EditingCommentId != comment.Id)
+                    {
+                        @if (Model.DeletingCommentId == comment.Id)
+                        {
+                            <form method="post" class="comentario-acoes" asp-page-handler="DeleteComment">
+                                <input type="hidden" name="commentId" value="@comment.Id" />
+
+                                <p class="aviso aviso-permanencia">@UiText.ConfirmDeleteComment</p>
+
+                                @*
+                                    The one press in this application that destroys
+                                    something, and it used to be dressed exactly like the
+                                    cancel standing next to it. The sentence above says
+                                    which is which, and a sentence is read once: the second
+                                    time somebody deletes a comment they are reading the
+                                    buttons.
+                                *@
+                                <button class="botao botao-destrutivo" type="submit">@UiText.ConfirmDeleteCommentButton</button>
+                                <a class="botao" asp-page="/Detalhe" asp-route-id="@Model.Idea.Id">@UiText.CancelEditLink</a>
+                            </form>
+                        }
+                        else
+                        {
+                            <p class="comentario-acoes">
+                                <a asp-page="/Detalhe"
+                                   asp-route-id="@Model.Idea.Id"
+                                   asp-route-editar="@comment.Id"
+                                   asp-fragment="comentario-@comment.Id">@UiText.EditCommentLink</a>
+
+                                <a asp-page="/Detalhe"
+                                   asp-route-id="@Model.Idea.Id"
+                                   asp-route-apagar="@comment.Id"
+                                   asp-fragment="comentario-@comment.Id">@UiText.DeleteCommentLink</a>
+                            </p>
+                        }
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @* The box for a new comment, which is not drawn while one is being changed, so that
+       there are never two boxes on screen competing for the same message. *@
+    @if (Model.EditingCommentId is null)
+    {
+        <form method="post" class="formulario" asp-page-handler="Comment">
+            <div class="campo">
+                <label for="texto-novo">@UiText.CommentLabel</label>
+                <textarea id="texto-novo"
+                          name="Text"
+                          rows="4"
+                          maxlength="@CommentLimits.TextMaximumLength"
+                          aria-describedby="@commentDescribedBy"
+                          aria-invalid="@commentInvalid">@Model.Text</textarea>
+                @if (commentError is not null)
+                {
+                    <p class="erro" id="erro-comentario">@commentError</p>
+                }
+            </div>
+
+            <button class="botao botao-principal" type="submit">@UiText.AddCommentButton</button>
+        </form>
     }
 </section>

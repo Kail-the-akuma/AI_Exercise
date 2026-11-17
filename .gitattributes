@@ -21,3 +21,10 @@
 # load, it is a file that loads as nothing while every tool reports success.
 *.woff2 binary
 *.woff  binary
+
+# The licence beside the fonts is quoted material, not our prose. It is stored with the
+# line endings SIL publishes it with, so that it can be compared against the original by
+# anybody who doubts it. Left to `* text=auto` it would be rewritten on checkout, and a
+# licence text that no longer matches its source is one somebody has to verify again from
+# nothing.
+src/IdeaBoard.App/wwwroot/fonts/OFL.txt text eol=lf

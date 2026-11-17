@@ -17,6 +17,45 @@ namespace IdeaBoard.App.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
+            modelBuilder.Entity("IdeaBoard.App.Domain.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AuthorUserId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("authorUserId");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("createdAt");
+
+                    b.Property<int>("IdeaId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ideaId");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("updatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorUserId");
+
+                    b.HasIndex("IdeaId", "CreatedAt")
+                        .HasDatabaseName("IX_Comment_ideaId_createdAt");
+
+                    b.ToTable("Comment", (string)null);
+                });
+
             modelBuilder.Entity("IdeaBoard.App.Domain.Idea", b =>
                 {
                     b.Property<int>("Id")
@@ -127,6 +166,25 @@ namespace IdeaBoard.App.Data.Migrations
                         .HasDatabaseName("IX_Vote_ideaId_userId");
 
                     b.ToTable("Vote", (string)null);
+                });
+
+            modelBuilder.Entity("IdeaBoard.App.Domain.Comment", b =>
+                {
+                    b.HasOne("IdeaBoard.App.Domain.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IdeaBoard.App.Domain.Idea", "Idea")
+                        .WithMany()
+                        .HasForeignKey("IdeaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Idea");
                 });
 
             modelBuilder.Entity("IdeaBoard.App.Domain.Idea", b =>
