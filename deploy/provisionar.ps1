@@ -59,10 +59,69 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $PhysicalPath,
 
-    [string] $DataRoot = "C:\IdeaBoard"
+    [string] $DataRoot = "C:\IdeaBoard",
+
+    # Skips the pause at the end, for running this from another script.
+    [switch] $NoPause
 )
 
 $ErrorActionPreference = "Stop"
+
+#region Closing
+
+function Wait-ForKey
+{
+    <#
+        The last thing the script does, after the report is printed and after the exit code
+        is already decided. It reads a key and nothing else, so it cannot change what the
+        script is about to exit with.
+
+        It exists because of how these are started. Opened by double click or by "Executar
+        com o PowerShell", the console belongs to the script and closes with it, taking the
+        report off the screen before anybody has read it.
+    #>
+
+    if ($script:NoPause)
+    {
+        return
+    }
+
+    # A pause needs a console with a person in front of it. Started from another script,
+    # from a build, or with its input redirected, there is nobody to press a key and this
+    # would hang for ever. The -NoPause switch only helps whoever remembered to pass it,
+    # and the one who gets this wrong is precisely the one who did not know to pass it.
+    if ([System.Console]::IsInputRedirected)
+    {
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Carregue numa tecla para fechar esta janela." -ForegroundColor Cyan
+
+    try
+    {
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+    catch
+    {
+        # Not every host has a raw key reader, the ISE among them. Falling back rather than
+        # turning a finished run into a failure on its very last line.
+        $null = Read-Host
+    }
+}
+
+
+# Covers the ending nobody plans for. An unexpected terminating error would otherwise end
+# the script, and close the window, with the error still on screen and unread. Break
+# re-throws after the pause, so the script still ends the way it was going to end.
+trap
+{
+    Wait-ForKey
+
+    break
+}
+
+#endregion
 
 
 #region Output
@@ -101,6 +160,8 @@ function Stop-WithReason
     Write-Host ""
     Write-Host "Nada foi alterado a partir deste ponto. Nenhum pool ou site existente foi tocado." -ForegroundColor Red
     Write-Host ""
+
+    Wait-ForKey
 
     exit 1
 }
@@ -468,3 +529,8 @@ Write-Host "Nenhum pool ou site alheio foi tocado por este script." -ForegroundC
 Write-Host ""
 
 #endregion
+
+
+# The last line of the script, on purpose. Everything above has already decided what this
+# run means, and this only holds the window open so it can be read.
+Wait-ForKey
