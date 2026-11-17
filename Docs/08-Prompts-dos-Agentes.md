@@ -4,16 +4,37 @@
 
 Cinco papéis, cinco sessões separadas do Claude Code, cada uma na sua janela.
 
-**Sobre as árvores de trabalho, o que está escrito e o que aconteceu.** Este documento
-manda cada sessão trabalhar na sua própria árvore do git, criada a partir do `dev`. A 17
-de novembro de 2026 as cinco trabalharam na mesma, e a consequência foi observada mais do
-que uma vez: um `push` de um papel levou consigo o commit que outro tinha acabado de
-fazer na árvore partilhada.
+**Cada sessão trabalha na sua própria árvore de trabalho do git, criada a partir do
+`dev`.** A regra mantém se, e o que vem a seguir é o que custa quando ela não é seguida,
+porque uma regra sem o custo escrito lê se como preferência de arrumação.
 
-Não é avaria, é a regra do `push` da secção Ramos a existir por causa disto. Fica aqui
-porque quem ler só a primeira frase fica a pensar que as árvores separadas o protegem de
-uma coisa de que não protegem, e porque escolher entre as duas formas é decisão de quem
-organiza o trabalho e não deste documento.
+#### O que aconteceu a 17 de novembro de 2026
+
+As cinco sessões trabalharam na mesma árvore, e isso produziu três coisas, todas
+observadas e nenhuma delas um erro de quem as apanhou.
+
+**Um `push` levou o commit de outro papel.** Um papel commitou, outro empurrou minutos
+depois, e o `push` levou os dois, porque um `push` empurra o ramo e não o commit. Quem
+empurrou não sabia, e quem commitou podia continuar a pensar que tinha trabalho por
+empurrar. É por isso que existe a regra de relatar o intervalo, mais abaixo.
+
+**Ninguém sabia o que era seu na árvore partilhada.** Antes de um `reset --hard` houve
+alterações por committar que não eram de nenhum dos papéis e que tiveram de ser conferidas
+uma a uma. Numa árvore própria, tudo o que lá está é de quem lá trabalha, e a pergunta não
+se chega a pôr.
+
+**E as árvores antigas ficaram penduradas numa história que deixou de existir.** No fim
+do dia havia **sete** árvores de trabalho, três delas em `detached HEAD`. Contadas aqui:
+**cinco das sete apontam para commits que já não estão no `dev`**, porque a história foi
+reescrita nesse dia para substituir nomes internos por marcadores.
+
+É este o custo que não se adivinha. Enquanto a história não é reescrita, uma árvore velha
+é só desarrumação. No dia em que é, **quem está em `detached` fica com commits que
+deixaram de existir e sem ramo que os traga de volta**, e quem está num ramo de fase
+antigo tem um ramo que já não tem relação nenhuma com o `dev`.
+
+A arrumação é portanto parte da regra e não etiqueta: uma árvore que acabou o seu trabalho
+remove se, em vez de ficar à espera de um dia que a torne cara.
 
 Os prompts abaixo são para colar na primeira mensagem de cada sessão.
 
@@ -24,8 +45,36 @@ Os prompts abaixo são para colar na primeira mensagem de cada sessão.
 | **ORQ** | Nada. Abre e fecha cada fase, e verifica | Todos os ficheiros do repositório |
 | **ARQ** | `Docs/ADR/`, incluindo o índice `Docs/ADR/README.md` | `src/`, `tests/`, o resto de `Docs/` |
 | **DEV** | `src/`, `tests/IdeaBoard.Tests/` | `tests/IdeaBoard.E2E/`, `Docs/` |
-| **QA** | `tests/IdeaBoard.E2E/`, a lista manual de [07](07-Plano-de-Verificacao.md) | `src/`, `tests/IdeaBoard.Tests/` |
-| **DOC** | `Docs/` exceto `Docs/ADR/`, mais `README.md` | `src/`, `tests/`, `Docs/ADR/` |
+| **QA** | `tests/IdeaBoard.E2E/`, e as **afirmações** da lista manual de [07](07-Plano-de-Verificacao.md) | `src/`, `tests/IdeaBoard.Tests/`, e escrever em `Docs/` |
+| **DOC** | `Docs/` exceto `Docs/ADR/`, mais `README.md`, incluindo o **ficheiro** da lista manual | `src/`, `tests/`, `Docs/ADR/` |
+
+### A lista manual tem dois donos, e não é a mesma coisa vista duas vezes
+
+Esta é a única sobreposição da tabela, e é deliberada desde 17 de novembro de 2026, por
+arbitragem do orquestrador depois de a prática se ter mostrado melhor do que o que aqui
+estava escrito.
+
+**São duas coisas diferentes com o mesmo nome.**
+
+| | É de quem | O que é |
+|---|---|---|
+| A afirmação | **QA** | O que vale a pena verificar, o que um item prova, e quando um item deixou de provar o que diz provar |
+| O ficheiro e a prosa | **DOC** | Como está escrito, onde vive, se contradiz outro documento, e se a razão sobrevive à frase |
+
+**O que torna isto robusto é a asserção e a redacção estarem em mãos diferentes.** Quem
+mede um item não é quem decide como ele fica escrito, e quem o escreve teve de o entender
+ao ponto de o conseguir formular, que é uma segunda leitura que ninguém pediu de propósito.
+
+A forma de trabalho que isto descreve foi exercida nesse dia: o QA percorreu a lista
+inteira e mediu que sete itens não provavam o que diziam provar, relatou os com os comandos
+e as razões, o DOC confirmou por sua conta antes de escrever, e num deles escreveu a
+versão corrigida pelo próprio QA em vez da que lhe tinha chegado pelo caminho. Nenhum dos
+sete teria sido visto por quem só lê.
+
+**A fronteira, e é a única regra que esta divisão precisa.** Quando o QA propõe e o DOC
+discorda da **forma**, o DOC escreve como entender. Quando discorda da **afirmação**, sobe
+ao orquestrador e não arbitra. A asserção não lhe pertence, e trocar uma afirmação por
+outra ao escrevê la é exactamente o que esta divisão existe para impedir.
 
 O **`Docs/01-Arquitetura.md` continua do DOC**, e não do ARQ, apesar do nome. Descreve
 uma arquitetura, não a decide. Quem decide escreve o ADR, e quem descreve o resultado

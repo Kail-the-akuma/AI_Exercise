@@ -92,6 +92,11 @@ em que a sua afirmação deixaria de valer.
 > condição foi o que permitiu saber, no dia em que a previsão falhou, que havia uma
 > condição por verificar em vez de um registo simplesmente errado.** O que não se pode
 > afirmar é que a condição escrita foi a que disparou.
+>
+> E vale a pena dizer porque é que esta passou, sendo que este documento é inteiro sobre
+> apanhar afirmações largas: **uma história que fecha bem demais não se verifica com o
+> mesmo rigor de uma que incomoda.** Esta fechava bem para toda a gente que a leu,
+> incluindo para quem a escreveu e para quem a elogiou.
 
 **Registar a razão e não só a decisão.** Quando o endereço da aplicação teve de mudar no
 dia da publicação, a razão que sustentava o anterior caiu com ele. Por estar escrita,
@@ -142,6 +147,23 @@ aplicação funciona**, e foi preciso ir à máquina para saber.
 **Três mecanismos valem mais do que todas as outras práticas juntas.** Verificar por comando
 em vez de acreditar. Escrever ao lado de cada afirmação a condição em que ela deixa de valer.
 E não deixar nenhum papel ser dono do que também verifica.
+
+**E uma precisão sobre o primeiro, que é o que o torna cumprível.** "Verificar tudo" não se
+cumpre, e toda a gente sabe que não se cumpre, portanto não é regra nenhuma. O que se
+cumpre é verificar **duas categorias nomeadas**, e as duas custam segundos:
+
+| Categoria | Porquê | O que custa confirmar |
+|---|---|---|
+| Uma afirmação sobre como uma **ferramenta** se comporta | Um comportamento lembrado é uma hipótese, e as ferramentas mudam entre versões sem avisar | Correr a ferramenta |
+| **Apagar ou alterar um sintoma documentado** por relato de outra pessoa | É a mesma classe de erro que escrever um sem ir ao código, que foi como o sintoma errado nasceu | Abrir o ficheiro |
+
+**Nenhuma das duas pede juízo sobre quem mandou a afirmação**, e é isso que as torna
+repetíveis por quem vier a seguir e não conhecer ninguém. Uma regra que obrigue a avaliar a
+fonte não sobrevive a um dia com pressa, nem a uma equipa onde as pessoas mudam.
+
+Nos três casos deste exercício em que a versão medida acabou por ser diferente da que tinha
+chegado pelo caminho, foi uma destas duas categorias que fez alguém ir medir, e não
+desconfiança de quem a mandou.
 
 **O canal único pelo orquestrador escala mal e vale a pena na mesma.** Com cinco papéis
 funciona. Com dez seria um estrangulamento. A alternativa, que é deixá-los falar entre si,

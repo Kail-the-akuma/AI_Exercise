@@ -238,6 +238,22 @@ se lê como avaria da aplicação e não é.
 | Pool de aplicações | Próprio, `IdeaBoardPool`, e não o do site |
 | Pasta física | `C:\inetpub\IdeaBoard` |
 
+#### Os nomes dos vizinhos, que são marcadores e não nomes
+
+Os nomes reais do servidor, do domínio e das duas aplicações vizinhas foram substituídos
+por marcadores em todo o repositório, que é público. **Há dois marcadores por vizinho, um
+para a aplicação e outro para o repositório dela**, e o sufixo é o que os liga:
+
+| Vizinho | A aplicação | O repositório |
+|---|---|---|
+| Primeiro | `AplicacaoVizinhaA` | `RepositorioVizinhoA` |
+| Segundo | `AplicacaoVizinhaB` | `RepositorioVizinhoB` |
+
+`AplicacaoVizinhaA` e `RepositorioVizinhoA` são **o mesmo vizinho**, e o mesmo vale para o
+B. Fica escrito porque quem desenhou os marcadores já sabia a correspondência quando olhou
+para eles, e quem vier a ler não sabe: sem esta tabela, uma página que fale dos dois lê se
+como falando de quatro coisas.
+
 #### O mapa daquele servidor, medido e já não suposto
 
 Durante dois dias este documento e o [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md)
