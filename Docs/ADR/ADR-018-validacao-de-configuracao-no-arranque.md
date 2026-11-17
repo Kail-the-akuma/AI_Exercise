@@ -99,6 +99,57 @@ Para onde foi a detecção, e porque é que o `web.config` passou a ser versiona
 decisão de recusar arrancar está de pé, o que mudou foi o conjunto validado e quem guarda a
 autenticação.
 
+## O que estas guardas nunca puderam verificar, e não é defeito por corrigir
+
+Isto é um limite conhecido e fica escrito como limite. **Não é trabalho por fazer, e a
+secção seguinte diz o que o cobre**, para que ninguém leia isto como uma lacuna e vá tentar
+tapá la aqui dentro.
+
+O que o arranque verifica sobre a base de dados é que a cadeia de ligação existe, que ela
+traz uma origem de dados, que o caminho é absoluto, e que não aponta para dentro da pasta
+da aplicação. O verificador de journal acrescenta que o ficheiro está em write ahead
+logging.
+
+**Nenhuma destas verifica que é o ficheiro certo, e nenhuma pode.** Um caminho absoluto,
+fora da pasta da aplicação, a apontar para uma base de dados em WAL com o esquema todo lá
+dentro, passa as duas guardas inteiras e pode ser o ficheiro errado.
+
+**E a razão de não poder é a que vale o registo.** Para provar a identidade do ficheiro, a
+guarda teria de saber qual era o esperado, e esse valor viria da mesma configuração que já
+pode estar errada. Seria a configuração a verificar se a si própria, que é a classe de
+defeito que a secção acima sobre aplicar o pragma já descreve: uma verificação que não
+consegue falhar não é uma verificação. **"Certo" não é uma propriedade que o arranque
+consiga ver.**
+
+### O sintoma, e porque é que o nosso é pior do que o deles
+
+O incidente de 13 de outubro de 2026 registado no Contexto é exactamente esta falha, vivida
+por outra equipa no servidor para onde vamos. Lá, a aplicação respondia que a pessoa não
+tinha conta.
+
+**Na nossa forma o sintoma mente melhor.** Quem chega sem linha é mandado para a página do
+nome, regista o, **é aceite**, e no pedido seguinte volta a ser lhe pedido o nome. A escrita
+foi para um ficheiro e a leitura veio de outro, e as duas correram sem erro nenhum.
+
+Isso **parece um defeito da nossa página de registo** e não um problema de configuração, o
+que manda quem diagnostica para o código errado. Quem for ler o `UserProvisioningService` à
+procura da falha não encontra nada, porque não há lá nada: aquilo funcionou as duas vezes,
+em bases diferentes.
+
+### O que tapa isto é operacional, e já existe
+
+A verificação que falta não é de arranque, é de observação, e a diferença é o que a torna
+possível: **em vez de verificar a configuração, ver qual ficheiro foi mesmo aberto.**
+
+Depois de alguém usar o site, os ficheiros `-wal` e `-shm` aparecem ao lado da base de dados
+que o processo abriu de facto. Se aparecerem ao lado do ficheiro que esperamos, é esse o que
+está a ser lido e escrito. Se aparecerem noutro sítio, ou não aparecerem em sítio nenhum, a
+aplicação está noutro ficheiro.
+
+Proposta do papel de QA, relatada pelo ORQ a 18 de novembro de 2026. Fica escrita aqui ao
+lado do limite de propósito, porque um limite sem o que o cobre lê se como trabalho em
+dívida.
+
 ## Alternativas consideradas
 
 **Validação de opções da própria plataforma, com `ValidateOnStart`.** É o mecanismo que
