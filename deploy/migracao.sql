@@ -54,3 +54,24 @@ VALUES ('20261116185858_AvisoDeVotosNovos', '10.0.14');
 
 COMMIT;
 
+BEGIN TRANSACTION;
+CREATE TABLE "Comment" (
+    "id" INTEGER NOT NULL CONSTRAINT "PK_Comment" PRIMARY KEY AUTOINCREMENT,
+    "ideaId" INTEGER NOT NULL,
+    "authorUserId" INTEGER NOT NULL,
+    "text" TEXT NOT NULL,
+    "createdAt" TEXT NOT NULL,
+    "updatedAt" TEXT NULL,
+    CONSTRAINT "FK_Comment_Idea_ideaId" FOREIGN KEY ("ideaId") REFERENCES "Idea" ("id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Comment_User_authorUserId" FOREIGN KEY ("authorUserId") REFERENCES "User" ("id") ON DELETE RESTRICT
+);
+
+CREATE INDEX "IX_Comment_authorUserId" ON "Comment" ("authorUserId");
+
+CREATE INDEX "IX_Comment_ideaId_createdAt" ON "Comment" ("ideaId", "createdAt");
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261117102626_Comentarios', '10.0.14');
+
+COMMIT;
+

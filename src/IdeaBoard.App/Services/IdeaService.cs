@@ -475,6 +475,7 @@ public class IdeaService : IIdeaService
         }
 
         detail.Voters = await LoadVotersAsync(ideaId, cancellationToken);
+        detail.Comments = await LoadCommentsAsync(ideaId, cancellationToken);
 
         User signedInUser = await currentUser.GetAsync(cancellationToken);
 
@@ -483,6 +484,38 @@ public class IdeaService : IIdeaService
             .AnyAsync(vote => vote.IdeaId == ideaId && vote.UserId == signedInUser.Id, cancellationToken);
 
         return detail;
+    }
+
+
+    /// <summary>
+    /// Reads the comments on one idea, oldest first, in a single query.
+    ///
+    /// Whether each one belongs to the person looking is decided here, from the identifier
+    /// already in hand, rather than by asking the database once per comment. It is the same
+    /// shape as the vote state on the lists, and the same thing goes wrong if it is written
+    /// the obvious way: the page looks identical and only the number of commands differs.
+    /// </summary>
+    private async Task<IReadOnlyList<IdeaComment>> LoadCommentsAsync(
+        int ideaId,
+        CancellationToken cancellationToken)
+    {
+        User signedInUser = await currentUser.GetAsync(cancellationToken);
+
+        return await dbContext.Comments
+            .AsNoTracking()
+            .Where(comment => comment.IdeaId == ideaId)
+            .OrderBy(comment => comment.CreatedAt)
+            .ThenBy(comment => comment.Id)
+            .Select(comment => new IdeaComment
+            {
+                Id = comment.Id,
+                AuthorDisplayName = comment.Author!.DisplayName,
+                Text = comment.Text,
+                CreatedAt = comment.CreatedAt,
+                UpdatedAt = comment.UpdatedAt,
+                IsMine = comment.AuthorUserId == signedInUser.Id,
+            })
+            .ToListAsync(cancellationToken);
     }
 
 

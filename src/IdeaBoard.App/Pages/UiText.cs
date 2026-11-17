@@ -158,6 +158,50 @@ public static class UiText
     #endregion
 
 
+    #region Comments
+
+    /// <summary>Heads the conversation under an idea.</summary>
+    public const string CommentsHeading = "Comentários";
+
+    /// <summary>Shown when nobody has said anything about this idea yet.</summary>
+    public const string NoComments = "Ainda ninguém comentou esta ideia.";
+
+    /// <summary>Names the box a comment is written in.</summary>
+    public const string CommentLabel = "Comentário";
+
+    /// <summary>The button that adds a comment.</summary>
+    public const string AddCommentButton = "Comentar";
+
+    /// <summary>The link that opens one of your own comments for changing.</summary>
+    public const string EditCommentLink = "Editar";
+
+    /// <summary>The button that stores a changed comment.</summary>
+    public const string SaveCommentButton = "Guardar";
+
+    /// <summary>The link that leaves a comment as it was.</summary>
+    public const string CancelEditLink = "Cancelar";
+
+    /// <summary>The link that asks whether to remove one of your own comments.</summary>
+    public const string DeleteCommentLink = "Apagar";
+
+    /// <summary>
+    /// Asked before a comment is removed.
+    ///
+    /// There is a step here, rather than a button that removes on the first press, because
+    /// removal cannot be undone and this application has no scripting to put a dialogue in
+    /// the way. The same reasoning already warns somebody before they submit an idea.
+    /// </summary>
+    public const string ConfirmDeleteComment = "Apagar este comentário? Não é possível recuperá-lo.";
+
+    /// <summary>The button that goes through with the removal.</summary>
+    public const string ConfirmDeleteCommentButton = "Apagar";
+
+    /// <summary>Marks a comment that was changed after it was written.</summary>
+    public const string EditedMarker = "editado";
+
+    #endregion
+
+
     #region Counts
 
     /// <summary>
