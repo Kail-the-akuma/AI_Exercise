@@ -99,6 +99,25 @@ public class DisplayNameGateTests
         return context;
     }
 
+    private static async Task<DefaultHttpContext> RunUnderPathBaseAsync(string pathBase, string path)
+    {
+        DefaultHttpContext context = BuildContext(path, true);
+
+        // What the server sets when the application is not at the root of the site. It is
+        // set here rather than folded into the path, because the two are different things
+        // and the whole defect this covers was treating them as one.
+        context.Request.PathBase = pathBase;
+
+        DisplayNameGateMiddleware gate = new DisplayNameGateMiddleware(nextContext =>
+        {
+            return Task.CompletedTask;
+        });
+
+        await gate.InvokeAsync(context, new StubCurrentUser(null));
+
+        return context;
+    }
+
     #endregion
 
 
@@ -223,6 +242,51 @@ public class DisplayNameGateTests
 
         Assert.False(continued);
         Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+    }
+
+    #endregion
+
+
+    #region Under a path base
+
+    /// <summary>
+    /// Served as an application inside a site, the redirect has to stay inside the
+    /// application.
+    ///
+    /// THIS IS THE ONE CASE THE REST OF THE SUITE CANNOT SEE. Every other test, and every
+    /// scenario, serves the application at the root of its own server, where the path base
+    /// is empty and a bare "/nome" happens to be right. On the server this is being
+    /// deployed to, the application lives at /IdeaBoard inside a site that already serves
+    /// another application to real people, and a bare "/nome" would send the person out of
+    /// this application and into that one.
+    ///
+    /// Who it would happen to is the part that makes it worse than it sounds: only people
+    /// with no name recorded yet, which is everybody on their first visit.
+    ///
+    /// The header is asserted and not the status code, because the status code is right
+    /// either way. What is wrong is where it points.
+    /// </summary>
+    [Fact]
+    public async Task TheRedirectStaysInsideTheApplicationWhenServedUnderAPathBase()
+    {
+        DefaultHttpContext context = await RunUnderPathBaseAsync("/IdeaBoard", "/nova");
+
+        Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+        Assert.Equal("/IdeaBoard/nome", context.Response.Headers.Location.ToString());
+    }
+
+
+    /// <summary>
+    /// And with no path base it is exactly what it always was, which is what says the fix
+    /// did not trade one deployment for the other.
+    /// </summary>
+    [Fact]
+    public async Task TheRedirectIsUnchangedWhenThereIsNoPathBase()
+    {
+        DefaultHttpContext context = await RunUnderPathBaseAsync(string.Empty, "/nova");
+
+        Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+        Assert.Equal(DisplayNameGateMiddleware.RegistrationPath, context.Response.Headers.Location.ToString());
     }
 
     #endregion
