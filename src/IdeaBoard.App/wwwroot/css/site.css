@@ -816,6 +816,21 @@ a
     overflow-wrap: break-word;
 }
 
+/*
+    The two blocks of the detail page are panels on the tinted ground, which is what puts
+    their quiet text on white: the author's line, the dates beside each voter and the
+    standing warning all use --cor-texto-suave, which does not clear the floor on the
+    tint.
+*/
+.ideia-detalhe,
+.votantes
+{
+    padding: calc(var(--espaco) * 1.5);
+    border: 1px solid var(--cor-linha);
+    border-radius: var(--raio);
+    background: var(--cor-fundo);
+}
+
 .votantes
 {
     margin-top: calc(var(--espaco) * 1.5);
@@ -828,14 +843,39 @@ a
     list-style: none;
 }
 
+/*
+    THE ROW DOES NOT WRAP, THE NAME DOES. Allowed to wrap, a long name broke the row into
+    three: the mark alone on one line, the name on the next and the date on a third, which
+    reads as three people rather than one. Measured on "Rui Pedro Vasconcelos Albuquerque"
+    in a column of 21rem.
+
+    So the mark and the date keep their size and their place, and the name takes what is
+    left and wraps inside it.
+*/
 .lista-votantes li
 {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: baseline;
     gap: 0.5rem;
     padding: 0.375rem 0;
     border-bottom: 1px solid var(--cor-linha);
 }
+
+.lista-votantes li .iniciais
+{
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+.votante-nome
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: break-word;
+    font-weight: 600;
+}
+
 
 /* The list ended on a rule with nothing underneath it. */
 .lista-votantes li:last-child
@@ -843,13 +883,9 @@ a
     border-bottom: 0;
 }
 
-.votante-nome
-{
-    font-weight: 600;
-}
-
 .lista-votantes time
 {
+    flex: 0 0 auto;
     color: var(--cor-texto-suave);
     font-size: 0.9375rem;
 }
@@ -1170,16 +1206,18 @@ a
         min-height: 100vh;
 
         /*
-            THE TINTED GROUND IS GIVEN UP HERE, AND THE PALETTE IS THE REASON. A board of
-            cards wants the tint behind the cards, which puts the standing warning and
-            the bar's legend directly on it, and --cor-texto-suave measures 4.78:1 on
-            white and 4.38:1 on the tint, which is under the floor. There is no step
-            between: the comment on that token already records it is the only one of the
-            eleven neutrals that clears 4.5. So a tinted board costs the quiet text either
-            its contrast or its quietness. The cards carry their own figure instead, with
-            an edge and a shadow, on white.
+            THE GROUND IS TINTED AND THE CONTENT SITS ON WHITE, which is how the company's
+            other console does it: the page is a neutral step down and every block of
+            content is a white panel on top of it.
+
+            This was given up once, and the reason was real: --cor-texto-suave measures
+            4.78:1 on white and 4.38:1 on the tint, under the floor, and the standing
+            warning and the bar's legend were sitting directly on the ground. The answer
+            is not to darken them, it is to stop leaving them on the ground. Every piece
+            of quiet text on these pages now has a white panel under it, and the two notes
+            carry one of their own further down this file.
         */
-        background: var(--cor-fundo);
+        background: var(--cor-fundo-suave);
     }
 
     /* The same header element, the same nav, the same list, turned on its side. */
@@ -1418,6 +1456,35 @@ a
         padding: calc(var(--espaco) * 2) calc(var(--espaco) * 2) calc(var(--espaco) * 3) calc(var(--espaco) * 2);
     }
 
+    /*
+        The two notes above the board are the only quiet text that was left standing on
+        the tint, where --cor-texto-suave falls to 4.38:1. They take a white panel of
+        their own, joined into one block because they are one block: a rule about the
+        board and then what the board's bar measures.
+    */
+    .conteudo > .aviso-voto,
+    .conteudo > .legenda-apoio
+    {
+        margin-bottom: 0;
+        padding: 0.75rem var(--espaco);
+        background: var(--cor-fundo);
+        border: 1px solid var(--cor-linha);
+    }
+
+    .conteudo > .aviso-voto
+    {
+        border-bottom: 0;
+        border-radius: var(--raio) var(--raio) 0 0;
+        padding-left: calc(var(--espaco) - 3px);
+        border-left-width: 3px;
+    }
+
+    .conteudo > .legenda-apoio
+    {
+        margin-bottom: calc(var(--espaco) * 1.25);
+        border-radius: 0 0 var(--raio) var(--raio);
+    }
+
     .lista-ideias
     {
         display: grid;
@@ -1606,6 +1673,47 @@ a
     .area-pessoal .lista-ideias > li:first-child
     {
         grid-column: auto;
+    }
+
+    /*
+        THE DETAIL PAGE READS AS AN ARTICLE, AND THE VOTERS SIT BESIDE IT.
+
+        It was the worst page we had, and for the reason the board had before it: two
+        blocks the full width of the screen, stacked, with the text inside one of them
+        squeezed to a column narrower than it should be. Measured at 2000: the title ran
+        1864px on one line, the description was 59 characters over three lines, and 512px
+        of a 1100px screen were blank under everything.
+
+        Two columns, and the tracks are capped rather than stretched. An article does not
+        improve by being two thousand pixels wide: it improves by having one comfortable
+        measure and by not leaving half the screen empty under itself. The pair is centred,
+        so what remains on either side is margin rather than leftovers.
+
+        The list of voters is one line per person, which is right in a column of its own
+        and was wrong across the whole screen.
+    */
+    .conteudo:has(.ideia-detalhe)
+    {
+        display: grid;
+        grid-template-columns: minmax(0, 46rem) 21rem;
+        justify-content: center;
+        align-items: start;
+        column-gap: calc(var(--espaco) * 1.5);
+    }
+
+    /*
+        The description gives up its own cap here. The panel is the measure now, and two
+        caps fighting leaves white space inside a block that is already capped.
+    */
+    .ideia-detalhe .descricao
+    {
+        max-width: none;
+    }
+
+    .ideia-detalhe h1
+    {
+        font-size: 2rem;
+        letter-spacing: -0.02em;
     }
 }
 
