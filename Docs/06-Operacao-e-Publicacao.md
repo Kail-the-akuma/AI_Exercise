@@ -463,6 +463,7 @@ a diferença entre esta instalação e um site próprio.
 | Que falta uma variável no `web.config`, ou que está vazia | A aplicação recusa arrancar sem elas, e é melhor descobrir isso aqui do que no servidor |
 | Que o destino não parece a pasta desta aplicação | Ver o parágrafo seguinte, antes de forçar seja o que for |
 | Que o `robocopy` saiu com código 8 ou mais | Cópia falhada. O pool fica parado de propósito, para não arrancar sobre uma cópia a meio |
+| Que o destino ficou com ficheiros que não estão no artefacto | A cópia espelhada não espelhou, e o código de saída não o disse. Quase sempre um ficheiro ainda aberto. Parar o pool e repetir |
 
 Uma verificação que não conseguiu responder não é uma resposta negativa, e o
 `verificar-servidor.ps1` conta as que ficaram por responder em vez de as dar por
@@ -506,6 +507,30 @@ publicação precisa, e é um desastre se o caminho estiver errado por um carác
 apagar seja o que for, o `publicar.ps1` recusa um destino dentro de `C:\IdeaBoard`, recusa
 a raiz de uma unidade, e recusa uma pasta que tenha ficheiros mas não tenha o
 `IdeaBoard.Web.dll`. Uma pasta vazia ou inexistente passa, por ser a primeira cópia.
+
+#### O espelho pode não espelhar, e o código de saída não o diz
+
+**Isto é medido e não receado**, e desmente a palavra "apaga" do parágrafo acima na forma
+em que ela se lê.
+
+Com um ficheiro do destino ainda aberto por outra coisa, o `robocopy` **não o conseguiu
+apagar**, escreveu `ERROR 32` no registo dele, contou `FAILED` como **zero**, e saiu com
+código **3**, que é "ficheiros copiados" mais "extras detectados" e fica abaixo do limiar
+de falha. O script dava a cópia por feita e saía com zero. **Um resto de uma versão
+anterior sobreviveu a uma publicação que se reportou bem sucedida, e ninguém foi avisado.**
+
+A forma disto é própria do alojamento em processo: o processo de trabalho pode segurar um
+ficheiro da versão anterior por um momento depois de o pool parar, e **um apagamento que
+falha não é contado como falha pelo `robocopy` da mesma maneira que uma cópia que falha**.
+
+Por isso o `publicar.ps1` passou a **comparar o destino com o artefacto** depois de
+copiar, em vez de confiar no código de saída. A pergunta que isso responde é a que
+interessa, que é se o destino é agora o que foi publicado, e não como é que o `robocopy`
+escolheu codificar o que aconteceu.
+
+Se ficar algum ficheiro a mais, o script pára e nomeia os. A causa habitual é um ficheiro
+ainda aberto pela aplicação a correr, e a saída é parar o pool desta aplicação e repetir.
+**O pool fica parado de propósito**, para não arrancar sobre uma mistura de versões.
 
 ### O destrancamento da autenticação, que agora se relê
 

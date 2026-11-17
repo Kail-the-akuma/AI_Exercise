@@ -294,14 +294,54 @@ definições de servidor que são invisíveis no código.
       caixa assinalada, com um limite que convém não confundir: **corre uma vez, no
       provisionamento.** Este item cobre o dia em que alguém mexer nas definições do site
       pelo gestor do IIS, que é precisamente quando ninguém está a pensar nisto.
-- [ ] Iniciar sessão com uma conta corporativa real, de alguém que **nunca** entrou
-      antes, e confirmar que a linha de `User` é criada com o nome certo e com o
-      `accountName` na forma `DOMINIO\pessoa`. **Não há coluna de email**, e este item
-      pedia se para a confirmar até 17 de novembro de 2026.
-- [ ] Confirmar que o nome apresentado na aplicação é o esperado, e que o `accountName`
-      não aparece em lado nenhum da interface.
-- [ ] Confirmar que um acesso sem sessão a `/ideias/1` pede autenticação e, depois
-      dela, chega à página pedida, e não à página inicial.
+- [ ] **Uma pessoa entra pela primeira vez e a linha de `User` nasce.** Contar antes e
+      depois, em vez de acreditar que a pessoa é nova:
+      ```powershell
+      sqlite3 "C:\IdeaBoard\data\ideaboard.db" "SELECT COUNT(*) FROM User;"
+      ```
+      A contagem tem de subir **exactamente um**, e é a linha nova que se inspecciona: o
+      nome certo e o `accountName` na forma `DOMINIO\pessoa`. **Não há coluna de email**,
+      e este item pedia se para a confirmar até 17 de novembro de 2026.
+
+      **"Alguém que nunca entrou antes" não é verificável, e era assim que este item
+      estava escrito.** Não há como saber que a pessoa é nova, e o método natural é
+      alguém dizer que lhe parece que sim. Se já tiver entrado, a linha já lá está, lê se
+      uma linha antiga e a caixa é assinalada.
+
+      O que se perde nesse caso é exactamente o caminho que este documento diz que nenhum
+      teste cobre: a consulta ao diretório e a criação do utilizador a partir de uma
+      identidade verdadeira. Fica por exercitar e ninguém sabe. A contagem antes e depois
+      troca uma suposição por uma transição observada.
+
+      Feito logo a seguir ao provisionamento a contagem é `0`, e aí a primeira pessoa a
+      entrar é necessariamente nova. Feito mais tarde, a contagem é a única coisa que
+      salva o item.
+- [ ] Confirmar que o nome apresentado na aplicação é o esperado.
+- [ ] **O `accountName` não aparece na interface**, confirmado por procura e não por
+      vista de olhos. Procurar a barra invertida, ou o nome do domínio, no código fonte
+      das páginas que mostram pessoas: o ranking, as recentes, o detalhe e a área pessoal.
+
+      "Em lado nenhum" é uma afirmação sobre todos os ecrãs, e olhar para alguns não a
+      falsifica. É verificável à mesma, porque o valor tem forma conhecida,
+      `DOMINIO\pessoa`, e uma procura responde o que uma vista de olhos não responde.
+
+      **É o inverso do item das duas variáveis do `web.config`**, onde contar por procura
+      de texto é o método errado. Aqui é o método certo, e vale a pena dizer qual é qual
+      em vez de deixar a escolha ao hábito.
+- [ ] **Um acesso sem sessão ao detalhe de uma ideia chega a essa ideia, e não à página
+      inicial.** Submeter uma ideia primeiro e usar **o endereço dela**, copiado da barra
+      de endereço, e não um identificador escrito à mão.
+
+      **Duas correcções a este item, e a primeira é sobre o que ele deixou de provar.**
+      Com autenticação integrada o browser autentica se sem a pessoa sair do endereço,
+      portanto a metade que pedia "confirmar que pede autenticação" tornou se quase
+      verdadeira por construção. A metade com dentes é o **destino**. O item fica
+      estreitado a ela, e isto já tinha sido decidido numa ronda anterior e não tinha
+      chegado ao documento.
+
+      A segunda: numa base acabada de provisionar não existe ideia nenhuma, portanto
+      `/ideias/1` devolve a página de não encontrada. Quem fizer o item pela ordem em que
+      ele aparece nesta lista testa o contra um 404 e **nunca chega a provar o destino**.
 
 ### Pré requisitos da máquina
 
@@ -447,6 +487,14 @@ por isso confirmam se os dois e não um.
 - [ ] Pool de aplicações com **um só processo de trabalho**.
 - [ ] Chaves de Data Protection a serem escritas em `C:\IdeaBoard\keys\`. Confirmar
       que o ficheiro existe, e não apenas que a pasta está configurada.
+
+      **Feito depois de alguém ter aberto uma página com formulário**, e a de submeter
+      uma ideia serve. O anel de chaves só é escrito à primeira vez que alguma coisa
+      precisa dele, e com autenticação integrada o único consumidor é o antiforgery.
+      Numa aplicação acabada de arrancar que ninguém usou, a pasta está vazia e este item
+      falha **sem haver avaria nenhuma**.
+
+      Dizer quando é o que devolve à pasta vazia o significado de sinal de avaria.
 - [ ] Reciclar o pool de aplicações e confirmar a persistência das chaves, por esta
       ordem exata:
       1. Abrir o formulário de submissão e **deixá-lo aberto sem submeter**.
@@ -502,6 +550,27 @@ por isso confirmam se os dois e não um.
 - [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com
       origem `IdeaBoard`. Sem este passo, uma origem por criar não tem sintoma nenhum:
       as páginas servem, as pessoas votam, e o registo de erros simplesmente não existe.
+- [ ] **Ler o identificador de correlação que a página de erro mostra, e procurá lo na
+      entrada do Event Log desse erro.**
+
+      O item acima é satisfeito por qualquer entrada com aquela origem. Este pergunta
+      outra coisa: se a entrada leva o identificador que a pessoa é convidada a citar.
+
+      **Há razão para duvidar, e é por isso que o item existe em vez de uma afirmação.**
+      O identificador é o do `Activity` em curso, que vive no scope do registo, e os
+      fornecedores que a documentação do ASP.NET Core lista como suportando scopes não
+      incluem o do Event Log. Se for assim, a entrada leva a mensagem e a excepção e não
+      leva o identificador, e a correspondência acaba por ser feita pela hora.
+      Levantado pelo papel de verificação, pelo mecanismo e sem o ter executado.
+
+      **O que se faz com cada resultado, para que nenhum fique sem seguimento.** Se o
+      identificador lá estiver, o comentário do `Erro.cshtml.cs` está certo e não se toca
+      em nada. Se não estiver, a afirmação dele é falsa e volta ao DEV com esta medição
+      em cima, porque o achado é do comentário e não deste documento.
+
+      **Enquanto isto não for medido na máquina, não está errado.** As duas leituras que
+      sustentam a dúvida são de documentação, feitas por duas pessoas em separado, e
+      documentação lida não é comportamento observado.
 - [ ] Entrar a partir de uma máquina do domínio, em **`http://SERVIDOR-APP/IdeaBoard`**,
       que é o endereço exato que vai ser dado à equipa, e confirmar que a entrada é
       silenciosa, sem pedido de credenciais. A forma do nome é o que decide: um pedido de
@@ -519,7 +588,17 @@ por isso confirmam se os dois e não um.
 
 - [ ] Backup diário configurado e a produzir ficheiro.
 - [ ] **Restauro ensaiado uma vez**, para uma cópia, com verificação de que os dados
-      lá estão.
+      lá estão **e de que o ficheiro está são**:
+      ```powershell
+      sqlite3 "<copia>" "PRAGMA integrity_check;"
+      sqlite3 "<copia>" "PRAGMA foreign_key_check;"
+      ```
+      O primeiro tem de devolver `ok` e o segundo não deve imprimir nada.
+
+      "Com verificação de que os dados lá estão" era a parte frouxa: um ficheiro SQLite
+      restaurado pode ter as linhas todas e estar corrompido. **É aqui que o
+      `foreign_key_check` pertence**, e não na base acabada de provisionar, onde é
+      trivial por não haver linhas. Numa cópia restaurada com dados reais deixa de o ser.
 - [ ] As três consultas de métricas correm e devolvem valores plausíveis com dados
       reais.
 
@@ -531,8 +610,13 @@ por isso confirmam se os dois e não um.
 - [ ] Confirmar que o aviso de voto público e o aviso de submissão definitiva estão
       visíveis **antes** da ação, e não depois.
 - [ ] Percorrer a aplicação só com teclado.
-- [ ] Desativar o JavaScript e confirmar que votar continua a funcionar, com
-      recarregamento da página.
+- [ ] Desativar o JavaScript e confirmar que votar continua a funcionar, **pelo
+      endereço e não pelo piscar**: sem script o voto responde com um redirecionamento
+      para a mesma página com uma âncora, portanto o endereço passa a terminar em
+      `#ideia-` e o número da ideia. Com script o endereço não muda.
+
+      "Com recarregamento da página" confirmava se por se ver a página recarregar, que é
+      o que se perde numa rede rápida. O endereço fica.
 
 ---
 
