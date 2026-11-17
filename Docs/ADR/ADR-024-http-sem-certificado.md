@@ -1,7 +1,7 @@
-# ADR-024. HTTP sem certificado, no nome curto do servidor
+# ADR-024. HTTP sem certificado
 
-**Estado**: Aceite, com a forma do endereço emendada a 17 de novembro de 2026.
-**Data**: 13 de novembro de 2026.
+**Estado**: Aceite, com o endereço emendado a 17 de novembro de 2026, depois de medido na
+máquina. **Data**: 13 de novembro de 2026.
 **Substitui**: [ADR-013](ADR-013-certificado-no-arranque.md).
 
 ## Contexto
@@ -38,12 +38,16 @@ contradiz o ADR-013, executa a alternativa que ele próprio nomeou.
 
 **HTTP, sem certificado e sem HSTS.**
 
-O endereço é **`http://SERVIDOR-APP/IdeaBoard`**, no nome curto do servidor, servido como
-aplicação dentro do `Default Web Site` que já existe naquela máquina e já serve outra
-aplicação na porta 80.
+O endereço é **`http://servidor-app.dominio.interno/IdeaBoard`**, no nome qualificado do
+servidor, servido como aplicação dentro do `Default Web Site` que já existe naquela máquina
+e já serve outra aplicação na porta 80, conforme o
+[ADR-027](ADR-027-aplicacao-dentro-de-um-site-alheio.md).
 
-A forma e o valor estão os dois decididos pelo Hugo, o valor a 17 de novembro de 2026 com
-as alternativas à frente. Não fica aqui ponto nenhum em aberto.
+**Este título já mudou três vezes em dois dias, e por isso deixou de dizer o endereço.**
+Começou em "com o nome curto do servidor e porta", passou a "no nome curto do servidor", e
+hoje nenhuma das duas é verdade. Um título viaja para o índice e para dentro de cada ligação
+que aponta para cá, e é lido por quem nunca abre o ficheiro, portanto **a parte volátil não
+pertence lá**. O que não muda é HTTP sem certificado, e é isso que o título passa a dizer.
 
 ## A forma do endereço mudou a 17 de novembro, e mudou a favor
 
@@ -52,11 +56,53 @@ aplicação ia ter site próprio. A frase antiga fica contada e não apagada, po
 deste ficheiro a carregava, e porque as secções seguintes foram todas escritas a pensar
 numa porta.
 
-**O que não muda.** A exigência do nome curto e a razão dela, que é o início de sessão
+**O que não muda.** A exigência de um nome estável, e a razão dela, que é o início de sessão
 automático. As zonas de segurança são indexadas por anfitrião e esquema, e um caminho não
-entra nessa chave tal como uma porta não entrava. O `SERVIDOR-APP` continua a ser um nome sem
-pontos, portanto tudo o que está escrito mais abaixo sobre a zona de intranet vale tal e
-qual.
+entra nessa chave tal como uma porta não entrava.
+
+**O que muda, e foi medido no mesmo dia, mais tarde.** A forma do nome deixou de ser a curta.
+A secção seguinte trata disso, e é a emenda mais séria deste registo.
+
+## O nome curto pede credenciais e o nome qualificado entra sozinho, medido na máquina
+
+**Medido pelo Hugo a 17 de novembro de 2026, no browser dele, contra a instalação a sério.**
+O `http://SERVIDOR-APP/IdeaBoard` **pede credenciais**. O
+`http://servidor-app.dominio.interno/IdeaBoard` **entra sozinho**. É a primeira vez que esta
+aplicação corre com identidade verdadeira, e a primeira vez que esta questão sai do papel.
+
+**É o contrário do que este registo previa.** A subsecção abaixo afirmava, com confiança alta
+e apoiada em documentação de desenho do Chromium, que um nome sem pontos entra na zona de
+intranet local e um nome com pontos fica fora dela, e concluía que o nome curto era a forma
+favorável. **A conclusão estava errada neste parque.**
+
+**E o que salvou este registo foi a condição que ele próprio escreveu no primeiro dia.** Logo
+a seguir àquela afirmação está escrito que a deteção automática de intranet só acontece
+**quando a lista de servidores de autenticação não está definida por política**, que havendo
+lista é ela que governa, e que **num parque gerido a lista estar definida é o caso provável e
+não o improvável**. Foi exactamente esse o caso. A afirmação não era falsa, era condicional, e
+realizou se a condição que a limitava.
+
+**O porquê não está verificado, e é o que a medição não diz.** Ela diz o quê e não o porquê. A
+leitura mais económica é a da lista de servidores de autenticação, com o nome qualificado lá
+dentro e o curto fora, que é o mecanismo que este registo já nomeava como provável. **Não foi
+confirmado.** A página que o resolve é a que já estava escrita mais abaixo, `edge://policy`
+numa máquina do parque. Até lá, a confiança desta explicação é baixa, e é menor do que a da
+afirmação que ela substitui, como tem de ser.
+
+## A decisão não mudou, mudou o endereço que a satisfaz
+
+Isto é diferente de uma reversão, e quem ler daqui a um ano precisa de saber a diferença.
+
+O critério do Hugo, escrito no [ADR-027](ADR-027-aplicacao-dentro-de-um-site-alheio.md), é
+**um endereço sem porta escrita e sem depender de ninguém**. O nome qualificado cumpre o
+melhor do que o curto cumpria: não leva porta, e **já existe**, portanto não precisa de
+pedido nenhum à infraestrutura. É o mesmo critério a escolher outra vez, com um facto novo à
+frente.
+
+**E há a metade que não é lisonjeira, e fica ao lado.** A razão técnica que foi dada para
+preferir o nome curto, a zona de intranet, **não se verificou aqui**. Não é só que apareceu um
+endereço melhor, é que o argumento que sustentava o anterior caiu. As duas coisas são verdade
+ao mesmo tempo, e contar só a primeira seria escrever a versão simpática.
 
 **O que muda, e muda para melhor. A preocupação com o `EnableAuthNegotiatePort`
 desaparece.** Essa política só decide alguma coisa quando a porta não é 80 nem 443, o que
@@ -125,13 +171,18 @@ marcadores de toda a gente, que é custo humano e não técnico.
 
 ### O que está verificado sobre a forma do nome, e com que confiança
 
+**Esta subsecção está desmentida pela medição de 17 de novembro de 2026, e fica inteira.** O
+que ela diz continua a ser o que a documentação diz, e o que se passou a saber é que não é
+isso que governa este parque. Encolhê la deixaria a emenda acima sem o que ela emenda.
+
 **Um nome sem pontos entra na zona de intranet local por omissão, e é nessa zona que o
 início de sessão automático está ligado por omissão. Um nome com pontos fica fora dela.**
 Confiança alta, com a documentação de desenho do Chromium a dizer o inverso de forma
 direta, que um host com ponto fica fora da intranet local.
 
 Portanto o nome curto que o Hugo escolheu é a forma favorável a esta propriedade, e o
-nome qualificado completo é que precisaria de configuração no parque.
+nome qualificado completo é que precisaria de configuração no parque. **Esta última frase foi
+medida a ser falsa neste parque**, e a condição do parágrafo seguinte é a razão.
 
 **A condição que limita esta afirmação, e sem a qual ela não é verdadeira.** A deteção
 automática de intranet só acontece **quando a lista de servidores de autenticação não
@@ -156,6 +207,11 @@ vez e não a vai saber procurar.
 Primeiro, **confirmar numa máquina da equipa** que a nossa aplicação, no nosso servidor,
 com o nome curto e com Negotiate ligado, faz início de sessão automático. Só se não
 fizer é que se pergunta qual dos mecanismos falhou.
+
+**Este passo foi feito a 17 de novembro de 2026 e a resposta foi não.** Com o nome curto pede
+credenciais, com o nome qualificado entra sozinho. O passo cumpriu se e **morre com resultado
+em vez de morrer por omissão**. O que ele mandava perguntar a seguir, qual dos mecanismos
+falhou, **está por responder**, e é a única coisa que fica em aberto nesta área.
 
 A ordem importa porque dois dos três mecanismos possíveis não têm pedido nenhum
 associado à infraestrutura, e uma única página, `edge://policy` numa máquina do parque,
@@ -242,8 +298,9 @@ produto. É uma decisão proporcional a este contexto e não é uma posição so
 geral.
 
 **O que ficava em aberto, e já não fica.** Era o valor do endereço, e fechou a 17 de
-novembro de 2026 em `http://SERVIDOR-APP/IdeaBoard`. A frase fica com o destino escrito em
-vez de desaparecer, para que quem a procure encontre a resposta em vez de um vazio.
+novembro de 2026 em **`http://servidor-app.dominio.interno/IdeaBoard`**, depois de a forma curta
+ter sido medida a pedir credenciais nesse mesmo dia. A frase fica com o destino escrito em vez
+de desaparecer, para que quem a procure encontre a resposta em vez de um vazio.
 
 **E uma consequência que só existe por o endereço passar a ter caminho.** Servida debaixo
 de `/IdeaBoard`, a aplicação recebe o pedido com o caminho partido em base e resto, e tudo

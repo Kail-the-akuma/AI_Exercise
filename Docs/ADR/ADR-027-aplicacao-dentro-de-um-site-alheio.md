@@ -42,8 +42,10 @@ escrita e sem depender de ninguém.** A porta própria obrigava trinta pessoas a
 `:8080` para sempre. O nome próprio obrigava a um registo de DNS que alguém da
 infraestrutura teria de criar, e até lá não havia nada para mostrar a funcionar.
 
-A aplicação dentro do site dá `http://SERVIDOR-APP/IdeaBoard` no minuto a seguir ao
-provisionamento, sem pedir nada a ninguém. **E isso não é comodidade.** Num produto interno
+A aplicação dentro do site dá um endereço no minuto a seguir ao provisionamento, sem pedir
+nada a ninguém. O endereço acabou por ser
+`http://servidor-app.dominio.interno/IdeaBoard` e não a forma curta, por medição feita no
+próprio dia da instalação, e o [ADR-024](ADR-024-http-sem-certificado.md) trata disso. **E isso não é comodidade.** Num produto interno
 que ainda não serviu uma única pessoa, não depender da infraestrutura para o mostrar a
 funcionar é a diferença entre haver uma coisa para ver e haver um pedido em fila.
 
@@ -178,9 +180,21 @@ A avaria é a mesma e chega com o mesmo disfarce: os valores combinam se, o arra
 queixar se de uma cadeia de ligação, e o caminho que aparece na mensagem é um que ninguém
 escreveu.
 
-## O que o `Default Web Site` serve é hipótese, e a pergunta que a resolve
+## O que o `Default Web Site` serve, medido a 17 de novembro de 2026
 
-Isto fica escrito como hipótese de propósito, porque é hipótese.
+**Confirmado na máquina, e deixou de ser hipótese.** O `Get-Website` devolveu o
+`Default Web Site` com `physicalPath` igual a `C:\AplicacaoVizinhaA`. **O site da porta 80
+é a aplicação do RepositorioVizinhoA**, e o IdeaBoard entrou como aplicação filha de uma aplicação
+ASP.NET Core alojada em processo.
+
+Portanto o cenário que a secção dos handlers descreve como provável **é o cenário real**, e a
+proteção que nos vale é a do `inheritInChildApplications="false"` do ficheiro deles, que não é
+nosso e que ninguém se comprometeu a manter.
+
+O que se segue foi escrito antes da medição, de manhã, e fica porque mostra o que se sabia na
+altura e porque o raciocínio que lá chegou é reaproveitável.
+
+### O que estava escrito como hipótese, antes de ser medido
 
 Os documentos de instalação das duas aplicações vizinhas, lidos a 18 de novembro de 2026,
 dizem duas coisas que encaixam. O do RepositorioVizinhoA oferece, como uma das três saídas para o
@@ -205,10 +219,9 @@ Site`. Se apontar para a pasta de uma daquelas aplicações, está respondido. O
 precisamente para a responder, e isto fecha se com a máquina a dizer e não com dois
 documentos a sugerir.
 
-**Até lá, o que este registo afirma e o que supõe.** Afirma que o `Default Web Site` é dono
-da porta 80, porque isso saiu de um relatório da máquina. Supõe tudo o resto sobre o que ele
-serve. A decisão de entrar lá dentro não depende da diferença, mas a gravidade da colisão de
-handlers depende, e por isso a distinção fica escrita em vez de ser arrumada.
+**Foi exactamente essa pergunta que a respondeu**, horas depois, e a resposta está no topo
+desta secção. Dois documentos a sugerir acertaram, e isso **não os torna fonte**: o que
+fechou o assunto foi o comando, e a hipótese valeu por dizer onde apontá lo.
 
 ## A consequência que não é técnica, e é a que mais custa daqui a um ano
 
@@ -275,6 +288,17 @@ decidir seja o que for, conforme o [ADR-024](ADR-024-http-sem-certificado.md).
 **Más.** Passa a haver configuração alheia no nosso caminho de herança, com a colisão de
 handlers por fechar, um quarto sítio para as variáveis de ambiente colidirem, e uma equipa
 que nos pode partir sem tocar aqui.
+
+**E uma que só apareceu na instalação, a 17 de novembro de 2026.** Partilhar máquina não é
+partilhar forma de publicação. As duas aplicações vizinhas publicam self-contained e levam o
+runtime consigo; o IdeaBoard publica dependente da framework e precisa do runtime instalado
+na máquina. O servidor servia ASP.NET Core há meses e tinha o **8.0.34**, porque era o que as
+publicações delas exigiam, que é nenhum. **Foi preciso instalar o 10 por nossa causa.**
+
+A consequência que fica, e que não se vê a partir do nosso repositório: **a versão de runtime
+daquela máquina é uma dependência nossa que os vizinhos não têm.** Uma actualização, uma
+remoção ou uma reinstalação feita por quem não saiba que dependemos dela parte nos, e a eles
+não lhes faz nada. É a mesma forma da dependência global descrita acima, com outro objecto.
 
 **O que fica por verificar, e só se verifica com o ficheiro do vizinho à frente.** Se o
 `web.config` dele traz `inheritInChildApplications="false"`, se declara
