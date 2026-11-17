@@ -1160,8 +1160,13 @@ a
 {
     body
     {
-        display: grid;
-        grid-template-columns: 15rem minmax(0, 1fr);
+        /*
+            NOT A GRID, and that is not tidiness. The rail below is out of flow, so it
+            occupies no column, and a two column body would slide the board into the
+            track meant for the rail. The board carries a static margin for the closed
+            width instead, which never animates and so never moves when the rail opens.
+        */
+        display: block;
         min-height: 100vh;
 
         /*
@@ -1178,17 +1183,42 @@ a
     }
 
     /* The same header element, the same nav, the same list, turned on its side. */
+    /*
+        A RAIL OF ICONS THAT OPENS TO ICONS AND WORDS. 72px and 240px are the two widths
+        of the component the company already ships, and they are kept rather than
+        reinvented.
+
+        FIXED, AND THAT IS THE PART THAT MATTERS. Out of flow, the open rail lies OVER
+        the board and only its own handful of items are laid out again. As an ordinary
+        sibling it would reflow the whole board on every frame of the opening, for as
+        long as the opening lasts.
+
+        It opens on hover AND on focus-within. Hover alone is a rail that does not exist
+        for somebody arriving with the keyboard. The delay on the closed state is what
+        keeps a cursor crossing the corner of the screen from throwing it open.
+    */
     .cabecalho
     {
-        position: sticky;
+        position: fixed;
+        left: 0;
         top: 0;
-        align-self: start;
+        z-index: 20;
         display: block;
+        width: 4.5rem;
         height: 100vh;
-        padding: calc(var(--espaco) * 1.5) var(--espaco);
+        overflow: hidden;
+        padding: calc(var(--espaco) * 1.25) 0.75rem;
         border-bottom: 0;
-        border-right: 1px solid var(--cor-linha);
+        background: var(--cor-secundaria);
         box-shadow: none;
+        transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1) 120ms;
+    }
+
+    .cabecalho:hover,
+    .cabecalho:focus-within
+    {
+        width: 15rem;
+        transition-delay: 0ms;
     }
 
     .navegacao
@@ -1196,7 +1226,7 @@ a
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 0.25rem;
+        gap: 0.125rem;
         margin-left: 0;
         height: 100%;
     }
@@ -1210,69 +1240,121 @@ a
     }
 
     /*
-        The destination you are on becomes a filled shape rather than an underline. An
-        underline is a horizontal device and in a column of them it was reading as one
-        more rule.
+        Every item in the rail is an icon and a word, one height, one shape. The
+        destination you are on is a filled shape rather than an underline: an underline
+        is a horizontal device and in a column of them it read as one more rule.
     */
-    .separadores a
+    .separadores a,
+    .navegacao > .botao
     {
-        display: block;
-        padding: 0.625rem 0.75rem;
-        border-bottom: 0;
-        border-radius: var(--raio-medio);
-        color: var(--cor-texto);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        height: 2.75rem;
+        padding: 0 0.75rem;
+        border: 0;
+        border-radius: var(--raio);
+        background: none;
+        color: #ffffff;
         font-weight: 600;
+        white-space: nowrap;
+        box-shadow: none;
     }
 
-    .separadores a:hover
+    .separadores a:hover,
+    .navegacao > .botao:hover
     {
-        background: var(--cor-fundo-suave);
+        background: #2c4450;
+        color: #ffffff;
+        filter: none;
+        box-shadow: none;
         text-decoration: none;
     }
 
-    .separadores a[aria-current="page"]
+    .separadores a[aria-current="page"],
+    .separadores a[aria-current="page"]:hover
     {
         background: var(--cor-destaque);
         border-bottom-color: transparent;
         color: #ffffff;
     }
 
-    /*
-        The way into the form stops being the quietest thing on the page. It is the one
-        affordance the briefing's measure of success depends on.
-    */
     .navegacao > .botao
     {
         margin-left: 0;
         margin-top: calc(var(--espaco) * 1.25);
-        border-color: var(--cor-destaque);
-        background: var(--cor-destaque);
-        color: #ffffff;
-        text-align: center;
-        font-weight: 600;
-        box-shadow: var(--sombra-pousada);
     }
 
-    .navegacao > .botao:hover
+    .icone
     {
-        background: var(--cor-destaque);
-        border-color: var(--cor-destaque);
-        color: #ffffff;
-        box-shadow: var(--sombra-levantada);
-        filter: brightness(1.12);
+        flex: 0 0 auto;
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    /*
+        The words fade in place, clipped by each item's own overflow, rather than being
+        taken out of the layout. Removed instead of faded, they drag the icon beside them
+        as they go.
+    */
+    .rotulo
+    {
+        opacity: 1;
+        transition: opacity 140ms linear;
+    }
+
+    .cabecalho:not(:hover):not(:focus-within) .rotulo
+    {
+        opacity: 0;
+        pointer-events: none;
     }
 
     .identificacao
     {
         margin-top: auto;
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--cor-linha);
+        padding: 0.75rem;
+        border-top: 1px solid #2c4450;
+        color: #cfd6d9;
     }
 
+    .identificacao .iniciais
+    {
+        background: var(--cor-secundaria-fundo);
+        color: var(--cor-secundaria);
+    }
+
+    .identificacao-nome
+    {
+        color: #ffffff;
+    }
+
+    /*
+        The one thing that does leave the layout when the rail closes. It sits beside the
+        mark in a flex row, and a name that is invisible but still takes its width pushes
+        the mark out of a 72px rail. That is the whole difference between a label that
+        fades and a block that goes.
+    */
+    .cabecalho:not(:hover):not(:focus-within) .identificacao-nome
+    {
+        display: none;
+    }
+
+    /*
+        THE CAP COMES OFF, and centring it would not have been enough.
+
+        Capped at 68rem and set with margin:0, the column hugged the left and every pixel
+        of slack piled up on one side: 592px of nothing on a 1920 screen, all of it on the
+        right. Centring turns that into 296 a side, which is tidier and is still 592px not
+        being used.
+
+        A column of text wants a cap, because a long line is hard to read. A grid of cards
+        does not: every card is already capped by the track it sits in, and the width a cap
+        refuses is the width that turns three columns into four.
+    */
     .conteudo
     {
-        max-width: 68rem;
-        margin: 0;
+        max-width: none;
+        margin: 0 0 0 4.5rem;
         border-radius: 0;
         background: none;
         box-shadow: none;
@@ -1282,7 +1364,13 @@ a
     .lista-ideias
     {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        /*
+            As many columns as fit, not two. The minimum is the width a card needs before
+            a title of ordinary length breaks into three lines, and a card never grows
+            past its share of the row, so a wider screen buys columns and not wider cards.
+        */
+        grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
         gap: calc(var(--espaco) * 1.25);
         align-items: stretch;
     }
@@ -1299,9 +1387,17 @@ a
         thing the grid takes away. It costs nothing on the recent tab, where the first item
         is the newest and being first is equally what it has to say.
     */
+    /*
+        TWO TRACKS, NOT THE WHOLE ROW. Spanning everything was right while a row was two
+        cards wide. At four it gives the leader a band of 1760px with its content in the
+        first three hundred, which is the void this change exists to remove, back as a
+        feature. Twice a card still says "this one is first" and stays a card.
+
+        A span wider than the grid is clamped to the grid, so one column is one column.
+    */
     .lista-ideias > li:first-child
     {
-        grid-column: 1 / -1;
+        grid-column: span 2;
     }
 
     /* The row becomes a card. Not one attribute changes. */
@@ -1315,16 +1411,24 @@ a
         padding: calc(var(--espaco) * 1.25);
         border: 1px solid var(--cor-linha);
         border-bottom: 1px solid var(--cor-linha);
-        border-radius: var(--raio-grande);
+
+        /*
+            FLAT AT REST. A card carries an edge and nothing else, and the shadow is
+            earned by the pointer being on it. Given to every card at rest it is not depth,
+            it is fourteen things asking for attention at once, and the eye learns to
+            ignore all fourteen.
+        */
+        border-radius: var(--raio);
         background: var(--cor-fundo);
-        box-shadow: var(--sombra-pousada);
-        transition: box-shadow var(--transicao), border-color var(--transicao);
+        box-shadow: none;
+        transition: box-shadow var(--transicao), border-color var(--transicao), transform var(--transicao);
     }
 
     .ideia:hover
     {
-        border-color: var(--cor-contorno-campo);
-        box-shadow: var(--sombra-levantada);
+        border-color: var(--cor-ligacao);
+        box-shadow: 0 4px 16px -6px rgba(24, 26, 26, 0.28);
+        transform: translateY(-2px);
     }
 
     /*
@@ -1432,35 +1536,19 @@ a
     }
 
     /*
-        On the person's own page every card is the full width, so every one of them aligns
-        its footer the same way. Writing that rule for the first card only left the others
-        with a thousand pixels between the bar and the button.
+        The person's own page uses the same grid as the board. It used to be forced to one
+        column, which was right while the board was capped at 68rem: a single column of
+        cards read as a list. With the cap gone that column is 1784px wide on a large
+        screen, with its content in the first four hundred, which is the void this change
+        exists to remove wearing a different hat.
+
+        And the first card of each section stops spanning two tracks. On the board the
+        first card is the leader, which is a fact about the order. Here it is whichever
+        idea came back first, which is a fact about nothing.
     */
-    .area-pessoal .lista-ideias
+    .area-pessoal .lista-ideias > li:first-child
     {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .area-pessoal .lista-ideias > li
-    {
-        grid-template-columns: auto auto minmax(0, 1fr);
-    }
-
-    .area-pessoal .lista-ideias > li .ideia-corpo
-    {
-        grid-column: 1 / -1;
-    }
-
-    .area-pessoal .lista-ideias > li .ideia-voto [data-vote-count],
-    .area-pessoal .lista-ideias > li .ideia-de-quantos,
-    .area-pessoal .lista-ideias > li .apoio
-    {
-        grid-column: 1;
-    }
-
-    .area-pessoal .lista-ideias > li .ideia-voto [data-vote-button]
-    {
-        grid-column: 2;
+        grid-column: auto;
     }
 }
 
