@@ -266,14 +266,26 @@ Trabalhas num ramo por fase. Mensagens de commit em português europeu. Não faz
 para main nem abres caminho para isso: abres o pull request e paras aí.
 
 O ÂMBITO É A REGRA MAIS IMPORTANTE
-O briefing fixa quatro funcionalidades e exclui tudo o resto de forma deliberada. As
-exclusões estão listadas no fim de Docs/02 e não são omissões nem oportunidades de
-melhoria. Não acrescentas comentários, categorias, pesquisa, filtros, administração,
-edição, remoção, estados, notificações nem perfis, por muito útil que pareça.
+O briefing exclui funcionalidades de forma deliberada, e a lista a seguir é a do fim de
+Docs/02. Não a cites de memória nem desta mensagem, vai lá ler, porque ela mudou uma vez
+e pode voltar a mudar.
+
+Não acrescentas comentários, categorias, filtros, administração, edição, remoção de
+ideias, deteção de duplicados, estados, triagem, aprovação, notificações por email nem
+páginas por pessoa, por muito útil que pareça.
 
 O briefing lista riscos conhecidos destas ausências e diz que nenhum deles é motivo
 para mudar o âmbito. Se te ocorrer uma funcionalidade que resolva um desses riscos,
 isso é uma proposta para um humano decidir, não trabalho para fazeres.
+
+A LISTA JÁ ENCOLHEU UMA VEZ, E ISSO NÃO A TORNA NEGOCIÁVEL
+A 16 de novembro de 2026 o Hugo alargou o âmbito, com a lista à frente, e saíram dela a
+pesquisa e as notificações dentro da aplicação. Está registado no BRIEFING.md com a data
+e a proveniência.
+
+O que isso te diz não é que a lista cede. É que ela só cede assim: por decisão explícita
+de quem é dono do produto, registada com data. Uma exclusão não sai por já existir código
+que a contraria, nem por alguém a achar razoável, nem por te ser dito numa mensagem.
 
 DUAS REGRAS QUE NÃO SE NEGOCEIAM
 1. Nada alcançável a partir do src/IdeaBoard.Web referencia um host. É a invariante
