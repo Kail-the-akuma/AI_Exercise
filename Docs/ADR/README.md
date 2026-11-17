@@ -26,11 +26,12 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-015](ADR-015-estrutura-de-quatro-projetos.md) | Quatro projetos, com o produto numa biblioteca e dois hosts irmãos | Aceite |
 | [ADR-016](ADR-016-identidade-nos-testes-por-host-proprio.md) | Identidade nos testes por host próprio, em vez de esquema sobreposto | Aceite |
 | [ADR-017](ADR-017-xunit-v3.md) | xUnit v3 como único framework de teste da solução | Aceite |
-| [ADR-018](ADR-018-validacao-de-configuracao-no-arranque.md) | A aplicação recusa arrancar com configuração em falta | Aceite |
+| [ADR-018](ADR-018-validacao-de-configuracao-no-arranque.md) | A aplicação recusa arrancar com configuração em falta | Aceite, emendado pelo ADR-026 |
 | [ADR-019](ADR-019-wal-verificado-e-nao-imposto.md) | O modo WAL é verificado no arranque, e não aplicado | Aceite |
 | [ADR-020](ADR-020-migracoes-sem-idempotencia.md) | Migrações por script não idempotente, com verificação antes e depois | Aceite |
 | [ADR-021](ADR-021-contagem-relida-apos-o-voto.md) | A contagem mostrada depois de votar é relida, e não calculada | Aceite |
 | [ADR-022](ADR-022-resolucao-e-substituicao-do-nome.md) | Resolução do nome por claim, depois diretório, e substituição por proveniência | Aceite |
 | [ADR-023](ADR-023-chave-da-tabela-de-utilizadores.md) | A chave da tabela de utilizadores passa a ser o identificador de segurança, e o email sai | Aceite |
 | [ADR-024](ADR-024-http-sem-certificado.md) | HTTP sem certificado, com o nome curto do servidor e porta | Aceite |
-| [ADR-025](ADR-025-face-de-letra-alojada.md) | Uma face de letra alojada no repositório e servida pela aplicação | Aceite, escolha da face em revisão |
+| [ADR-025](ADR-025-face-de-letra-alojada.md) | Uma face de letra alojada no repositório e servida pela aplicação | Aceite |
+| [ADR-026](ADR-026-onde-vive-a-configuracao.md) | A configuração obrigatória vive no `web.config` versionado | Aceite |
