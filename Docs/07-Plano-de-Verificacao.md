@@ -50,8 +50,12 @@ daria confiança em algo que não é o que corre em produção.
 - Retirar um voto que não existe não falha e não altera nada.
 - As consultas do ranking e do detalhe devolvem a ordem correta com dados que forçam
   empates.
-- O upsert do utilizador local cria na primeira vez e não duplica nas seguintes,
-  mesmo quando o nome ou o email mudam entre inícios de sessão.
+- O upsert do utilizador local cria na primeira vez e não duplica nas seguintes, e
+  continua a dar uma linha só quando o nome muda entre inícios de sessão. **Não há
+  coluna de email**, e esta linha falava dela até 17 de novembro de 2026.
+- Um nome vindo do diretório segue uma alteração posterior do diretório, e um nome
+  escrito pela própria pessoa nunca é substituído por ele.
+- Duas pessoas com o mesmo nome apresentado continuam a ser duas linhas.
 - A consulta do estado do botão de voto resolve se num só acesso, e não num por linha.
 
 ---
@@ -217,9 +221,26 @@ definições de servidor que são invisíveis no código.
 
 ### Autenticação real
 
+- [ ] **A autenticação anónima está desligada no site, e a do Windows ligada.** Ler as
+      duas no gestor do IIS, no site, e não confiar em terem sido postas uma vez.
+
+      Este item existe porque o código abdicou de a verificar e apontou para aqui. Com
+      a identidade a vir do Windows, essas definições vivem no `web.config` do site e na
+      configuração do IIS, fora do alcance do processo no arranque: **o host arranca na
+      perfeição com a anónima ligada e nada dentro dele dá por isso.** O sintoma é toda a
+      gente recusada no primeiro pedido, visível e sem explicação. A decisão e as suas
+      razões estão no [ADR-026](ADR/ADR-026-onde-vive-a-configuracao.md).
+
+      O `deploy/provisionar.ps1` põe as duas e relê as no fim, e isso é melhor do que uma
+      caixa assinalada, com um limite que convém não confundir: **corre uma vez, no
+      provisionamento.** Este item cobre o dia em que alguém mexer nas definições do site
+      pelo gestor do IIS, que é precisamente quando ninguém está a pensar nisto.
 - [ ] Iniciar sessão com uma conta corporativa real, de alguém que **nunca** entrou
-      antes, e confirmar que a linha de `User` é criada com o nome e o email certos.
-- [ ] Confirmar que o nome apresentado na aplicação é o esperado.
+      antes, e confirmar que a linha de `User` é criada com o nome certo e com o
+      `accountName` na forma `DOMINIO\pessoa`. **Não há coluna de email**, e este item
+      pedia se para a confirmar até 17 de novembro de 2026.
+- [ ] Confirmar que o nome apresentado na aplicação é o esperado, e que o `accountName`
+      não aparece em lado nenhum da interface.
 - [ ] Confirmar que um acesso sem sessão a `/ideias/1` pede autenticação e, depois
       dela, chega à página pedida, e não à página inicial.
 
