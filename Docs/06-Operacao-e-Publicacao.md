@@ -192,7 +192,7 @@ em [07](07-Plano-de-Verificacao.md).
 #### As aplicações de 32 bits, e porque é que a razão tem fonte e âmbito
 
 **Isto é uma observação sobre este servidor e não um facto geral sobre o IIS.** Está
-registada no guia de instalação do AplicacaoVizinhaB, em `RepositorioVizinhoB`, na primeira
+registada no guia de instalação da AplicacaoVizinhaB, em `RepositorioVizinhoB`, na primeira
 instalação a sério, de 7 de setembro de 2026, com as palavras "confirmed the hard way":
 nesta máquina o `New-WebAppPool` cria o pool com as aplicações de 32 bits **ligadas**.
 
