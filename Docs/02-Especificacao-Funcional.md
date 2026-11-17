@@ -57,7 +57,7 @@ autor das ideias e na lista de quem votou.
 | `/` | Ranking | Ideias ordenadas por votos, separador principal |
 | `/recentes` | Recentes | As mesmas ideias, ordenadas por data de submissão |
 | `/nova` | Nova ideia | Formulário de submissão |
-| `/ideias/{id}` | Detalhe | Uma ideia, com a descrição completa e a lista de votantes |
+| `/ideias/{id}` | Detalhe | Uma ideia, com a descrição completa, a lista de votantes e os comentários |
 | `/pessoal` | As minhas ideias e votos | Ideias propostas e apoiadas por quem está a ver |
 | `/nome` | Registo do nome | Só para quem chega sem nome conhecido |
 
@@ -310,18 +310,100 @@ ideia, e é lá que continua a viver. Nada aqui se tornou público que já não 
 de que o voto é público está acima da lista, e a lista completa de votantes sempre esteve
 na página da ideia. O que mudou foi onde algumas dessas pessoas aparecem.
 
-> **Achado por resolver, e não é meu para corrigir.** Estas iniciais são o único sinal
-> daquelas pessoas naquele sítio, e estão marcadas como `aria-hidden`. Nos outros quatro
-> sítios onde as mesmas iniciais aparecem há sempre o nome escrito ao lado, que é o que
-> justifica escondê las de quem usa leitor de ecrã. Aqui não há, portanto quem usa leitor
-> de ecrã ouve a etiqueta e mais nada. Relatado a quem trata da interface, que tinha
-> previsto um texto com os nomes para leitor de ecrã que não chegou ao código.
+Os nomes completos destas pessoas são também lidos por quem usa leitor de ecrã, fora do
+ecrã e dentro da mesma linha. As iniciais continuam marcadas como `aria-hidden`, porque
+uma fila de abreviaturas de duas letras lida em voz alta é ruído.
+
+> **Achado resolvido, e fica registado por causa do que ensina.** Durante um dia estas
+> iniciais foram o único sinal daquelas pessoas naquele sítio e estavam escondidas de quem
+> usa leitor de ecrã, que ouvia a etiqueta e mais nada. Nos outros quatro sítios onde as
+> mesmas iniciais aparecem há sempre o nome escrito ao lado, e era isso que justificava
+> escondê las. O texto que repõe os nomes estava previsto por quem trata da interface e
+> não tinha chegado ao código, o que é a forma mais difícil de apanhar: a decisão estava
+> certa e só a execução é que faltava.
 
 ### Quantas pessoas no quadro
 
 O fim da lista diz de quantas pessoas é o quadro, contando quem já entrou pelo menos uma
 vez. Não é a dimensão da equipa, e a diferença entre os dois números importa para os
 critérios de sucesso, conforme [06](06-Operacao-e-Publicacao.md).
+
+---
+
+## F6. Comentar uma ideia
+
+Acrescentado a 17 de novembro de 2026, por decisão do Hugo que alargou o âmbito do
+briefing. Os comentários abriam a lista de exclusões, e saíram dela pela mesma via que a
+pesquisa tinha saído no dia anterior.
+
+Os comentários aparecem no detalhe de cada ideia, por baixo da lista de quem votou, do
+mais antigo para o mais recente, que é a ordem por que se lê uma conversa. Uma ideia que
+ninguém comentou diz que ninguém comentou, em vez de mostrar uma secção vazia.
+
+### Quem escreve, e quem pode mexer
+
+- **Comenta quem está autenticado**, que é toda a gente que chega à aplicação. Não há
+  comentário anónimo, e o nome de quem escreveu aparece ao lado do texto, como no autor de
+  uma ideia e na lista de votantes.
+- **Só o autor de um comentário o muda ou o apaga.** Mais ninguém, e não há papel de
+  administração que o possa fazer, porque não há administração.
+- Os controlos de editar e de apagar só são desenhados para quem escreveu o comentário.
+  **Isso é uma cortesia e nunca a proteção.** O que recusa o pedido de outra pessoa é o
+  servidor, e a recusa é verificada por cenário.
+
+### Editar
+
+Abre um formulário sobre o comentário, com o texto lá dentro. Guardar substitui o texto, e
+cancelar deixa o comentário como estava.
+
+Um comentário que foi mudado depois de escrito mostra a palavra `editado` ao lado da data.
+Mostra a palavra e não uma segunda data, porque a data que situa o comentário na conversa
+é a primeira.
+
+### Apagar, que tem um passo à frente
+
+**Apagar não tem volta**, e por isso o primeiro toque pergunta antes de fazer. A pergunta
+é "Apagar este comentário? Não é possível recuperá lo.", e só a confirmação apaga.
+
+O passo existe por duas razões, e nenhuma delas é hábito. A aplicação funciona sem
+JavaScript, portanto não há diálogo do browser para pôr no caminho. E a ligação que abre a
+pergunta só muda o que está desenhado, de modo que nada é apagado por um pedido que o
+browser faça sozinho.
+
+**Um comentário apagado desaparece.** Não fica linha nenhuma a dizer que ali esteve
+alguma coisa. Um vazio visível seria uma afirmação sobre uma pessoa feita à frente das
+outras, e este produto não tem moderação nem triagem por dentro para a tomar.
+
+### Regras do texto
+
+- Os espaços no início e no fim são removidos antes de validar e de guardar. Um
+  comentário feito só de espaços é um comentário vazio.
+- O texto é guardado e apresentado como texto simples. As quebras de linha são
+  preservadas. Markdown e HTML não são interpretados, tal como na descrição de uma ideia.
+- **O limite de comprimento é o mesmo da descrição de uma ideia**, 2000 caracteres, e isso
+  não é coincidência. Um comentário que possa ser mais comprido do que a ideia inverte a
+  página, e um número diferente seria um segundo limite para explicar sem razão por trás.
+
+| Situação | Comportamento |
+|---|---|
+| Comentário vazio | A página volta com a mensagem "Escreva um comentário." junto à caixa |
+| Comentário acima de 2000 caracteres | Mensagem "O comentário não pode ultrapassar 2000 caracteres." |
+| Pedido sobre o comentário de outra pessoa | O servidor responde 403 e o comentário fica por tocar |
+| Pedido sobre um comentário que já não existe | O servidor responde 404 |
+
+A mensagem de erro fica ligada à caixa a que diz respeito, do mesmo modo que no formulário
+de submissão, e a caixa aberta para edição mantém se aberta para a mensagem aparecer ao
+lado dela e não no fim da página.
+
+### Porque é que uma ideia continua a não poder ser editada
+
+As duas coisas parecem a mesma e não são, e a diferença fica escrita aqui porque é a
+primeira pergunta de quem lê as duas secções seguidas.
+
+**Uma ideia foi votada.** Mudá la depois muda aquilo em que as pessoas votaram, sem que
+elas saibam, e apagá la apaga os votos de outras pessoas com ela. Um comentário não carrega
+voto nenhum e pertence a uma pessoa só. A submissão de uma ideia continua definitiva, e o
+ecrã continua a avisar disso antes de submeter.
 
 ---
 
@@ -409,6 +491,22 @@ Acrescentados a 16 de novembro de 2026, com o alargamento do âmbito.
 | Ideias com votos novos, singular | 1 ideia sua recebeu votos novos |
 | Ideias com votos novos, plural | {n} ideias suas receberam votos novos |
 
+Acrescentados a 17 de novembro de 2026, com os comentários.
+
+| Elemento | Texto |
+|---|---|
+| Título da secção | Comentários |
+| Sem comentários | Ainda ninguém comentou esta ideia. |
+| Etiqueta da caixa | Comentário |
+| Botão de comentar | Comentar |
+| Ligação de editar | Editar |
+| Botão de guardar | Guardar |
+| Ligação de cancelar | Cancelar |
+| Ligação de apagar | Apagar |
+| Pergunta antes de apagar | Apagar este comentário? Não é possível recuperá-lo. |
+| Botão que confirma o apagar | Apagar |
+| Marca de comentário mudado | editado |
+
 ---
 
 ## Acessibilidade
@@ -432,25 +530,27 @@ Repetido aqui de forma explícita, porque uma especificação funcional é o sí
 estas ausências são mais facilmente confundidas com esquecimento. Todas estas decisões
 vêm do briefing.
 
-**Esta lista encolheu a 16 de novembro de 2026**, por decisão do Hugo tomada com ela à
-frente. Saíram a pesquisa, e a exclusão de notificações passou a valer apenas para as de
-email. O que entrou está descrito em F5 e registado no
-[BRIEFING.md](../BRIEFING.md), com a data e a proveniência.
+**Esta lista já encolheu duas vezes, por decisão do Hugo tomada com ela à frente.** A 16
+de novembro de 2026 saiu a pesquisa, e a exclusão de notificações passou a valer apenas
+para as de email. A 17 saíram os comentários. O que entrou está descrito em F5 e em F6, e
+registado no [BRIEFING.md](../BRIEFING.md), com as datas e a proveniência.
 
-Que a lista tenha encolhido uma vez não a torna negociável. Encolher outra vez precisa do
-mesmo que esta precisou, que é decisão explícita de quem é dono do produto.
+Que a lista tenha encolhido duas vezes não a torna negociável. Encolher outra vez precisa
+do mesmo que estas precisaram, que é decisão explícita de quem é dono do produto.
+
+**Esta é a lista em vigor.** O `CLAUDE.md` traz um resumo dela e diz que em caso de
+divergência vale esta.
 
 | Não existe | Nota |
 |---|---|
-| Comentários | |
 | Categorias, etiquetas e filtros | |
 | Administração | Sem ecrã de gestão e sem utilizadores privilegiados |
-| Edição de ideias | A submissão é definitiva |
+| Edição de ideias | A submissão é definitiva. Um comentário é diferente e pode ser mudado, pela razão escrita em F6 |
 | Remoção de ideias | Correção apenas por procedimento manual documentado |
 | Deteção de duplicados | |
 | Estados, triagem ou aprovação | Uma ideia submetida está publicada |
 | Mecanismo de exploração | Nada acontece a uma ideia vencedora dentro da plataforma |
-| Inscrição em ideias | |
+| Inscrição em ideias de outros | |
 | Registo do que se aprendeu | |
 | Notificações por email | Dentro da aplicação há o aviso de votos novos, descrito em F5 |
 | Perfis de utilizador | Não há página por pessoa. O separador pessoal mostra sempre quem o abriu |

@@ -54,19 +54,21 @@ melhorias ao dia a dia, protótipos, temas de partilha, tudo cabe na mesma lista
 
 Decidido, não esquecido.
 
-Sem comentários. Sem categorias. Sem administração. Sem edição ou remoção de ideias
-depois de submetidas. Sem deteção de duplicados. Sem estados, triagem ou aprovação. Sem
-mecanismo formal de exploração, inscrição em ideias ou registo do que se aprendeu.
+Sem categorias. Sem administração. Sem edição ou remoção de ideias depois de
+submetidas. Sem deteção de duplicados. Sem estados, triagem ou aprovação. Sem mecanismo
+formal de exploração, inscrição em ideias de outros ou registo do que se aprendeu.
 
 O que acontece a uma ideia muito votada fica em aberto, por decisão. Quem quiser
 pegar nela organiza se fora da plataforma.
 
-### O âmbito foi alargado a 16 de novembro de 2026
+### O âmbito já foi alargado duas vezes, e cada uma fica datada aqui
 
-**Decisão do Hugo, tomada com esta lista à frente, e não deslize de construção.** Fica
-registado aqui com a data porque esta lista é a referência contra a qual tudo o resto se
+**Decisões do Hugo, tomadas com esta lista à frente, e não deslizes de construção.** Ficam
+registadas aqui com a data porque esta lista é a referência contra a qual tudo o resto se
 mede, e uma exclusão que desaparece sem explicação é indistinguível de uma que ninguém
 respeitou.
+
+#### 16 de novembro de 2026
 
 Saiu daqui a **pesquisa**, que era excluída pela palavra e passou a existir, por título e
 por quem propôs.
@@ -76,12 +78,27 @@ Entraram, sem estarem nesta lista mas contra o espírito dela de produto mínimo
 ideias de cada pessoa, as **iniciais de quem votou** ao lado de cada ideia na lista, e o
 **número de pessoas que já entrou no quadro**.
 
-O resto desta lista mantém se inteiro. Em particular continua a não haver comentários,
-categorias, administração, edição, remoção, deteção de duplicados, estados nem triagem.
+#### 17 de novembro de 2026
 
-**O que isto não é.** Não é autorização para continuar a alargar. A lista encolheu uma
-vez, por decisão explícita de quem é dono do produto, e volta a precisar do mesmo para
-encolher outra vez.
+Saíram daqui os **comentários**, que abriam esta lista. Quem comenta é quem está
+autenticado, só o autor de um comentário o muda ou apaga, e um comentário apagado
+desaparece sem deixar marca. O que ficou construído está especificado em
+[Docs/02](Docs/02-Especificacao-Funcional.md).
+
+A **edição e a remoção de ideias** não saíram, e continuam excluídas. A diferença é
+deliberada e está escrita na especificação: uma ideia foi votada, e mudá la depois mudava
+aquilo em que se votou.
+
+#### O que estes dois registos não são
+
+Não são autorização para continuar a alargar. Duas exclusões saíram desta lista, cada uma
+por decisão explícita de quem é dono do produto, e a seguinte precisa exatamente do mesmo.
+
+**Esta secção regista o que saiu, e não repete o que fica.** A lista em vigor é a do fim
+de [Docs/02](Docs/02-Especificacao-Funcional.md), e é lá que se confirma o que continua
+excluído. Um parágrafo aqui a enumerar o que se mantém já ficou desmentido duas vezes, uma
+por cada alargamento, por ser uma cópia da lista escrita no sítio onde se registam as
+mudanças dela.
 
 ## Critérios de sucesso
 
