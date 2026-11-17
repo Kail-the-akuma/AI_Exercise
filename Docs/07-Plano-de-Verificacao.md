@@ -317,17 +317,33 @@ definições de servidor que são invisíveis no código.
       entrar é necessariamente nova. Feito mais tarde, a contagem é a única coisa que
       salva o item.
 - [ ] Confirmar que o nome apresentado na aplicação é o esperado.
-- [ ] **O `accountName` não aparece na interface**, confirmado por procura e não por
-      vista de olhos. Procurar a barra invertida, ou o nome do domínio, no código fonte
-      das páginas que mostram pessoas: o ranking, as recentes, o detalhe e a área pessoal.
+- [ ] **O nome mostrado é um nome de pessoa e não um nome de conta.** Olhar para a
+      linha de `User` criada e para o ecrã, e confirmar que o nome não tem barra
+      invertida nem arroba.
 
-      "Em lado nenhum" é uma afirmação sobre todos os ecrãs, e olhar para alguns não a
-      falsifica. É verificável à mesma, porque o valor tem forma conhecida,
-      `DOMINIO\pessoa`, e uma procura responde o que uma vista de olhos não responde.
+      **Este item mudou de alvo a 18 de novembro de 2026, e a razão vale mais do que a
+      mudança.** Ele dizia que o `accountName` não aparece em lado nenhum da interface, e
+      isso guarda um caminho que não existe: o valor não é projectado para read model
+      nenhum, portanto não há por onde chegar a um ecrã. Era uma caixa que não podia
+      falhar.
 
-      **É o inverso do item das duas variáveis do `web.config`**, onde contar por procura
-      de texto é o método errado. Aqui é o método certo, e vale a pena dizer qual é qual
-      em vez de deixar a escolha ao hábito.
+      Medido pelo papel de verificação e confirmado aqui, em duas procuras, a larga e a
+      estreita: onze ficheiros do `IdeaBoard.App` mencionam `accountName` e **nenhum é um
+      `.cshtml`**, e não há nenhum nos read models. Com um controlo a confirmar que a
+      procura encontra termos em `.cshtml` quando lá estão.
+
+      **O risco a sério é o vizinho dele**: não é o `accountName` chegar ao ecrã, é o
+      `displayName` **guardado** ser ele próprio um nome de conta, que é o que acontece se
+      a resolução do nome devolver `DOMINIO\pessoa` e isso for escrito na coluna do nome.
+      É por isso que o código tem um `AssertIsNotAnAccountName`, chamado nos dois caminhos
+      de escrita, e que as regras do nome trazem a forma da conta com um aviso a dizer que
+      não se simplifica.
+
+      **A procura pela barra invertida no código fonte das páginas fica como rede e não
+      como objectivo.** É barata e cobre o dia em que alguém acrescentar a coluna a uma
+      vista. É também o inverso do item das duas variáveis do `web.config`, onde contar
+      por procura de texto é o método errado: vale a pena dizer qual é qual, em vez de
+      deixar a escolha ao hábito.
 - [ ] **Um acesso sem sessão ao detalhe de uma ideia chega a essa ideia, e não à página
       inicial.** Submeter uma ideia primeiro e usar **o endereço dela**, copiado da barra
       de endereço, e não um identificador escrito à mão.
@@ -616,7 +632,14 @@ por isso confirmam se os dois e não um.
       `#ideia-` e o número da ideia. Com script o endereço não muda.
 
       "Com recarregamento da página" confirmava se por se ver a página recarregar, que é
-      o que se perde numa rede rápida. O endereço fica.
+      o que se perde numa rede rápida. O endereço fica. Verificado por leitura: as quatro
+      páginas com botão de voto constroem o redirecionamento pelo mesmo `BuildIdeaAnchor`.
+
+      **Na área pessoal há um caso que não é falha e parece uma.** Retirar um voto tira a
+      ideia da lista, portanto a âncora pode apontar para uma linha que deixou de existir
+      e o browser fica no topo da página. O endereço continua a ter a âncora e a página
+      não salta. Está escrito no código como comportamento correcto, e fica escrito aqui
+      para não ser assinalado como defeito.
 
 ---
 
