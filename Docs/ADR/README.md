@@ -32,6 +32,6 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-021](ADR-021-contagem-relida-apos-o-voto.md) | A contagem mostrada depois de votar é relida, e não calculada | Aceite |
 | [ADR-022](ADR-022-resolucao-e-substituicao-do-nome.md) | Resolução do nome por claim, depois diretório, e substituição por proveniência | Aceite |
 | [ADR-023](ADR-023-chave-da-tabela-de-utilizadores.md) | A chave da tabela de utilizadores passa a ser o identificador de segurança, e o email sai | Aceite |
-| [ADR-024](ADR-024-http-sem-certificado.md) | HTTP sem certificado, com o nome curto do servidor e porta | Aceite |
+| [ADR-024](ADR-024-http-sem-certificado.md) | HTTP sem certificado, no nome curto do servidor | Aceite, forma do endereço emendada |
 | [ADR-025](ADR-025-face-de-letra-alojada.md) | Uma face de letra alojada no repositório e servida pela aplicação | Aceite |
 | [ADR-026](ADR-026-onde-vive-a-configuracao.md) | A configuração obrigatória vive no `web.config` versionado | Aceite |

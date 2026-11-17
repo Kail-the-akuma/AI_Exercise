@@ -1,6 +1,7 @@
-# ADR-024. HTTP sem certificado, com o nome curto do servidor e porta
+# ADR-024. HTTP sem certificado, no nome curto do servidor
 
-**Estado**: Aceite. **Data**: 13 de novembro de 2026.
+**Estado**: Aceite, com a forma do endereço emendada a 17 de novembro de 2026.
+**Data**: 13 de novembro de 2026.
 **Substitui**: [ADR-013](ADR-013-certificado-no-arranque.md).
 
 ## Contexto
@@ -37,9 +38,43 @@ contradiz o ADR-013, executa a alternativa que ele próprio nomeou.
 
 **HTTP, sem certificado e sem HSTS.**
 
-O endereço é o **nome curto do servidor com porta**. A forma está decidida pelo Hugo. O
-valor concreto, qual é o nome e qual é a porta, não está, e é a única coisa que falta
-para a Fase 5.
+O endereço é **`http://SERVIDOR-APP/IdeaBoard`**, no nome curto do servidor, servido como
+aplicação dentro do `Default Web Site` que já existe naquela máquina e já serve outra
+aplicação na porta 80.
+
+A forma e o valor estão os dois decididos pelo Hugo, o valor a 17 de novembro de 2026 com
+as alternativas à frente. Não fica aqui ponto nenhum em aberto.
+
+## A forma do endereço mudou a 17 de novembro, e mudou a favor
+
+**Quando este registo foi escrito, o endereço era o nome curto com porta**, porque a
+aplicação ia ter site próprio. A frase antiga fica contada e não apagada, porque o título
+deste ficheiro a carregava, e porque as secções seguintes foram todas escritas a pensar
+numa porta.
+
+**O que não muda.** A exigência do nome curto e a razão dela, que é o início de sessão
+automático. As zonas de segurança são indexadas por anfitrião e esquema, e um caminho não
+entra nessa chave tal como uma porta não entrava. O `SERVIDOR-APP` continua a ser um nome sem
+pontos, portanto tudo o que está escrito mais abaixo sobre a zona de intranet vale tal e
+qual.
+
+**O que muda, e muda para melhor. A preocupação com o `EnableAuthNegotiatePort`
+desaparece.** Essa política só decide alguma coisa quando a porta não é 80 nem 443, o que
+está escrito mais abaixo desde o primeiro dia, e o endereço novo é porta 80. Dos dois
+mecanismos que a verificação em `edge://policy` ia investigar, um deixa de poder falhar, e
+fica a lista de servidores de autenticação sozinha.
+
+Vale a pena reparar que esta conclusão **já estava contida no que este registo tinha
+escrito**, e não precisou de informação nenhuma que não estivesse cá. É o inverso do que
+costuma acontecer neste repositório: uma decisão a jusante costuma matar uma razão
+escrita, e desta vez confirmou uma.
+
+**O que esta emenda não trata, de propósito.** Entrar dentro de um site que outra equipa
+já usa é uma decisão sobre a superfície de alojamento, com consequências próprias que não
+são sobre transporte nem sobre endereço: a configuração do vizinho passa a estar no nosso
+caminho de herança, o modelo in-process exige pool próprio, e passa a haver quem nos possa
+partir sem tocar neste repositório. Isso não cabe num registo intitulado sobre
+certificados, e está proposto como registo separado.
 
 ## O que morre com esta decisão, e uma morte que é boa notícia
 
@@ -111,6 +146,11 @@ a política `EnableAuthNegotiatePort` do Chrome e do Edge, que decide se a porta
 nome do serviço pedido ao Kerberos quando não é 80 nem 443. Confiança alta, é documento
 de desenho do Chromium.
 
+**Desde 17 de novembro de 2026 isto não governa o nosso endereço**, que passou a ser porta
+80. Fica escrito por inteiro em vez de encolhido, porque é a análise que torna a pergunta
+respondível, e quem um dia mudar esta aplicação para uma porta própria precisa dela outra
+vez e não a vai saber procurar.
+
 ### O que isto manda fazer, e por que ordem
 
 Primeiro, **confirmar numa máquina da equipa** que a nossa aplicação, no nosso servidor,
@@ -128,6 +168,11 @@ confirmada no nosso ambiente. E a leitura mais económica dela é que essas trê
 as únicas onde existe aplicação a pedir autenticação integrada, porque uma porta onde
 nenhuma aplicação a pede não pode dar início de sessão automático, com zona ou sem zona.
 Nessa leitura, a medição não diz nada sobre a nossa porta.
+
+**E desde 17 de novembro de 2026 não diz nada sobre nós de todo**, porque deixámos de ter
+porta própria. Fica pela mesma razão do parágrafo anterior, e por uma segunda: é um exemplo
+medido de uma observação verdadeira a ser lida como propriedade de uma aplicação quando era
+propriedade do que estava instalado, e esse erro não precisa de portas para se repetir.
 
 ## O que se perde com HTTP, nomeado e não escondido
 
@@ -196,8 +241,22 @@ sem dados além de ideias e votos que já são públicos dentro da equipa por de
 produto. É uma decisão proporcional a este contexto e não é uma posição sobre HTTP em
 geral.
 
-**O que fica em aberto, e é a única coisa que falta para a Fase 5.** O valor do nome e da
-porta. A forma está decidida.
+**O que ficava em aberto, e já não fica.** Era o valor do endereço, e fechou a 17 de
+novembro de 2026 em `http://SERVIDOR-APP/IdeaBoard`. A frase fica com o destino escrito em
+vez de desaparecer, para que quem a procure encontre a resposta em vez de um vazio.
+
+**E uma consequência que só existe por o endereço passar a ter caminho.** Servida debaixo
+de `/IdeaBoard`, a aplicação recebe o pedido com o caminho partido em base e resto, e tudo
+o que escreva um caminho literal para o browser passa a mandar a pessoa para fora dela.
+Havia exactamente um sítio assim, o redireccionamento do portão do nome, corrigido no `dev`
+em `4f1a3ad`.
+
+Fica registado porque a classe não se fecha com a correcção. Qualquer caminho literal
+escrito a partir de hoje tem o mesmo defeito, e o que o apanha são **dois testes a correr
+debaixo de um caminho base**, que foi como a correcção foi medida: tirando a base da
+frente, os dois ficam vermelhos, o que prova que o `Response.Redirect` não acrescenta nada
+de seu. Medição de quem a fez, e não minha, que tinha levantado o ponto com a confiança
+marcada e sem o conseguir confirmar aqui.
 
 **E o que fica para rever.** HTTPS continua a ser possível mais tarde, e passar a ter o
 não obriga a mudar arquitetura nenhuma, ao contrário do que aconteceu na direção
