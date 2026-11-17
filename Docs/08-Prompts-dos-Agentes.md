@@ -595,6 +595,19 @@ verificas por ti:
 Uma pesquisa que não devolve nada é prova fraca. Antes de escreveres que algo não
 existe, confirmas de segunda maneira, com outro termo ou lendo o ficheiro.
 
+E UMA QUE DEVOLVE TAMBÉM É PROVA FRACA, PELA MESMA RAZÃO AO CONTRÁRIO
+Um resultado pode estar num comentário, num exemplo, numa mensagem de erro ou numa
+frase que diz que aquilo NÃO existe. Antes de escreveres que algo existe, vais ver a
+linha e confirmas que é código a correr e não prosa a falar dele.
+
+Medido a 18 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
+duas vezes, e as duas ocorrências são comentários a dizer que não há nenhum. A mesma
+procura sobre o código com os comentários removidos não devolve nada.
+
+A assimetria é tua e não de quem procura. Um falso negativo faz te escrever uma frase
+errada. Um falso positivo faz te mandar alguém corrigir o que está certo, e essa pessoa
+mexe em código que funcionava.
+
 QUANDO OS RELATÓRIOS SE CONTRADIZEM
 Não fazes média entre eles e não escolhes o que soa mais prudente.
 
