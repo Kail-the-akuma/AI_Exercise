@@ -102,10 +102,15 @@ distingue as duas causas**, por isso verificar ambos antes de procurar noutro la
 
 E há uma **terceira** causa com o mesmo código, que não é um pré requisito da máquina mas
 aparece no mesmo sítio. O `web.config` que a publicação produz traz a secção de
-autenticação lá dentro, e o IIS tranca essa secção ao nível do servidor, por isso um site
-cujo `web.config` a traga pode responder 500.19 em vez de arrancar. O
-`deploy/provisionar.ps1` destranca a com `overrideMode` a `Allow` e **com `-Location` do
-site**, portanto só para este site e sem mexer no que vale para os outros.
+autenticação lá dentro, e o IIS tranca essa secção ao nível do servidor, por isso uma
+aplicação cujo `web.config` a traga pode responder 500.19 em vez de arrancar. O
+`deploy/provisionar.ps1` destranca a com `overrideMode` a `Allow` e **com `-Location` da
+própria aplicação**, `Site/IdeaBoard`, e não do site.
+
+A diferença importa para quem for procurar a entrada no `applicationHost.config`: está no
+caminho da aplicação e não no do site. E importa pela propriedade que dá, que é mais
+forte do que destrancar ao nível do site: **nem o site que recebe a aplicação nem o
+vizinho que o partilha mudam de comportamento.**
 
 **Nenhum de nós verificou isto numa máquina com IIS**, nem quem escreveu o script nem
 quem escreve esta linha, e a referência do IIS consultada não diz qual é o valor por
@@ -123,10 +128,32 @@ módulo. É aí que esta causa é a certa, e é no script que se mexe.
 | Tempo limite de inatividade | 0 | O mesmo motivo |
 | Reciclagem por intervalo regular | 0 | Desliga a reciclagem a cada 29 horas, que cai a meio do dia de trabalho |
 | Reciclagem a hora fixa | Fora do horário laboral | Se for mesmo necessária |
+| Aplicações de 32 bits | **Desligadas** | Posto de forma explícita, pela razão a seguir à tabela |
 
 A limitação a um processo de trabalho é a definição mais fácil de esquecer e a mais
 difícil de diagnosticar depois. Fica registada aqui e é item da lista de verificação
 em [07](07-Plano-de-Verificacao.md).
+
+#### As aplicações de 32 bits, e porque é que a razão tem fonte e âmbito
+
+**Isto é uma observação sobre este servidor e não um facto geral sobre o IIS.** Está
+registada no guia de instalação do AplicacaoVizinhaB, em `RepositorioVizinhoB`, na primeira
+instalação a sério, de 7 de setembro de 2026, com as palavras "confirmed the hard way":
+nesta máquina o `New-WebAppPool` cria o pool com as aplicações de 32 bits **ligadas**.
+
+Fica com a fonte e com a data à frente de propósito. Lido como regra do IIS, isto seria
+aplicado noutro servidor onde pode não valer, e um valor por omissão depende da versão e
+da configuração da máquina.
+
+**O que nos faria não é o que lhes fez a eles.** Eles publicam auto contido `win-x64`,
+que um pool de 32 bits não consegue sequer carregar, por isso tiveram um `HTTP Error
+500.32` e souberam logo. Esta aplicação é publicada dependente do framework e em
+processo, e o Hosting Bundle instala também o runtime x86, portanto num pool de 32 bits
+isto arrancaria e serviria, em silêncio, como processo de 32 bits.
+
+A afirmação honesta não é que parte. É que **diverge em silêncio** do que julgamos ter
+publicado, e uma avaria assim não tem dia em que apareça. Por isso o `provisionar.ps1`
+põe a definição e, no fim, relê a e pára se ela não ficou.
 
 ### Site e aplicação
 
@@ -180,10 +207,13 @@ rasto no repositório.
 É nele que vivem as duas variáveis sem as quais a aplicação recusa arrancar, e é por isso
 que o `publicar.ps1` confere que lá estão e que não estão vazias antes de copiar.
 
-| Definição de autenticação | Valor |
-|---|---|
-| Autenticação Windows | **Ativada** |
-| Autenticação anónima | **Desligada** |
+Estas duas são postas **na aplicação** e não no site, pelo mesmo `-Location` da secção
+acima, portanto o site que a recebe fica como estava.
+
+| Definição de autenticação | Valor | Onde |
+|---|---|---|
+| Autenticação Windows | **Ativada** | Na aplicação, `Site/IdeaBoard` |
+| Autenticação anónima | **Desligada** | Na aplicação, `Site/IdeaBoard` |
 
 As duas andam juntas. Com a anónima ligada, o IIS serve o pedido sem desafiar ninguém, e
 a aplicação recebe pedidos sem identidade, o que faz a política de autorização recusar
@@ -319,6 +349,37 @@ administrador. Os três scripts não a automatizam, dão lhe guardas.
 | `provisionar.ps1` | Cria as pastas, o pool, a aplicação e a origem do Event Log | Sim, só o que não existia |
 | `publicar.ps1` | Produz o artefacto, confere o que lá está, e copia para o servidor | Sim, na pasta da aplicação |
 
+#### Os valores desta instalação são as omissões, nos dois que escrevem
+
+**O `provisionar.ps1` corre sem argumento nenhum** e provisiona o `SERVIDOR-APP`: a
+aplicação `/IdeaBoard` dentro do `Default Web Site`, no pool próprio `IdeaBoardPool`,
+sobre `C:\inetpub\IdeaBoard`. O `publicar.ps1` tem as omissões equivalentes para o
+destino, o pool e a raiz de dados, e só o `-ArtefactPath` é obrigatório.
+
+Isto muda como se usam, e muda em duas direcções. Numa, deixa de haver transcrição de
+valores à mão, que é por onde entra um erro de uma letra num caminho que depois é apagado
+por uma cópia espelhada. Noutra, **deixou de haver a rede que um parâmetro obrigatório
+dava contra um arranque acidental**.
+
+O que fica entre um arranque acidental e uma máquina alterada são as guardas, e não a
+falta de argumentos: elevação, o site existir, o pool não existir, e não haver já uma
+aplicação naquele caminho virtual. Todas recusam antes de criar seja o que for.
+
+Cada script imprime todos os valores antes de mexer em nada, **dizendo de cada um se veio
+da omissão ou da linha de comandos**, para que quem corra sem argumentos possa parar na
+primeira linha errada em vez de descobrir no fim.
+
+#### Os três esperam por uma tecla no fim
+
+Começados por duplo clique ou por "Executar com o PowerShell", a consola pertence ao
+script e fecha se com ele, levando o relatório do ecrã antes de alguém o ler. A espera
+existe por isso, e é a última coisa que acontece, depois de o código de saída já estar
+decidido.
+
+Passar `-NoPause` salta a espera, para correr um destes a partir de outro script. Um
+script começado com a entrada redirecionada também não espera, porque aí não há ninguém
+para carregar na tecla e a espera ficaria pendurada para sempre.
+
 A ordem completa de uma instalação de raiz:
 
 1. **`verificar-servidor.ps1`.** Resolver o que ele apontar antes de continuar.
@@ -348,7 +409,10 @@ a diferença entre esta instalação e um site próprio.
 | Que a consola não é de administrador | Faltou elevação. Abrir outra consola, nada foi alterado |
 | Que falta o ASP.NET Core Module v2, ou a Autenticação do Windows | Pré requisito por instalar. As duas causas dão o mesmo 500.19, por isso confirmar as duas |
 | Que já existe um pool com esse nome, ou uma aplicação naquele caminho virtual | Escolher outro nome ou outro caminho, ou apagar o existente à mão depois de confirmar de quem é. O script não reconfigura o que encontra |
-| Que o site que devia receber a aplicação não existe | O nome do site está errado, ou a máquina não é a que se pensava. O script não cria o site neste modo |
+| Que o site que devia receber a aplicação não existe | O nome do site está errado, ou a máquina não é a que se pensava. O script não cria o site neste modo. A mensagem lista os sites que existem |
+| Que o caminho virtual parece um caminho de disco | Ver o aviso sobre o Git Bash, a seguir a esta tabela |
+| Que o pool ficou com as aplicações de 32 bits ligadas | A definição foi posta e não ficou. Nesse estado a aplicação arrancaria em silêncio como processo de 32 bits |
+| Que a aplicação não aparece no site depois de criada, ou ficou no pool errado | O script releu o que criou e não bateu certo. Sem pool próprio não há o limite de um processo de trabalho |
 | Que a autenticação não ficou como devia | O script releu o que escreveu e não bateu certo. Verificar à mão antes de continuar |
 | Que o artefacto leva identidade local | É a invariante do `CLAUDE.md`. Não se publica assim, e o problema está na construção e não na publicação |
 | Que o artefacto leva uma base de dados | A base vive em `C:\IdeaBoard\data` e nunca na pasta da aplicação, senão a publicação seguinte apaga a |
@@ -360,6 +424,22 @@ Uma verificação que não conseguiu responder não é uma resposta negativa, e 
 `verificar-servidor.ps1` conta as que ficaram por responder em vez de as dar por
 ausentes. Resolver isso antes de provisionar, em vez de assumir o pior ou o melhor.
 
+**Correr estes scripts a partir do PowerShell, e não de uma janela Git Bash.** O Git Bash
+reescreve um argumento que comece por barra num caminho do Windows antes de o script o
+ver, portanto `-VirtualPath /IdeaBoard` chega lá dentro como um caminho de disco. O
+`provisionar.ps1` reconhece essa forma e pára a explicar o que aconteceu, em vez de criar
+uma aplicação num caminho que ninguém escreveu.
+
+#### O que o `verificar-servidor.ps1` responde e que o provisionamento já não precisa de descobrir
+
+Ele lista, por cada site, as **aplicações lá dentro**, com o caminho virtual, o pool e a
+pasta de cada uma. Saber quem é dono da porta 80 responde a uma pergunta; saber que
+caminhos virtuais estão ocupados dentro desse site responde à que decide se a aplicação
+pode nascer em `/IdeaBoard`.
+
+Sem isso, quem descobre é o `provisionar.ps1`, a recusar, já no servidor, numa ida que
+esta leitura teria poupado.
+
 ### Dois cuidados que este servidor exige e um servidor vazio não exigiria
 
 Esta máquina já serve outra aplicação a pessoas reais, com autenticação integrada. As
@@ -367,9 +447,14 @@ duas coisas a seguir existem por causa disso e não devem ser afrouxadas.
 
 **Nenhum comando global.** Não há `iisreset` em script nenhum, o serviço de publicação
 nunca é parado, e nenhum pool ou site que não tenha sido criado por estes scripts é
-arrancado, parado ou reconfigurado. O `publicar.ps1` pára um pool só, pelo nome, e só
-quando lho dão. Um comando global levaria a outra aplicação abaixo, e quem corresse o
-script não teria motivo para ligar as duas coisas.
+arrancado, parado ou reconfigurado. Um comando global levaria a outra aplicação abaixo, e
+quem corresse o script não teria motivo para ligar as duas coisas.
+
+O `publicar.ps1` pára **um pool só, pelo nome**, e o nome vem da omissão
+`IdeaBoardPool` quando não é dado. Este documento dizia que ele só parava um pool quando
+lho davam, e isso deixou de ser verdade no dia em que as omissões entraram. A propriedade
+que interessa sobrevive inteira, e é outra: o pool parado é sempre um só e é sempre
+nomeado, nunca o do vizinho e nunca todos.
 
 **A cópia é espelhada, e por isso o destino é confirmado antes.** O `robocopy` corre com
 `/MIR`, que apaga no destino tudo o que não venha no artefacto. É o que uma pasta de
@@ -380,9 +465,9 @@ a raiz de uma unidade, e recusa uma pasta que tenha ficheiros mas não tenha o
 
 ### Um passo que ninguém conseguiu verificar, e fica dito como tal
 
-O `provisionar.ps1` destranca as secções de autenticação ao nível do site, com
-`-Location`, porque o IIS as tranca ao nível do servidor por omissão e um site cujo
-`web.config` as traga responde 500.19 em vez de arrancar.
+O `provisionar.ps1` destranca as secções de autenticação ao nível da **aplicação**, com
+`-Location Site/IdeaBoard`, porque o IIS as tranca ao nível do servidor por omissão e uma
+aplicação cujo `web.config` as traga responde 500.19 em vez de arrancar.
 
 **Isto não foi verificado numa máquina com IIS.** Fica escrito aqui por isso mesmo, e não
 como afirmação de que funciona.
@@ -400,7 +485,7 @@ momento em que o faz.
 3. **Copiar os ficheiros publicados** para `C:\inetpub\IdeaBoard\`.
 4. **Aplicar as migrações** com o script SQL gerado a partir das migrações do EF Core,
    sempre com `-bail`, pela razão da secção seguinte.
-5. **Arrancar o site.**
+5. **Arrancar o pool**, que é o que foi parado no passo 2.
 6. **Verificar** com a lista de verificação de [07](07-Plano-de-Verificacao.md).
 
 #### Porque é o pool e não o site, e porque isto é uma decisão e não uma medição
