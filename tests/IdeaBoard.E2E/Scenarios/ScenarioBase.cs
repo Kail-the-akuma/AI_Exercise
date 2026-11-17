@@ -209,6 +209,18 @@ public abstract class ScenarioBase : PageTest
                 // failed. The rate was 4 failed runs in 85, roughly 0,2% per call, which is
                 // low enough to look like bad luck and often enough to break a suite weekly.
                 //
+                // What was NOT shown, written here so nobody takes this for more than it
+                // is: a probe of a thousand submissions on a warm page saw neither way of
+                // waiting fail. It did not reproduce the fault and it did not refute it
+                // either. At 0,2% per call a thousand calls come up empty by luck about
+                // one time in eight, so that probe never had the power to tell "does not
+                // happen" from "did not come up". It was not run again larger, because the
+                // reason to prefer the poll does not rest on it: a poll cannot miss a
+                // state that is already true, and that holds by construction. The suite
+                // running over the coming weeks is the evidence, and the timeline below is
+                // what makes a return legible the first time instead of after reproducing
+                // it.
+                //
                 // The observable trigger, if this ever comes back: a failure here whose
                 // timeline below shows the idea page already served, early. That means the
                 // wait missed it again and the cure is a stricter poll, never a longer
