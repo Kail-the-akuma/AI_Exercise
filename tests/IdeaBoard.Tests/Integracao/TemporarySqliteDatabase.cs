@@ -3,6 +3,9 @@ using IdeaBoard.App.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IdeaBoard.Tests.Integracao;
 
@@ -55,7 +58,44 @@ public sealed class TemporarySqliteDatabase : IDisposable
     }
 
 
+    /// <summary>
+    /// Creates the file and applies the migrations up to the one named, and no further.
+    ///
+    /// It is how an incremental deploy script is held against the migration it stands for:
+    /// the database is taken to the state before that migration, the script is applied to
+    /// it, and the result is compared with a database the migrations took all the way.
+    /// </summary>
+    public static TemporarySqliteDatabase MigratedTo(string targetMigration)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetMigration);
+
+        return new TemporarySqliteDatabase(null, targetMigration);
+    }
+
+
+    /// <summary>The migrations the model declares, in the order they apply.</summary>
+    public static IReadOnlyList<string> DeclaredMigrations()
+    {
+        DbContextOptionsBuilder<IdeaBoardDbContext> optionsBuilder =
+            new DbContextOptionsBuilder<IdeaBoardDbContext>();
+
+        // Reading the list is a question about the assembly and not about any database, so
+        // this deliberately points nowhere that could be created by asking.
+        optionsBuilder.UseSqlite("Data Source=:memory:");
+
+        using IdeaBoardDbContext context = new IdeaBoardDbContext(optionsBuilder.Options);
+
+        return new List<string>(context.Database.GetMigrations());
+    }
+
+
     private TemporarySqliteDatabase(string? script)
+        : this(script, null)
+    {
+    }
+
+
+    private TemporarySqliteDatabase(string? script, string? targetMigration)
     {
         databasePath = Path.Combine(
             Path.GetTempPath(),
@@ -72,7 +112,20 @@ public sealed class TemporarySqliteDatabase : IDisposable
         if (script is null)
         {
             using IdeaBoardDbContext context = CreateContext();
-            context.Database.Migrate();
+
+            if (targetMigration is null)
+            {
+                context.Database.Migrate();
+
+                return;
+            }
+
+            // Migrate takes the database to the last migration and offers no way to stop
+            // short, so the migrator itself is asked. It is the service Migrate is built
+            // on, which is why this is not a back door into anything.
+            IMigrator migrator = context.GetInfrastructure().GetRequiredService<IMigrator>();
+
+            migrator.Migrate(targetMigration);
 
             return;
         }
