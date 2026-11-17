@@ -223,6 +223,41 @@ definições de servidor que são invisíveis no código.
 - [ ] Confirmar que um acesso sem sessão a `/ideias/1` pede autenticação e, depois
       dela, chega à página pedida, e não à página inicial.
 
+### Pré requisitos da máquina
+
+Antes de copiar seja o que for. Os dois primeiros falham com o **mesmo** código de erro,
+por isso confirmam se os dois e não um.
+
+- [ ] **ASP.NET Core Hosting Bundle** do .NET 10 instalado.
+- [ ] **Serviço de função Autenticação do Windows do IIS** instalado. Não vem por
+      omissão, e sem ele a autenticação integrada não existe como opção.
+- [ ] Origem `IdeaBoard` criada no Event Log, confirmada por
+      `[System.Diagnostics.EventLog]::SourceExists("IdeaBoard")` a devolver `True`. A
+      aplicação não a cria, de propósito.
+
+### Configuração que chega ao host
+
+- [ ] As duas variáveis presentes no `web.config` **do servidor**, depois de copiados os
+      ficheiros: `ConnectionStrings__IdeaBoard` e `DataProtection__KeysPath`.
+- [ ] Nenhum desses dois nomes definido **também** no ambiente da máquina ou do pool de
+      aplicações. Definidos nos dois sítios, os valores podem ser combinados e a
+      aplicação não arranca, com uma mensagem que aponta para um caminho que ninguém
+      escreveu.
+- [ ] Não existe `appsettings.Production.json` na pasta da aplicação. Se existir, alguém
+      pôs a configuração no único sítio que a publicação seguinte apaga.
+
+### Base de dados sem dados de teste
+
+- [ ] As quatro contagens a zero numa base recém provisionada, antes de a equipa entrar:
+      ```sql
+      SELECT 'User' AS tabela, COUNT(*) AS linhas FROM User
+      UNION ALL SELECT 'Idea', COUNT(*) FROM Idea
+      UNION ALL SELECT 'Vote', COUNT(*) FROM Vote
+      UNION ALL SELECT 'Comment', COUNT(*) FROM Comment;
+      ```
+- [ ] A `__EFMigrationsHistory` tem as **três** linhas esperadas e nenhuma a mais.
+- [ ] `PRAGMA integrity_check;` devolve `ok`.
+
 ### Configuração de servidor
 
 - [ ] Pool de aplicações com **um só processo de trabalho**.
@@ -244,6 +279,9 @@ definições de servidor que são invisíveis no código.
       com um erro de pedido inválido, e não com qualquer mensagem sobre chaves.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
 - [ ] Modo WAL ativo no ficheiro da base de dados.
+- [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com
+      origem `IdeaBoard`. Sem este passo, uma origem por criar não tem sintoma nenhum:
+      as páginas servem, as pessoas votam, e o registo de erros simplesmente não existe.
 - [ ] Entrar a partir de uma máquina do domínio, usando **o endereço exato** que vai
       ser dado à equipa, e confirmar que a entrada é silenciosa, sem pedido de
       credenciais. A forma do nome é o que decide: um pedido de credenciais aqui não é
