@@ -321,7 +321,7 @@ definições de servidor que são invisíveis no código.
       linha de `User` criada e para o ecrã, e confirmar que o nome não tem barra
       invertida nem arroba.
 
-      **Este item mudou de alvo a 18 de novembro de 2026, e a razão vale mais do que a
+      **Este item mudou de alvo a 17 de novembro de 2026, e a razão vale mais do que a
       mudança.** Ele dizia que o `accountName` não aparece em lado nenhum da interface, e
       isso guarda um caminho que não existe: o valor não é projectado para read model
       nenhum, portanto não há por onde chegar a um ecrã. Era uma caixa que não podia
@@ -591,7 +591,7 @@ por isso confirmam se os dois e não um.
       equipa, e confirmar que a entrada é silenciosa, sem pedido de credenciais.
 
       **Um pedido de credenciais aqui não é um defeito da aplicação**, é a zona de
-      segurança do browser. E a forma do nome é o que decide: a 18 de novembro de 2026,
+      segurança do browser. E a forma do nome é o que decide: a 17 de novembro de 2026,
       naquele servidor, o nome curto `http://SERVIDOR-APP/IdeaBoard` **pediu credenciais** e
       o nome qualificado entrou sozinho. Fazer o item com o endereço errado prova o
       contrário do que ele pergunta.

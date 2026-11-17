@@ -92,7 +92,7 @@ Module v2.
 
 #### Não se presume o runtime por a máquina já servir ASP.NET Core
 
-**Medido a 18 de novembro de 2026**, e custou uma paragem. Aquele servidor servia ASP.NET
+**Medido a 17 de novembro de 2026**, e custou uma paragem. Aquele servidor servia ASP.NET
 Core havia meses e tinha apenas o runtime **8.0.34**, porque as duas aplicações vizinhas
 são publicadas **auto contidas**: levam o runtime dentro do artefacto e não precisam de
 nenhum instalado na máquina.
@@ -119,7 +119,7 @@ existem na natureza:
 
 | Caminho | |
 |---|---|
-| `%ProgramFiles%\IIS\Asp.Net Core Module\V2\` | É onde está no `SERVIDOR-APP`, medido a 18 de novembro de 2026 |
+| `%ProgramFiles%\IIS\Asp.Net Core Module\V2\` | É onde está no `SERVIDOR-APP`, medido a 17 de novembro de 2026 |
 | `%SystemRoot%\System32\inetsrv\` | O outro sítio habitual, e o primeiro onde quase toda a gente vai procurar |
 
 **A lição não é "é neste".** É que testar um caminho é adivinhar onde outra pessoa pôs
@@ -132,7 +132,7 @@ Get-WebGlobalModule | Where-Object { $_.Name -eq "AspNetCoreModuleV2" }
 Se devolver alguma coisa, o módulo está registado, que é a pergunta que interessa. A
 propriedade `Image` diz onde o ficheiro está, e serve para imprimir e não para decidir.
 
-**Isto custou uma paragem a 18 de novembro de 2026.** O `verificar-servidor.ps1` testava o
+**Isto custou uma paragem a 17 de novembro de 2026.** O `verificar-servidor.ps1` testava o
 caminho em `System32\inetsrv`, não o encontrou, e disse que o módulo faltava num servidor
 que o tinha. Quem seguisse essa resposta ia instalar o que já lá estava. O
 `provisionar.ps1` passou a perguntar ao IIS, e a medição foi feita de uma consola de 64
@@ -636,7 +636,7 @@ O `provisionar.ps1` destranca as secções de autenticação ao nível da **apli
 `-Location Site/IdeaBoard`, porque o IIS as tranca ao nível do servidor por omissão e uma
 aplicação cujo `web.config` as traga responde 500.19 em vez de arrancar.
 
-**Escrever e nunca reler era a lacuna, e fechou a 18 de novembro de 2026.** As duas
+**Escrever e nunca reler era a lacuna, e fechou a 17 de novembro de 2026.** As duas
 aplicações vizinhas desta máquina fecham a nos guias delas, que exigem o
 `OverrideModeEffective` a dizer `Allow` antes de se fazer o que quer que seja.
 
@@ -1068,7 +1068,7 @@ correlação, conforme [04](04-Requisitos-Nao-Funcionais-e-Seguranca.md).
 
 Está no `RepositorioVizinhoA/Docs/Instalation/INSTALLATION-IIS.md`, na secção sobre uma pessoa
 reconhecida e sem conta na aplicação. **É afirmação deles, datada de 13 de outubro de
-2026**, lida pelo ARQ a 18 de novembro, e não medição nossa. Fica aqui resumida, com o
+2026**, lida pelo ARQ a 17 de novembro, e não medição nossa. Fica aqui resumida, com o
 apontador, e não copiada.
 
 **O valor dela não está nos passos, está no passo zero.**

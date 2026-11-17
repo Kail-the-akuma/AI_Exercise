@@ -11,12 +11,18 @@ aplicação faz lê o `BRIEFING.md` e o `Docs/02`.
 | | |
 |---|---|
 | Período | 4 a 17 de novembro de 2026, catorze dias |
-| Commits | 142, dos quais 68 no último dia |
-| Código | 217 ficheiros C#, cerca de 21 600 linhas, contando testes |
+| Commits | mais de 140, dos quais cerca de metade no último dia |
+| Código | 122 ficheiros C# e 19 de Razor, cerca de 24 300 linhas em `src` e `tests` |
 | Testes | 282 de unidade e integração, 37 ponta a ponta |
 | Registos de decisão | 27 ADR |
 | Pessoas | uma |
 | Agentes | cinco papéis em sessões separadas |
+
+Os números de ficheiros, de linhas e de registos foram contados neste repositório. O de
+commits está arredondado de propósito, porque a história foi reescrita no último dia para
+substituir nomes internos por marcadores e um número exacto fica errado à primeira
+contagem seguinte. **O de testes é relatado e não medido aqui**, e é o único da tabela que
+não foi confirmado por quem a escreve.
 
 A aplicação é uma plataforma interna de ideias com quatro funcionalidades: submeter,
 votar, ver um ranking e ver quem votou. Corre em ASP.NET Core sobre SQLite, com
@@ -45,6 +51,14 @@ não haver duas versões de uma decisão a correr em paralelo.
 documentação, não escreve registos. Se o fizesse, deixava de poder verificar com
 independência o que os outros escreveram.
 
+> **Este documento é a excepção, e convém que isso se leia aqui e não só no histórico.**
+> Foi escrito pelo orquestrador, a pedido da pessoa, porque é sobre o modo de trabalho e
+> não sobre o produto. Passou para o papel de documentação no momento em que entrou em
+> `Docs/`, e foi esse papel que verificou os números acima e escreveu esta nota.
+>
+> Uma regra enunciada num documento que a quebra, sem o dizer, é precisamente o género de
+> coisa que este post mortem diz ter custado caro noutros sítios.
+
 **O orquestrador não acredita em relatórios.** Verifica por comando. Esta é a regra que
 mais vezes salvou o trabalho e a que mais custou a cumprir, porque um relatório bem escrito
 parece-se muito com um facto.
@@ -62,10 +76,22 @@ atribuída ao mecanismo errado, e uma explicação de um erro que o próprio có
 impossível. Nenhuma delas se via na leitura. Todas se viram ao correr alguma coisa.
 
 **Escrever a condição que falsifica.** Um dos registos previu, com confiança alta e
-documentação a sustentar, exactamente o contrário do que viria a acontecer no servidor. O
-que o salvou de estar errado foi a condição que ele próprio tinha escrito no primeiro dia,
-a dizer em que circunstância a afirmação deixaria de valer. Foi essa circunstância que se
-realizou. A afirmação não era falsa, era condicional.
+documentação a sustentar, exactamente o contrário do que viria a acontecer no servidor:
+dizia que o nome curto do servidor entraria sem pedir credenciais, e no dia da publicação é
+o nome qualificado que entra. Esse registo tinha escrito, no primeiro dia, a circunstância
+em que a sua afirmação deixaria de valer.
+
+> **E aqui é preciso cuidado, porque esta é a lição mais fácil de contar bem de mais.** Que
+> a afirmação era condicional está escrito e é verdade. Que foi **aquela** condição que se
+> realizou **não está medido**. O próprio registo diz, duas linhas abaixo, que o porquê não
+> está verificado e que a explicação mais económica é apenas a mais económica. Há pelo
+> menos um segundo mecanismo capaz de produzir o mesmo resultado, e distinguir os dois pede
+> uma leitura numa máquina do parque que ainda ninguém fez.
+>
+> O que se pode afirmar hoje é mais modesto e continua a ser a lição: **ter escrito a
+> condição foi o que permitiu saber, no dia em que a previsão falhou, que havia uma
+> condição por verificar em vez de um registo simplesmente errado.** O que não se pode
+> afirmar é que a condição escrita foi a que disparou.
 
 **Registar a razão e não só a decisão.** Quando o endereço da aplicação teve de mudar no
 dia da publicação, a razão que sustentava o anterior caiu com ele. Por estar escrita,

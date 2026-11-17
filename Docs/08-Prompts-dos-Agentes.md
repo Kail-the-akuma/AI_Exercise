@@ -2,8 +2,18 @@
 
 **Versão 2, 13 de novembro de 2026.**
 
-Cinco papéis, cinco sessões separadas do Claude Code, cada uma na sua janela. Cada uma
-trabalha na sua própria árvore de trabalho do git, e não todas na mesma.
+Cinco papéis, cinco sessões separadas do Claude Code, cada uma na sua janela.
+
+**Sobre as árvores de trabalho, o que está escrito e o que aconteceu.** Este documento
+manda cada sessão trabalhar na sua própria árvore do git, criada a partir do `dev`. A 17
+de novembro de 2026 as cinco trabalharam na mesma, e a consequência foi observada mais do
+que uma vez: um `push` de um papel levou consigo o commit que outro tinha acabado de
+fazer na árvore partilhada.
+
+Não é avaria, é a regra do `push` da secção Ramos a existir por causa disto. Fica aqui
+porque quem ler só a primeira frase fica a pensar que as árvores separadas o protegem de
+uma coisa de que não protegem, e porque escolher entre as duas formas é decisão de quem
+organiza o trabalho e não deste documento.
 
 Os prompts abaixo são para colar na primeira mensagem de cada sessão.
 
@@ -155,7 +165,7 @@ cinco papéis à volta.
 
 ### Dois comandos que imprimem a mesma palavra podem provar coisas diferentes
 
-Observação do papel de verificação, a 18 de novembro de 2026, e é a pergunta aplicada ao
+Observação do papel de verificação, a 17 de novembro de 2026, e é a pergunta aplicada ao
 caso mais escorregadio: quando a prova não falha por estar errada, falha por ter sido
 feita no momento errado ou contra a coisa errada.
 
@@ -624,7 +634,7 @@ Um resultado pode estar num comentário, num exemplo, numa mensagem de erro ou n
 frase que diz que aquilo NÃO existe. Antes de escreveres que algo existe, vais ver a
 linha e confirmas que é código a correr e não prosa a falar dele.
 
-Medido a 18 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
+Medido a 17 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
 duas vezes, e as duas ocorrências são comentários a dizer que não há nenhum. A mesma
 procura sobre o código com os comentários removidos não devolve nada.
 
