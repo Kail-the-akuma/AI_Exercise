@@ -455,7 +455,8 @@ Write-Host "Provisionamento concluido. O site existe e ainda nao tem aplicacao n
 Write-Host ""
 Write-Host "A seguir, por esta ordem:" -ForegroundColor White
 Write-Host "  1. Criar a base de dados com o script completo, numa base NOVA:"
-Write-Host "       sqlite3 -bail `"$databaseFile`" < deploy\migracao.sql"
+Write-Host "       Get-Content deploy\migracao.sql | sqlite3 -bail `"$databaseFile`""
+Write-Host "       (nao usar '<': no PowerShell e operador reservado e a linha nem chega a correr)" -ForegroundColor DarkGray
 Write-Host "  2. Ligar o modo WAL, uma vez, conforme Docs/06:"
 Write-Host "       sqlite3 -bail `"$databaseFile`" `"PRAGMA journal_mode = WAL;`""
 Write-Host "  3. Publicar e copiar com o publicar.ps1."
