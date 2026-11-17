@@ -59,7 +59,17 @@ param(
     [ValidateSet("Publish", "Copy", "All")]
     [string] $Action = "All",
 
-    [string] $RepositoryRoot = (Split-Path -Parent $PSScriptRoot),
+    # Left empty here and worked out in the body, never in this default. Inside a
+    # parameter default $PSScriptRoot is EMPTY when the script is started as a new process
+    # with powershell.exe -file, and it holds the right path only when the script is called
+    # from inside a session that is already open. Measured both ways, with this file.
+    #
+    # Which matters because -file is exactly how Windows starts a .ps1 from the shell: the
+    # registry command behind "Executar com o PowerShell" is
+    # "powershell.exe" "-file" " %1 ". So computing it here killed the script inside its own
+    # parameter block, before one line of the report, in the very way of starting it that
+    # the pause at the end exists to serve.
+    [string] $RepositoryRoot = "",
 
     [Parameter(Mandatory = $true)]
     [string] $ArtefactPath,
@@ -78,6 +88,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Here and not in the parameter default, for the reason written there. In the body
+# $PSScriptRoot holds the script's own folder however the script was started.
+if ($RepositoryRoot -eq "")
+{
+    $RepositoryRoot = Split-Path -Parent $PSScriptRoot
+}
 
 #region Closing
 

@@ -1,5 +1,7 @@
-using System.Net;
+﻿using System.Net;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
+using IdeaBoard.App.Data;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -88,6 +90,116 @@ public class PathBaseTests
         Assert.Equal(PathBase + "/nome", location);
     }
 
+
+    /// <summary>
+    /// NOTHING THE PAGE RENDERS POINTS OUTSIDE THE PREFIX.
+    ///
+    /// This is deliberately not three assertions about three places known to be wrong. Two
+    /// defects of exactly this shape have been found by hand, one in a redirect and one in
+    /// an href, and the second was missed by a search for the first because the slash was
+    /// not written in the source: it came out of an expression. A net that only covers the
+    /// places somebody already thought of catches the third one never.
+    ///
+    /// So the assertion is about the whole rendered page: every href, src and action either
+    /// begins with the prefix or does not begin with a slash at all. A relative address, a
+    /// fragment and an absolute external address are all fine, because none of them is
+    /// resolved against the root of this server. One that begins with a slash and not with
+    /// the prefix is a link out of this application, and on the server this is deployed to
+    /// that means a link into the neighbour's.
+    ///
+    /// The search term is in the address on purpose. Some of what is rendered only exists
+    /// once a search is active, the button that clears it among them, and that button was
+    /// the second defect.
+    /// </summary>
+    [Fact]
+    public async Task NothingRenderedPointsOutsideThePrefix()
+    {
+        using TemporarySqliteDatabase database = new TemporarySqliteDatabase();
+
+        Assert.Equal("wal", database.EnableWriteAheadLogging());
+
+        // The person has to exist, otherwise the gate answers every page with a redirect
+        // and there is no rendered page to look at.
+        using (IdeaBoardDbContext seeding = database.CreateContext())
+        {
+            seeding.Users.Add(TestData.NewUser("Ana Dias", SignedInScheme.SubjectId));
+
+            await seeding.SaveChangesAsync(Cancellation);
+        }
+
+        using EnvironmentVariableScope environment = new EnvironmentVariableScope();
+
+        environment.Set("ASPNETCORE_ENVIRONMENT", "Development");
+        environment.Set("ConnectionStrings__IdeaBoard", database.ConnectionString);
+        environment.Set("Localization__TimeZoneId", "Europe/Lisbon");
+
+        using PathBasedWebFactory factory = new PathBasedWebFactory();
+
+        using HttpClient client = factory.CreateClient();
+
+        string[] pages = ["/", "/recentes", "/pessoal"];
+
+        List<string> offenders = new List<string>();
+
+        foreach (string page in pages)
+        {
+            string address = PathBase + page + "?procura=sessoes";
+
+            using HttpResponseMessage response = await client.GetAsync(address, Cancellation);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            string html = await response.Content.ReadAsStringAsync(Cancellation);
+
+            foreach (string reference in ReferencesIn(html))
+            {
+                if (PointsOutsideThePrefix(reference))
+                {
+                    offenders.Add(page + " -> " + reference);
+                }
+            }
+        }
+
+        Assert.True(
+            offenders.Count == 0,
+            "Rendered addresses that leave the application: " + string.Join(", ", offenders));
+    }
+
+
+    /// <summary>Every address the markup asks the browser to resolve.</summary>
+    private static IReadOnlyList<string> ReferencesIn(string html)
+    {
+        List<string> references = new List<string>();
+
+        foreach (Match match in Regex.Matches(html, "(?:href|src|action)\\s*=\\s*\"([^\"]*)\""))
+        {
+            references.Add(match.Groups[1].Value);
+        }
+
+        return references;
+    }
+
+
+    /// <summary>
+    /// An address leaves the application when it starts at the root of the server and not
+    /// at the prefix. Anything that does not start with a slash is resolved relative to the
+    /// current page, or is absolute and meant to be, and neither can land on the neighbour.
+    /// </summary>
+    private static bool PointsOutsideThePrefix(string reference)
+    {
+        if (!reference.StartsWith("/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (reference.Equals(PathBase, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return !reference.StartsWith(PathBase + "/", StringComparison.Ordinal);
+    }
+
     #endregion
 
 
@@ -152,6 +264,8 @@ public class PathBaseTests
     {
         public const string Name = "TestWindows";
 
+        public const string SubjectId = "S-1-5-21-1-2-3-9999";
+
         public SignedInScheme(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
@@ -165,7 +279,7 @@ public class PathBaseTests
             ClaimsIdentity identity = new ClaimsIdentity(
                 [
                     new Claim(ClaimTypes.Name, "EXEMPLO\\adias"),
-                    new Claim(ClaimTypes.PrimarySid, "S-1-5-21-1-2-3-9999"),
+                    new Claim(ClaimTypes.PrimarySid, SubjectId),
                 ],
                 Name);
 

@@ -26,10 +26,17 @@
         @*
             Only offered once there is something to clear. A link rather than a button
             because it goes somewhere, which is this same page without the term.
+
+            The path base is in front, and the reason is the whole difference between this
+            line and the one in _Layout. There, Request.Path is compared, and comparing
+            without the prefix is right. Here it is WRITTEN into an address, and an address
+            beginning with a slash is resolved by the browser against the root of the
+            server. Served at /IdeaBoard, clearing a search on Recentes would render
+            href="/recentes" and send the person to whatever else that server hosts.
         *@
         @if (IdeaSearch.Clean(Model) is not null)
         {
-            <a class="botao" href="@Context.Request.Path">@UiText.ClearSearchButton</a>
+            <a class="botao" href="@(Context.Request.PathBase + Context.Request.Path)">@UiText.ClearSearchButton</a>
         }
     </span>
 </form>

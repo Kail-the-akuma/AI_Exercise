@@ -2,8 +2,9 @@
 
 <#
 .SYNOPSIS
-    Creates the folders, the application pool and the site for the IdeaBoard, and touches
-    nothing that was already there.
+    Creates the folders and the application pool for the IdeaBoard, and then either an
+    application inside a site that already exists, which is the default, or a site of its
+    own. It touches nothing that was already there.
 
 .DESCRIPTION
     This server already serves another application to real people. Everything below is
@@ -14,10 +15,21 @@
     is started, stopped or reconfigured. A global command takes the other application down
     with it, and the person running this would have no reason to connect the two.
 
-    IT REFUSES RATHER THAN REPAIRS. If the pool, the site or the port is already taken, the
-    script stops and says so instead of configuring over what it found. A script that
-    quietly corrects what it meets is how the application next door gets broken by somebody
-    who was trying to be helpful.
+    IT REFUSES RATHER THAN REPAIRS. If the pool is already taken, if the site it was told
+    to use does not exist, if there is already an application at that virtual path, or if
+    the port is already bound, the script stops and says so instead of configuring over
+    what it found. A script that quietly corrects what it meets is how the application next
+    door gets broken by somebody who was trying to be helpful.
+
+    IT HAS TWO MODES, AND THEY ARE PARAMETER SETS AND NOT A SWITCH. Giving -VirtualPath
+    creates an application inside a site that already exists, which is the default and what
+    this installation uses, because the port is already served by the site next door.
+    Giving -Port instead creates a site of its own. PowerShell refuses both together.
+
+    EVERY PARAMETER HAS A DEFAULT, and they are the SERVIDOR-APP installation's, so running
+    it with no arguments provisions that installation. They are not universal values. The
+    script prints every value before it changes anything, saying of each one whether it came
+    from the default or from the command line.
 
     Run it in a PowerShell console as an administrator, on the server.
 
@@ -25,13 +37,25 @@
     prints is in Portuguese, because it is read by the person running it.
 
 .PARAMETER PoolName
-    Name of the application pool to create. It must not exist yet.
+    Name of the application pool to create. It must not exist yet, in either mode. The pool
+    is always its own: sharing one between applications is not supported with the in-process
+    hosting model, which is what the published web.config declares.
 
 .PARAMETER SiteName
-    Name of the site to create. It must not exist yet.
+    In the default mode, the site that already exists and is to receive the application; it
+    is read, it receives an application, and nothing else about it changes. With -Port, the
+    site to create, which must not exist yet.
+
+.PARAMETER VirtualPath
+    Virtual path under the existing site, such as /IdeaBoard. Giving it chooses the
+    application mode. There must be no application at that path already. It is a virtual
+    path and not a path on disk, and the script refuses one that looks like a disk path.
 
 .PARAMETER Port
-    HTTP port for the site. It must not be bound by another site.
+    HTTP port for a site of its own. Giving it chooses the site mode, and it cannot be given
+    together with -VirtualPath. It must not be bound by another site. This installation does
+    not use it: the application goes inside a site that already serves on port 80 and
+    inherits its bindings.
 
 .PARAMETER PhysicalPath
     Folder the published application will live in, for example C:\inetpub\IdeaBoard.
@@ -40,8 +64,27 @@
     Root of the folders that survive a publication. The default is the path Docs/06 fixes,
     and the script prints it so that it is never silently assumed.
 
+.PARAMETER NoPause
+    Skips the pause at the end. The pause is there because the console closes with the
+    script when it is started from the shell, taking the report with it. Pass this when
+    another script runs this one.
+
 .EXAMPLE
-    .\provisionar.ps1 -PoolName IdeaBoard -SiteName IdeaBoard -Port 8080 -PhysicalPath C:\inetpub\IdeaBoard
+    .\provisionar.ps1
+
+    This installation. Every value comes from the defaults: the application /IdeaBoard
+    inside the Default Web Site, in its own pool IdeaBoardPool, serving C:\inetpub\IdeaBoard.
+
+.EXAMPLE
+    .\provisionar.ps1 -SiteName "Default Web Site" -VirtualPath /Ideias -PoolName IdeiasPool
+
+    An application inside an existing site, with values of its own.
+
+.EXAMPLE
+    .\provisionar.ps1 -PoolName IdeaBoardPool -SiteName IdeaBoard -Port 8080 -PhysicalPath C:\inetpub\IdeaBoard
+
+    A site of its own, on a port of its own. Another installation, on a server where
+    port 8080 is free.
 #>
 
 <#
