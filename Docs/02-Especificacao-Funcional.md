@@ -1,6 +1,6 @@
 # 02. Especificação funcional
 
-**Versão 2, 13 de novembro de 2026.**
+**Versão 3, 17 de novembro de 2026.**
 
 Descreve o comportamento das quatro funcionalidades do produto mínimo definido em
 [BRIEFING.md](../BRIEFING.md). O que aqui não estiver, não existe.
@@ -58,6 +58,7 @@ autor das ideias e na lista de quem votou.
 | `/recentes` | Recentes | As mesmas ideias, ordenadas por data de submissão |
 | `/nova` | Nova ideia | Formulário de submissão |
 | `/ideias/{id}` | Detalhe | Uma ideia, com a descrição completa e a lista de votantes |
+| `/pessoal` | As minhas ideias e votos | Ideias propostas e apoiadas por quem está a ver |
 | `/nome` | Registo do nome | Só para quem chega sem nome conhecido |
 
 Quatro ecrãs do produto, mais o registo do nome e as páginas de erro. A navegação
@@ -229,11 +230,13 @@ de relance.
 
 Não há. Todas as ideias numa página.
 
-Com o volume esperado, entre vinte e cem ideias, a página continua pequena e a
-pesquisa do browser continua a funcionar sobre a lista toda, o que compensa em parte a
-ausência de pesquisa própria. Se a lista crescer muito além disso, é um sinal a
-observar depois do lançamento, conforme o briefing, e não um problema a resolver por
-antecipação.
+Com o volume esperado, entre vinte e cem ideias, a página continua pequena. Desde 16 de
+novembro de 2026 há procura própria, descrita em F5, que estreita a lista por título e
+por quem propôs.
+
+Se a lista crescer muito além do esperado, continua a ser um sinal a observar depois do
+lançamento, conforme o briefing, e não um problema a resolver por antecipação. A procura
+ajuda a encontrar uma ideia conhecida, e não a percorrer um quadro grande.
 
 ---
 
@@ -256,6 +259,71 @@ funcionalidade por construir.
 
 ---
 
+## F5. Procurar, e ver o que é meu
+
+Acrescentado a 16 de novembro de 2026, por decisão do Hugo que alargou o âmbito do
+briefing. Não é produto mínimo, e está documentado aqui pelo mesmo critério que tudo o
+resto: descreve o que ficou construído.
+
+### Procura
+
+Um campo de procura sobre a mesma lista, nos dois separadores.
+
+- Procura **no título e no nome de quem propôs**, e em mais nada.
+- Ignora maiúsculas e acentos, portanto `anibal` encontra `Aníbal`.
+- Os espaços no início e no fim são aparados, e um termo vazio devolve a lista inteira,
+  que é o estado de não se ter procurado nada.
+- A ordenação do separador mantém se. A procura estreita a lista, não a reordena.
+
+### O separador pessoal, em `/pessoal`
+
+Duas listas sobre a mesma pessoa, quem está a ver e mais ninguém. **Não há página por
+pessoa**, e continua a não haver: esta página mostra sempre quem a abriu.
+
+| Secção | Conteúdo |
+|---|---|
+| Ideias que propus | As ideias de quem está a ver |
+| Ideias que apoiei | As ideias em que essa pessoa votou |
+
+### Aviso de votos novos
+
+Quando uma ideia de quem está a ver recebeu votos desde a última vez que essa pessoa
+abriu o separador pessoal, o número aparece na linha dessa ideia, e o total aparece na
+navegação.
+
+A contagem **só é preenchida no separador pessoal e só para as ideias da própria
+pessoa**. Em todo o lado o valor é zero e não se desenha nada.
+
+Quem nunca abriu o separador não tem marca de leitura nenhuma, e isso é deliberado. O
+registo entra vazio para toda a gente no dia em que a coluna passa a existir, porque um
+valor por omissão com a data desse dia declararia em silêncio que toda a gente tinha
+acabado de ler tudo.
+
+### Iniciais de quem votou, na lista
+
+Cada linha da lista mostra as iniciais das **últimas quatro pessoas a votar** naquela
+ideia, da mais recente para a mais antiga. Uma ideia sem votos não mostra nada, em vez de
+uma etiqueta vazia.
+
+**São iniciais e não nomes.** A lista nominal completa continua a estar no detalhe da
+ideia, e é lá que continua a viver. Nada aqui se tornou público que já não fosse: o aviso
+de que o voto é público está acima da lista, e a lista completa de votantes sempre esteve
+na página da ideia. O que mudou foi onde algumas dessas pessoas aparecem.
+
+> **Achado por resolver, e não é meu para corrigir.** Estas iniciais são o único sinal
+> daquelas pessoas naquele sítio, e estão marcadas como `aria-hidden`. Nos outros quatro
+> sítios onde as mesmas iniciais aparecem há sempre o nome escrito ao lado, que é o que
+> justifica escondê las de quem usa leitor de ecrã. Aqui não há, portanto quem usa leitor
+> de ecrã ouve a etiqueta e mais nada. Relatado ao DEV.
+
+### Quantas pessoas no quadro
+
+O fim da lista diz de quantas pessoas é o quadro, contando quem já entrou pelo menos uma
+vez. Não é a dimensão da equipa, e a diferença entre os dois números importa para os
+critérios de sucesso, conforme [06](06-Operacao-e-Publicacao.md).
+
+---
+
 ## Estados vazios e de erro
 
 ### Lista vazia
@@ -267,6 +335,16 @@ ideia, com o botão em destaque.
 O briefing identifica o arranque vazio como risco, e a resposta combinada é esta mais
 a submissão de ideias pela equipa antes do lançamento, descrita em
 [05](05-Plano-de-Entrega.md).
+
+### Procura sem resultados, que é um estado vazio diferente
+
+**São dois estados e não um, e convém que não se confundam.** Uma lista sem ideias é um
+quadro por estrear, e convida a propor a primeira. Uma procura sem correspondências é um
+quadro cheio onde aquele termo não encontrou nada, e propor uma ideia não é a resposta.
+
+Por isso a procura sem resultados mostra a sua própria mensagem e **não** o convite a
+submeter. Mostrar o convite aqui diria a quem procurou que o quadro está vazio, o que é
+falso e desanima sem motivo.
 
 ### Ideia inexistente
 
@@ -309,6 +387,27 @@ Português europeu em toda a aplicação. Sem emojis.
 | Registo do nome, botão | Guardar |
 | Registo do nome, aviso | Este nome fica visível para os seus colegas, como autor das suas ideias e na lista de quem votou. |
 
+Acrescentados a 16 de novembro de 2026, com o alargamento do âmbito.
+
+| Elemento | Texto |
+|---|---|
+| Etiqueta do campo de procura | Procurar por título ou por quem propôs |
+| Botão de procurar | Procurar |
+| Botão de limpar a procura | Limpar |
+| Procura sem resultados | Nenhuma ideia corresponde a esta procura. |
+| Separador pessoal | As minhas ideias e votos |
+| Secção das ideias próprias | Ideias que propus |
+| Secção das ideias apoiadas | Ideias que apoiei |
+| Sem ideias propostas | Ainda não propôs nenhuma ideia. |
+| Sem ideias apoiadas | Ainda não apoiou nenhuma ideia. |
+| Etiqueta das iniciais na lista | Últimos votos |
+| Pessoas no quadro, singular | de 1 pessoa no quadro |
+| Pessoas no quadro, plural | de {n} pessoas no quadro |
+| Votos novos, singular | 1 voto novo |
+| Votos novos, plural | {n} votos novos |
+| Ideias com votos novos, singular | 1 ideia sua recebeu votos novos |
+| Ideias com votos novos, plural | {n} ideias suas receberam votos novos |
+
 ---
 
 ## Acessibilidade
@@ -332,11 +431,18 @@ Repetido aqui de forma explícita, porque uma especificação funcional é o sí
 estas ausências são mais facilmente confundidas com esquecimento. Todas estas decisões
 vêm do briefing.
 
+**Esta lista encolheu a 16 de novembro de 2026**, por decisão do Hugo tomada com ela à
+frente. Saíram a pesquisa, e a exclusão de notificações passou a valer apenas para as de
+email. O que entrou está descrito em F5 e registado no
+[BRIEFING.md](../BRIEFING.md), com a data e a proveniência.
+
+Que a lista tenha encolhido uma vez não a torna negociável. Encolher outra vez precisa do
+mesmo que esta precisou, que é decisão explícita de quem é dono do produto.
+
 | Não existe | Nota |
 |---|---|
 | Comentários | |
 | Categorias, etiquetas e filtros | |
-| Pesquisa | A pesquisa do browser sobre a página serve de paliativo |
 | Administração | Sem ecrã de gestão e sem utilizadores privilegiados |
 | Edição de ideias | A submissão é definitiva |
 | Remoção de ideias | Correção apenas por procedimento manual documentado |
@@ -345,8 +451,8 @@ vêm do briefing.
 | Mecanismo de exploração | Nada acontece a uma ideia vencedora dentro da plataforma |
 | Inscrição em ideias | |
 | Registo do que se aprendeu | |
-| Notificações | Nem por email nem na aplicação |
-| Perfis de utilizador | Não há página por pessoa |
+| Notificações por email | Dentro da aplicação há o aviso de votos novos, descrito em F5 |
+| Perfis de utilizador | Não há página por pessoa. O separador pessoal mostra sempre quem o abriu |
 | Decaimento de votos ou ciclos | A lista é contínua |
 
 O briefing lista consequências conhecidas destas ausências e afirma que nenhuma delas
