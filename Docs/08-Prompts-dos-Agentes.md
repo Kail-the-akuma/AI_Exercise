@@ -87,12 +87,29 @@ Pior do que isso: não avisa quem o partiu, avisa o seguinte que lá chegar. Ess
 uma suite vermelha sobre trabalho que não é dela, e o primeiro instinto, que é procurar a
 avaria no que acabou de escrever, é o instinto errado.
 
-Daí as duas práticas que acompanham a regra, e que são o preço dela:
+### Quem empurra diz o que o push levou, e não o que commitou
+
+Num ramo partilhado sem pull request, **"empurrei o meu trabalho" deixou de querer dizer
+"empurrei só o meu trabalho"**. Um push empurra o ramo e não o commit, portanto leva tudo
+o que estiver no ramo, incluindo o que outro agente commitou na árvore partilhada entre a
+tua última busca e o teu commit.
+
+Por isso o que se relata é o intervalo medido, e não o próprio `git log`.
+
+**Engana nos dois sentidos, e o segundo é o que custa a ver.** Num, empurras trabalho de
+outra pessoa sem o saber, e ela não sabe que já lá está. No outro, essa pessoa diz que
+tem trabalho por empurrar quando ele já foi, porque o teu push o levou.
+
+Medido a 17 de novembro de 2026: um push que o DOC deu por empurrar um commit seu levou
+também um commit do ARQ, que tinha ficado por empurrar minutos antes.
+
+Daí as três práticas que acompanham a regra, e que são o preço dela:
 
 - **O ORQ guarda o último commit em que mediu o `dev` verde**, e diz qual é sempre que o
   mede. É um ponto de comparação e não um certificado.
 - **Quem chegar a um `dev` vermelho mede primeiro se já estava vermelho antes do trabalho
   dele.** A pergunta não é "o que é que eu parti", é "isto já estava assim".
+- **Quem empurra diz o que o push levou**, pela razão da secção acima.
 
 O commit verde de referência não está escrito aqui de propósito. Ele muda várias vezes por
 dia, e um número gravado num documento envelhece à primeira medição seguinte. Este
