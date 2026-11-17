@@ -44,17 +44,26 @@
     .\provisionar.ps1 -PoolName IdeaBoard -SiteName IdeaBoard -Port 8080 -PhysicalPath C:\inetpub\IdeaBoard
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = "NewSite")]
 param(
     [Parameter(Mandatory = $true)]
     [string] $PoolName,
 
+    # The site to create, in NewSite, or the site that already exists and is to receive the
+    # application, in Application.
     [Parameter(Mandatory = $true)]
     [string] $SiteName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = "NewSite")]
     [ValidateRange(1, 65535)]
     [int] $Port,
+
+    # The virtual path under the existing site, such as /IdeaBoard. Giving it is what picks
+    # the Application mode, and the two modes are parameter sets rather than a switch so
+    # that PowerShell itself refuses Port and VirtualPath together and demands whichever of
+    # the two the chosen mode needs. One script, one way of creating a pool.
+    [Parameter(Mandatory = $true, ParameterSetName = "Application")]
+    [string] $VirtualPath,
 
     [Parameter(Mandatory = $true)]
     [string] $PhysicalPath,
@@ -169,16 +178,74 @@ function Stop-WithReason
 #endregion
 
 
+#region Mode
+
+<#
+    Everything below works on one location inside the IIS configuration, and the only thing
+    the two modes change is which location that is. A site is addressed by its name, an
+    application by the site's name, a slash, and its own path. Deriving it once here is what
+    keeps the pool, the permissions, the Event Log source and the authentication identical
+    between the two instead of copied.
+#>
+
+$isApplication = ($PSCmdlet.ParameterSetName -eq "Application")
+
+$applicationName = ""
+$targetLocation = $SiteName
+$targetDescription = "site '$SiteName'"
+
+if ($isApplication)
+{
+    $applicationName = $VirtualPath.Trim("/\ ")
+
+    if ($applicationName.Length -eq 0)
+    {
+        Stop-WithReason "O caminho virtual esta vazio. Para servir na raiz do site usa-se o modo de site proprio, e nao uma aplicacao."
+    }
+
+    <#
+        A virtual path is not a path on disk, and this catches the one way it arrives looking
+        like one. Run from a Git Bash window, the shell rewrites an argument that begins with
+        a slash into a Windows path before the script ever sees it, so -VirtualPath /IdeaBoard
+        arrives as something like C:/Program Files/Git/IdeaBoard. Observed, not imagined.
+
+        Without this the application would be created, or refused, under a name nobody typed,
+        and the message would be about something else entirely.
+    #>
+    if ($applicationName.Contains(":") -or $applicationName.Contains("\"))
+    {
+        Stop-WithReason "O caminho virtual '$applicationName' parece um caminho de disco e nao um caminho virtual. Se isto foi corrido a partir de uma janela Git Bash, foi a shell que reescreveu o argumento antes de o script o ver. Correr a partir do PowerShell, ou passar o valor sem a barra inicial, como -VirtualPath IdeaBoard."
+    }
+
+    $targetLocation = $SiteName + "/" + $applicationName
+    $targetDescription = "aplicacao '/$applicationName' dentro do site '$SiteName'"
+}
+
+#endregion
+
+
 #region Preconditions
 
 Write-Host ""
 Write-Host "Provisionamento do IdeaBoard no IIS." -ForegroundColor White
 Write-Host ""
-Write-Host "  Pool:     $PoolName"
-Write-Host "  Site:     $SiteName"
-Write-Host "  Porta:    $Port"
+Write-Host "  Pool:      $PoolName"
+
+if ($isApplication)
+{
+    Write-Host "  Modo:      aplicacao dentro de um site que ja existe"
+    Write-Host "  Site pai:  $SiteName  (lido, recebe uma aplicacao, e mais nada muda nele)"
+    Write-Host "  Caminho:   /$applicationName"
+}
+else
+{
+    Write-Host "  Modo:      site proprio, com porta propria"
+    Write-Host "  Site:      $SiteName"
+    Write-Host "  Porta:     $Port"
+}
+
 Write-Host "  Aplicacao: $PhysicalPath"
-Write-Host "  Dados:    $DataRoot"
+Write-Host "  Dados:     $DataRoot"
 Write-Host ""
 Write-Host "  O caminho dos dados nao foi adivinhado: ou veio por parametro, ou e o que o"
 Write-Host "  Docs/06 fixa. Esta aqui escrito para ser lido antes de continuar."
@@ -248,32 +315,88 @@ Write-Done "Nao ha pool chamado '$PoolName'"
 
 $existingSite = Get-Website | Where-Object { $_.Name -eq $SiteName }
 
-if ($null -ne $existingSite)
+if ($isApplication)
 {
-    Stop-WithReason "Ja existe um site chamado '$SiteName'. Mesma razao."
-}
-
-Write-Done "Nao ha site chamado '$SiteName'"
-
-# A port taken by another site is the collision that actually takes the neighbour down,
-# because two sites bound to the same port cannot both start.
-foreach ($site in Get-Website)
-{
-    foreach ($binding in $site.bindings.Collection)
+    # The site has to be there, and saying which ones are is the whole point of the message.
+    # A virtual path created under the wrong site is among the hardest things to see
+    # afterwards: it answers 404 from a place nobody is looking at.
+    if ($null -eq $existingSite)
     {
-        $parts = $binding.bindingInformation -split ":"
+        $known = (Get-Website | ForEach-Object { $_.Name }) -join ", "
 
-        if ($parts.Length -ge 2)
+        if ($known.Length -eq 0)
         {
-            if ($parts[1] -eq $Port.ToString())
+            $known = "nenhum"
+        }
+
+        Stop-WithReason "Nao existe nenhum site chamado '$SiteName'. Os que existem nesta maquina sao: $known. Uma aplicacao criada no site errado responde 404 a partir de um sitio onde ninguem a procura."
+    }
+
+    Write-Done "O site '$SiteName' existe e vai receber a aplicacao"
+
+    <#
+        Nesting the application's folder inside the parent site's folder is legal in IIS and
+        is the one arrangement that can later cost the neighbour its files. The mirrored copy
+        in publicar.ps1 deletes whatever is in the destination and not in the artefact, so a
+        destination typed one level too high would be the neighbour's own folder.
+
+        It is a warning and not a refusal, because the arrangement is legitimate and the
+        decision is the operator's. publicar.ps1 refuses a destination holding files that are
+        not this application's, so the danger is already caught on the other side. This says
+        it here, where the folder is still being chosen.
+    #>
+    $parentRoot = [System.IO.Path]::GetFullPath($existingSite.physicalPath)
+    $applicationRoot = [System.IO.Path]::GetFullPath($PhysicalPath)
+
+    if ($applicationRoot.StartsWith($parentRoot, [System.StringComparison]::OrdinalIgnoreCase))
+    {
+        Write-Host "   AVISO: a pasta da aplicacao fica DENTRO da pasta do site vizinho." -ForegroundColor Yellow
+        Write-Host ("     Vizinho:   {0}" -f $parentRoot) -ForegroundColor Yellow
+        Write-Host ("     Aplicacao: {0}" -f $applicationRoot) -ForegroundColor Yellow
+        Write-Host "     E legitimo, mas a copia do publicar.ps1 apaga o que estiver no destino" -ForegroundColor Yellow
+        Write-Host "     e nao estiver no artefacto. Um destino escrito um nivel acima seria a" -ForegroundColor Yellow
+        Write-Host "     pasta do vizinho. Conferir o -DestinationPath com cuidado." -ForegroundColor Yellow
+    }
+
+    foreach ($application in (Get-WebApplication -Site $SiteName))
+    {
+        if ($application.path -eq ("/" + $applicationName))
+        {
+            Stop-WithReason "Ja existe uma aplicacao em '/$applicationName' dentro do site '$SiteName', a servir '$($application.PhysicalPath)' pelo pool '$($application.applicationPool)'. Este script nao reconfigura o que encontra. Apagar a existente a mao depois de confirmar que nao e de outra aplicacao, ou escolher outro caminho."
+        }
+    }
+
+    Write-Done "Nao ha aplicacao em '/$applicationName' dentro de '$SiteName'"
+}
+else
+{
+    if ($null -ne $existingSite)
+    {
+        Stop-WithReason "Ja existe um site chamado '$SiteName'. Mesma razao. Se a intencao era servir dentro dele, usar -VirtualPath em vez de -Port."
+    }
+
+    Write-Done "Nao ha site chamado '$SiteName'"
+
+    # A port taken by another site is the collision that actually takes the neighbour down,
+    # because two sites bound to the same port cannot both start.
+    foreach ($site in Get-Website)
+    {
+        foreach ($binding in $site.bindings.Collection)
+        {
+            $parts = $binding.bindingInformation -split ":"
+
+            if ($parts.Length -ge 2)
             {
-                Stop-WithReason "A porta $Port ja esta ligada ao site '$($site.Name)'. Dois sites na mesma porta nao arrancam os dois, e o que ja la esta serve pessoas."
+                if ($parts[1] -eq $Port.ToString())
+                {
+                    Stop-WithReason "A porta $Port ja esta ligada ao site '$($site.Name)'. Dois sites na mesma porta nao arrancam os dois, e o que ja la esta serve pessoas. Se a intencao era servir dentro desse site, usar -VirtualPath em vez de -Port."
+                }
             }
         }
     }
-}
 
-Write-Done "A porta $Port esta livre"
+    Write-Done "A porta $Port esta livre"
+}
 
 #endregion
 
@@ -412,28 +535,91 @@ Write-Host "   origem escreve em HKLM, e o pool nao deve ter essa permissao." -F
 #endregion
 
 
-#region Site
+#region Site or application
 
-Write-Step "A criar o site '$SiteName'"
+if ($isApplication)
+{
+    Write-Step "A ler o web.config do site pai, sem lhe tocar"
 
-New-Website -Name $SiteName -Port $Port -PhysicalPath $PhysicalPath -ApplicationPool $PoolName | Out-Null
+    <#
+        An application inherits its parent site's web.config. What is in the neighbour's is
+        not known here, and nothing is assumed about it: this reads it and reports it, and
+        changes nothing, because the usual cure for an unwanted inheritance is an edit to
+        the PARENT file, which is the one file this script must never touch.
 
-Write-Done "Site criado na porta $Port, sobre $PhysicalPath"
+        If a section does turn out to need isolating, this is where that is decided, and it
+        is decided by a person with the report below in front of them.
+    #>
 
-Write-Step "A destrancar a seccao de autenticacao, SO para este site"
+    $parentConfig = Join-Path $existingSite.physicalPath "web.config"
+
+    if (Test-Path -LiteralPath $parentConfig)
+    {
+        Write-Host "   O site pai tem web.config proprio, em $parentConfig" -ForegroundColor Yellow
+
+        try
+        {
+            $parentXml = [xml](Get-Content -Raw -LiteralPath $parentConfig)
+
+            foreach ($node in $parentXml.configuration.ChildNodes)
+            {
+                if ($node.NodeType -eq "Element")
+                {
+                    $inner = ($node.ChildNodes | Where-Object { $_.NodeType -eq "Element" } | ForEach-Object { $_.Name }) -join ", "
+
+                    Write-Host ("     {0}: {1}" -f $node.Name, $inner) -ForegroundColor Yellow
+                }
+            }
+        }
+        catch
+        {
+            Write-Host "     Nao foi possivel ler o ficheiro como XML. Fica por responder, e isso nao e o mesmo que estar vazio." -ForegroundColor Magenta
+        }
+
+        Write-Host "   O que a aplicacao herdar daqui vale ANTES do web.config dela." -ForegroundColor Yellow
+        Write-Host "   O sintoma: a aplicacao responde 500.19 a falar de uma seccao duplicada," -ForegroundColor Yellow
+        Write-Host "   ou arranca e comporta-se de forma que o web.config dela nao explica." -ForegroundColor Yellow
+        Write-Host "   A cura habitual mexe no ficheiro do VIZINHO, e este script nao lhe toca." -ForegroundColor Yellow
+    }
+    else
+    {
+        Write-Done "O site pai nao tem web.config proprio, portanto nada e herdado dele"
+    }
+
+    Write-Step "A criar a aplicacao '/$applicationName' dentro do site '$SiteName'"
+
+    New-WebApplication `
+        -Site $SiteName `
+        -Name $applicationName `
+        -PhysicalPath $PhysicalPath `
+        -ApplicationPool $PoolName | Out-Null
+
+    Write-Done "Aplicacao criada sobre $PhysicalPath, no pool '$PoolName'"
+    Write-Done "O site '$SiteName', o pool dele e as ligacoes dele ficaram como estavam"
+}
+else
+{
+    Write-Step "A criar o site '$SiteName'"
+
+    New-Website -Name $SiteName -Port $Port -PhysicalPath $PhysicalPath -ApplicationPool $PoolName | Out-Null
+
+    Write-Done "Site criado na porta $Port, sobre $PhysicalPath"
+}
+
+Write-Step "A destrancar a seccao de autenticacao, SO para $targetDescription"
 
 Write-Host "   O web.config que a publicacao produz traz a seccao de autenticacao dentro." -ForegroundColor DarkGray
 Write-Host "   O IIS tranca essa seccao ao nivel do servidor por omissao, e um site cujo" -ForegroundColor DarkGray
 Write-Host "   web.config a traga responde 500.19 em vez de arrancar." -ForegroundColor DarkGray
-Write-Host "   Isto e feito com -Location '$SiteName', portanto escreve uma entrada so para" -ForegroundColor DarkGray
-Write-Host "   este site e NAO altera o que vale para os outros." -ForegroundColor DarkGray
+Write-Host "   Isto e feito com -Location '$targetLocation', portanto escreve uma entrada so" -ForegroundColor DarkGray
+Write-Host "   para este alvo e NAO altera o que vale para os outros." -ForegroundColor DarkGray
 
 foreach ($section in @("windowsAuthentication", "anonymousAuthentication"))
 {
     Set-WebConfiguration `
         -Filter ("/system.webServer/security/authentication/" + $section) `
         -PSPath "IIS:\" `
-        -Location $SiteName `
+        -Location $targetLocation `
         -Metadata "overrideMode" `
         -Value "Allow"
 
@@ -445,7 +631,14 @@ Write-Host "   Se o site responder 500.19 a falar de uma seccao que nao pode ser
 Write-Host "   caminho, e isto que falhou, e e aqui que se mexe." -ForegroundColor Yellow
 
 
-Write-Step "A configurar a autenticacao do site"
+Write-Step "A configurar a autenticacao de $targetDescription"
+
+<#
+    Set at the application's own location in Application mode, which is also what settles
+    the one piece of inheritance that is certain: whatever the parent site says about
+    authentication, what is written here is what applies to this application. The parent's
+    own settings are left exactly as they were, which is what keeps the neighbour working.
+#>
 
 # The two go together. With anonymous on, IIS serves the request without challenging
 # anybody, the application receives requests with no identity, and the authorisation policy
@@ -455,7 +648,7 @@ Set-WebConfigurationProperty `
     -Name "enabled" `
     -Value $true `
     -PSPath "IIS:\" `
-    -Location $SiteName
+    -Location $targetLocation
 
 Write-Done "Autenticacao Windows: ativada"
 
@@ -464,7 +657,7 @@ Set-WebConfigurationProperty `
     -Name "enabled" `
     -Value $false `
     -PSPath "IIS:\" `
-    -Location $SiteName
+    -Location $targetLocation
 
 Write-Done "Autenticacao anonima: desligada"
 
@@ -487,17 +680,35 @@ $bindings = ($createdSite.bindings.Collection | ForEach-Object { $_.bindingInfor
 Write-Host ("   Site '{0}': estado {1}, pool {2}, bindings {3}" -f `
     $createdSite.Name, $createdSite.State, $createdSite.applicationPool, $bindings)
 
+if ($isApplication)
+{
+    $createdApplication = Get-WebApplication -Site $SiteName | Where-Object { $_.path -eq ("/" + $applicationName) }
+
+    if ($null -eq $createdApplication)
+    {
+        Stop-WithReason "A aplicacao '/$applicationName' nao aparece no site '$SiteName' depois de criada. Verificar a mao antes de continuar."
+    }
+
+    Write-Host ("   Aplicacao '{0}': pool {1}, caminho {2}" -f `
+        $createdApplication.path, $createdApplication.applicationPool, $createdApplication.PhysicalPath)
+
+    if ($createdApplication.applicationPool -ne $PoolName)
+    {
+        Stop-WithReason "A aplicacao ficou no pool '$($createdApplication.applicationPool)' e nao em '$PoolName'. Sem pool proprio nao ha o limite de um processo de trabalho nem a reciclagem desligada."
+    }
+}
+
 $windowsAuthEnabled = (Get-WebConfigurationProperty `
     -Filter "/system.webServer/security/authentication/windowsAuthentication" `
     -Name "enabled" `
     -PSPath "IIS:\" `
-    -Location $SiteName).Value
+    -Location $targetLocation).Value
 
 $anonymousEnabled = (Get-WebConfigurationProperty `
     -Filter "/system.webServer/security/authentication/anonymousAuthentication" `
     -Name "enabled" `
     -PSPath "IIS:\" `
-    -Location $SiteName).Value
+    -Location $targetLocation).Value
 
 Write-Host ("   Autenticacao: Windows {0}, anonima {1}" -f $windowsAuthEnabled, $anonymousEnabled)
 
@@ -512,7 +723,15 @@ if ($windowsAuthEnabled -ne $true -or $anonymousEnabled -ne $false)
 #region What comes next
 
 Write-Host ""
-Write-Host "Provisionamento concluido. O site existe e ainda nao tem aplicacao nenhuma." -ForegroundColor White
+if ($isApplication)
+{
+    Write-Host "Provisionamento concluido. A aplicacao existe e a pasta dela ainda esta vazia." -ForegroundColor White
+}
+else
+{
+    Write-Host "Provisionamento concluido. O site existe e ainda nao tem aplicacao nenhuma." -ForegroundColor White
+}
+
 Write-Host ""
 Write-Host "A seguir, por esta ordem:" -ForegroundColor White
 Write-Host "  1. Criar a base de dados com o script completo, numa base NOVA:"
@@ -525,6 +744,12 @@ Write-Host "  4. Percorrer a lista de verificacao manual do Docs/07, que e a par
 Write-Host "     nenhum teste automatico cobre: o desafio de autenticacao, a consulta ao"
 Write-Host "     diretorio, e a criacao do utilizador a partir de uma identidade verdadeira."
 Write-Host ""
+if ($isApplication)
+{
+    Write-Host ("Quando estiver publicada, responde em http://<maquina>/{0}" -f $applicationName) -ForegroundColor White
+    Write-Host ""
+}
+
 Write-Host "Nenhum pool ou site alheio foi tocado por este script." -ForegroundColor White
 Write-Host ""
 
