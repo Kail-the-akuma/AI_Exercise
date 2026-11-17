@@ -356,18 +356,35 @@ momento em que o faz.
 
 1. **Backup da base de dados**, pelo procedimento descrito mais abaixo. Antes de
    qualquer outra coisa, incluindo publicações que não mudam o esquema.
-2. **Parar o site** no IIS, não apenas o pool, para que não entrem pedidos a meio.
+2. **Parar o pool de aplicações**, e só esse, pela razão a seguir à lista.
 3. **Copiar os ficheiros publicados** para `C:\inetpub\IdeaBoard\`.
 4. **Aplicar as migrações** com o script SQL gerado a partir das migrações do EF Core,
    sempre com `-bail`, pela razão da secção seguinte.
 5. **Arrancar o site.**
 6. **Verificar** com a lista de verificação de [07](07-Plano-de-Verificacao.md).
 
-> **O passo 2 e o `publicar.ps1` não dizem o mesmo, e a diferença não é minha para
-> resolver.** Esta lista manda parar o site. O `publicar.ps1` pára o pool e deixa o site a
-> responder, o que dá 503 a quem chegar durante a cópia em vez de recusar a ligação. As
-> duas formas libertam os ficheiros para a cópia, portanto nenhuma está avariada, mas
-> quem seguir uma e ler a outra fica sem saber qual conta. Relatado.
+#### Porque é o pool e não o site, e porque isto é uma decisão e não uma medição
+
+Esta lista mandava parar o site. Foi alinhada com o `publicar.ps1`, que pára o pool, e a
+decisão é do orquestrador, tomada a 17 de novembro de 2026.
+
+**O raciocínio é sobre quem segura os ficheiros.** Quem os tem abertos é o processo de
+trabalho, e esse pertence ao pool e não ao site. Parar o site pára o atendimento de
+pedidos e pode deixar o processo vivo, e nesse caso a cópia falha na mesma com ficheiros
+bloqueados, que é o problema que parar servia para evitar.
+
+Que o 503 durante a cópia se leia melhor do que uma ligação recusada é verdade e não é o
+que decide. É um argumento sobre o sintoma, e o outro é sobre a causa.
+
+> **ISTO NÃO FOI MEDIDO, E A DISTINÇÃO É O PONTO.** Nem quem decidiu nem quem escreve isto
+> tem IIS para o confirmar. É um raciocínio sobre como o IIS funciona, e um raciocínio
+> coerente não é a mesma coisa que uma observação.
+>
+> A confirmação está na lista de verificação manual de
+> [07](07-Plano-de-Verificacao.md), para ser fechada numa máquina a sério. **Se ela disser
+> o contrário, a decisão inverte se e era o documento que estava certo.** Fica escrito
+> assim para que, nesse dia, ninguém tenha de descobrir que havia uma decisão por trás
+> disto.
 
 ### Migrações
 
