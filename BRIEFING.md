@@ -1,6 +1,6 @@
 # Briefing: plataforma interna de ideias
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 17 de novembro de 2026.**
 
 ## Resumo
 
@@ -54,13 +54,34 @@ melhorias ao dia a dia, protótipos, temas de partilha, tudo cabe na mesma lista
 
 Decidido, não esquecido.
 
-Sem comentários. Sem categorias nem pesquisa. Sem administração. Sem edição ou remoção
-de ideias depois de submetidas. Sem deteção de duplicados. Sem estados, triagem ou
-aprovação. Sem mecanismo formal de exploração, inscrição em ideias ou registo do que
-se aprendeu.
+Sem comentários. Sem categorias. Sem administração. Sem edição ou remoção de ideias
+depois de submetidas. Sem deteção de duplicados. Sem estados, triagem ou aprovação. Sem
+mecanismo formal de exploração, inscrição em ideias ou registo do que se aprendeu.
 
 O que acontece a uma ideia muito votada fica em aberto, por decisão. Quem quiser
 pegar nela organiza se fora da plataforma.
+
+### O âmbito foi alargado a 16 de novembro de 2026
+
+**Decisão do Hugo, tomada com esta lista à frente, e não deslize de construção.** Fica
+registado aqui com a data porque esta lista é a referência contra a qual tudo o resto se
+mede, e uma exclusão que desaparece sem explicação é indistinguível de uma que ninguém
+respeitou.
+
+Saiu daqui a **pesquisa**, que era excluída pela palavra e passou a existir, por título e
+por quem propôs.
+
+Entraram, sem estarem nesta lista mas contra o espírito dela de produto mínimo, um
+**separador pessoal** com as ideias propostas e apoiadas, um **aviso de votos novos** nas
+ideias de cada pessoa, as **iniciais de quem votou** ao lado de cada ideia na lista, e o
+**número de pessoas que já entrou no quadro**.
+
+O resto desta lista mantém se inteiro. Em particular continua a não haver comentários,
+categorias, administração, edição, remoção, deteção de duplicados, estados nem triagem.
+
+**O que isto não é.** Não é autorização para continuar a alargar. A lista encolheu uma
+vez, por decisão explícita de quem é dono do produto, e volta a precisar do mesmo para
+encolher outra vez.
 
 ## Critérios de sucesso
 
@@ -100,6 +121,13 @@ criticar trabalho existente. Vale a pena perguntar às pessoas passado um mês.
 
 **Sem categorias nem pesquisa, a navegação degrada se.** Acima de cerca de cinquenta
 ideias a lista torna se difícil de percorrer.
+
+> Risco parcialmente mitigado a 16 de novembro de 2026. A pesquisa por título e por quem
+> propôs passou a existir. As categorias continuam fora do âmbito, e a lista continua a
+> ser percorrida por inteiro quando ninguém procura nada, portanto o sinal a observar
+> mantém se.
+
+
 
 ## Notas técnicas
 

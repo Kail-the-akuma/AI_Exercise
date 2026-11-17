@@ -1,6 +1,6 @@
 # 06. Operação e publicação
 
-**Versão 2, 13 de novembro de 2026.**
+**Versão 3, 17 de novembro de 2026.**
 
 Destina se a quem publica e mantém a aplicação no servidor interno. Os caminhos usam
 o nome de trabalho `IdeaBoard` e têm de ser ajustados ao nome final.
@@ -185,6 +185,31 @@ anterior nem o seguinte, e que nenhum script sabe reparar. O comando é portanto
 ```
 sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db" < deploy\migracao.sql
 ```
+
+#### Qual dos dois scripts aplicar, e é preciso escolher
+
+A pasta `deploy` tem **dois** ficheiros, e aplicar o errado falha.
+
+| Ficheiro | Para que base de dados |
+|---|---|
+| `migracao.sql` | Uma base de dados **nova**. Contém tudo, incluindo a migração do aviso de votos novos |
+| `migracao-002-aviso-de-votos-novos.sql` | Uma base de dados **já em uso**, que tem apenas a migração inicial |
+
+Numa base já em uso o script completo falha logo na primeira instrução, por as tabelas já
+existirem, e é para esse caso que o segundo ficheiro existe.
+
+O enquadramento é o mesmo das outras migrações, por verificação e não por idempotência:
+
+1. Ler a `__EFMigrationsHistory` antes de aplicar. Se `20261116185858_AvisoDeVotosNovos`
+   já lá estiver, não aplicar nada.
+2. Aplicar com `-bail`.
+3. Confirmar o código de saída igual a zero.
+
+A coluna `lastNotificationsSeenAt` entra a `NULL` em todas as linhas existentes, e isso é
+deliberado. `NULL` quer dizer que a pessoa nunca abriu a página que lhe mostra os votos
+recebidos, o que é verdade para toda a gente no momento em que a coluna passa a existir.
+Um valor por omissão com a data desse dia declararia em silêncio que toda a gente tinha
+acabado de ler tudo.
 
 ## Backup e restauro
 
