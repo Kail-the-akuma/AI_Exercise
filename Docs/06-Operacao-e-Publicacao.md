@@ -877,10 +877,70 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Nada da aplicação aparece no Event Log, com tudo o resto a funcionar | A origem `IdeaBoard` não foi criada no servidor |
 | Toda a gente recusada no primeiro acesso | Autenticação anónima ligada no site, ou autenticação Windows desligada |
 | O browser pede credenciais em vez de entrar sozinho | O endereço não está na zona de intranet local do browser. Ver [ADR-024](ADR/ADR-024-http-sem-certificado.md) |
-| Ciclo infinito de redirecionamentos para `/nome` | A linha de utilizador existe sem nome, o que não devia acontecer, porque a linha só nasce com nome |
+| A pessoa chega à página do nome | **Não é avaria.** É o comportamento correcto de quem ainda não tem linha, e ver esta página prova que a identidade do Windows chegou bem |
+| Regista o nome, é aceite, e no pedido seguinte é lhe pedido outra vez | A escrita e a leitura não estão no mesmo ficheiro. Ver a cadeia de ligação do `web.config` contra o ficheiro que está mesmo a ser escrito |
+| Ao ser mandada para o nome, a pessoa aterra fora da aplicação | O caminho base não foi à frente do redirecionamento. Corrigido em `4f1a3ad`, e é a única regressão possível neste ponto |
 | Nome de utilizador a aparecer como autor, na forma `DOMINIO\pessoa` | Nome registado à mão a contornar a validação, que recusa barra invertida |
 | Dados desaparecidos depois de uma publicação | Base de dados dentro da pasta da aplicação |
 | Backup que restaura sem os últimos dias | Cópia do ficheiro em vez de `VACUUM INTO` |
 
 Os detalhes das exceções estão no Event Log do Windows, com identificador de
 correlação, conforme [04](04-Requisitos-Nao-Funcionais-e-Seguranca.md).
+
+### A ordem de diagnóstico que outra equipa pagou um dia para aprender
+
+Está no `RepositorioVizinhoA/Docs/Instalation/INSTALLATION-IIS.md`, na secção sobre uma pessoa
+reconhecida e sem conta na aplicação. **É afirmação deles, datada de 13 de outubro de
+2026**, lida pelo ARQ a 18 de novembro, e não medição nossa. Fica aqui resumida, com o
+apontador, e não copiada.
+
+**O valor dela não está nos passos, está no passo zero.**
+
+> **Enquanto a pessoa chega à aplicação, o Kerberos fez o trabalho dele.**
+
+Uma mensagem a dizer que a pessoa não tem conta só é alcançável **depois** de o servidor
+ter negociado e entregue uma identidade verdadeira. Quem lê isso e vai investigar o
+Kerberos está a investigar a camada que acabou de funcionar. Foi aí que o dia se perdeu:
+a excluir, uma a uma, as hipóteses da camada errada.
+
+Só se investiga SPN, replicação do Active Directory, desvio de relógio ou restrições de
+NTLM **depois** de a base de dados estar excluída. São todas causas reais de autenticação
+integrada partida, e nenhuma era a causa naquela vez.
+
+#### O que transfere para esta aplicação e o que não transfere
+
+**Não transfere** o passo de confirmar que a linha da pessoa existe. A aplicação deles
+exige a linha criada à mão antes de alguém entrar, e esta cria a linha sozinha. Mandar
+procurar uma linha que este produto não exige manda a pessoa procurar o que não há.
+
+**Transfere inteiro** o passo de confirmar que a aplicação está a ler a base de dados que
+julgamos. A cadeia de ligação está no `web.config`, versionada, e **um caminho válido mas
+errado passa as duas guardas de arranque**: elas confirmam que a cadeia existe, que o
+caminho é absoluto, que está fora da pasta da aplicação e que o ficheiro está em WAL.
+Nenhuma delas confirma que é o ficheiro **certo**.
+
+O sintoma nesta aplicação não é um erro, é uma repetição: a pessoa regista o nome, é
+aceite, e no pedido seguinte volta a ser lhe pedido. A escrita foi para um ficheiro e a
+leitura veio de outro.
+
+#### A linha que estava aqui e era falsa
+
+Este documento dizia que um ciclo infinito de redirecionamentos para `/nome` vinha de uma
+linha de utilizador existir sem nome. **As duas metades eram falsas**, e a verificação foi
+feita no código e não por raciocínio.
+
+O ciclo não é possível. O portão redireciona quando a resolução do nome devolve nulo, e no
+`UserProvisioningService` há **um único** `return null`, alcançável apenas quando não há
+linha **e** nenhum nome foi obtido. Com linha, o método devolve sempre a linha. Do outro
+lado, a página do nome manda para o início exactamente quando a linha existe. As duas
+condições são complementares sobre o mesmo predicado, portanto não há estado em que as
+duas redirecionem.
+
+A causa também não existia. Uma linha sem nome não se cria, porque o caminho automático só
+chama a criação depois de confirmar que o nome não está vazio. E se uma aparecesse por
+escrita directa na base, o portão **deixava a pessoa passar na mesma**, porque o que ele
+pergunta é se existe linha e não se ela tem nome.
+
+Fica registado em vez de apagado porque o erro tem forma reconhecível: era uma causa
+plausível, escrita sem ir ao código, que teria mandado quem a lesse procurar na tabela de
+utilizadores por uma linha que não podia estar lá.

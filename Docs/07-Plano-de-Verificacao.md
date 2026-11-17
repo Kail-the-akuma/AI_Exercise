@@ -318,11 +318,101 @@ por isso confirmam se os dois e não um.
 ### Configuração que chega ao host
 
 - [ ] As duas variáveis presentes no `web.config` **do servidor**, depois de copiados os
-      ficheiros: `ConnectionStrings__IdeaBoard` e `DataProtection__KeysPath`.
-- [ ] Nenhum desses dois nomes definido **também** no ambiente da máquina ou do pool de
-      aplicações. Definidos nos dois sítios, os valores podem ser combinados e a
-      aplicação não arranca, com uma mensagem que aponta para um caminho que ninguém
-      escreveu.
+      ficheiros, **declaradas uma vez cada**:
+      ```powershell
+      [xml]$x = Get-Content "C:\inetpub\IdeaBoard\web.config" -Raw
+      $vars = $x.SelectNodes("//aspNetCore/environmentVariables/environmentVariable")
+      foreach ($n in @("ConnectionStrings__IdeaBoard","DataProtection__KeysPath"))
+      {
+          "$n declarado " + @($vars | Where-Object { $_.name -eq $n }).Count + " vez(es)"
+      }
+      ```
+      Tem de dar `1` e `1`.
+
+      **Não contar por procura de texto.** O `ConnectionStrings__IdeaBoard` aparece duas
+      vezes no ficheiro, e a segunda está dentro de um comentário, na frase que explica o
+      duplo sublinhado. Quem contar com Ctrl+F, que é como uma pessoa conta, vê duas e
+      conclui que está declarada duas vezes.
+
+      É um falso alarme, e chega no dia em que um falso alarme custa tempo e custa
+      confiança no resto desta lista. O que o item distingue é **declarada** de
+      **mencionada**.
+- [ ] **Nenhum desses dois nomes definido noutro sítio.** São quatro passos, e os três
+      primeiros verificam o que está escrito enquanto o quarto observa o resultado.
+
+      **1. Ambiente da máquina e do utilizador**, pela presença do **nome** e não pelo
+      valor:
+      ```powershell
+      $chaves = @{
+          "Maquina"    = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+          "Utilizador" = "HKCU:\Environment"
+      }
+      foreach ($k in $chaves.Keys)
+      {
+          $props = (Get-ItemProperty -Path $chaves[$k]).PSObject.Properties.Name
+          foreach ($n in @("ConnectionStrings__IdeaBoard","DataProtection__KeysPath"))
+          {
+              "$k / $n -> definido: " + ($props -contains $n)
+          }
+      }
+      ```
+      Os quatro resultados têm de ser `False`. Vai ao registo e não ao
+      `GetEnvironmentVariable` de propósito: **uma variável definida com valor vazio
+      continua a ser uma definição**, e a função devolve vazio tanto para essa como para
+      uma que não existe. O registo distingue as duas.
+
+      **2. Ambiente do pool de aplicações**, lido do `applicationHost.config`, sem precisar
+      de módulo nenhum do IIS:
+      ```powershell
+      [xml]$ah = Get-Content "$env:windir\system32\inetsrv\config\applicationHost.config" -Raw
+      $vars = $ah.SelectNodes("//applicationPools/add/environmentVariables/add")
+      foreach ($n in @("ConnectionStrings__IdeaBoard","DataProtection__KeysPath"))
+      {
+          $hit = @($vars | Where-Object { $_.name -eq $n })
+          if ($hit.Count -gt 0)
+          {
+              "CONFLITO: $n definido no pool " + ($hit | ForEach-Object { $_.ParentNode.ParentNode.name })
+          }
+          else
+          {
+              "limpo: $n"
+          }
+      }
+      ```
+      Os dois têm de dizer `limpo`.
+
+      > **Como este passo foi validado, e fica escrito porque não é a mesma coisa que ter
+      > corrido num servidor.** Foi testado pelo papel de verificação contra um
+      > `applicationHost.config` **sintético**, escrito à mão numa pasta temporária, com um
+      > pool a definir o `DataProtection__KeysPath`, e o comando acusou o conflito. **Não
+      > foi testado contra um servidor**, por esta máquina não ter IIS. Quem o correr num
+      > servidor a sério pode substituir esta nota pela melhor.
+
+      **3. O `web.config` do site que recebe a aplicação**, que não é o da aplicação.
+      Mesmo XPath do item anterior, apontado ao ficheiro do site. É o sítio de que ninguém
+      se lembra, porque pertence ao vizinho. Ver
+      [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md).
+
+      **4. A confirmação do resultado**, que é a única que não se pode fazer antes de
+      publicar. Com o site a correr e alguém a usá lo, confirmar que existem
+      `ideaboard.db-wal` e `ideaboard.db-shm` ao lado de
+      `C:\IdeaBoard\data\ideaboard.db`.
+
+      Os três acima verificam o que está escrito. **Este observa qual ficheiro foi mesmo
+      aberto.** Se os valores tivessem sido combinados a aplicação não arrancava, e se
+      tivesse sido aberto outro ficheiro estes dois apareciam noutro sítio.
+
+      **Porque é que este item existe.** A documentação do módulo avisa que uma variável
+      presente no `web.config` e também ao nível do sistema faz com que o valor do
+      `web.config` seja **acrescentado** ao do sistema, com o exemplo
+      `ASPNETCORE_ENVIRONMENT: Development;Development`, e que isso impede a aplicação de
+      arrancar. Numa cadeia de ligação isso dá `Data Source=...;Data Source=...`, que é a
+      mensagem a apontar para um caminho que ninguém escreveu.
+
+      **E há uma honestidade que vale ser escrita**: a mesma página da documentação diz
+      noutro parágrafo que os valores do `web.config` têm precedência sobre os do sistema.
+      As duas frases convivem e não concordam. A leitura segura é a do aviso, e o facto de
+      não concordarem é por si a razão de o passo 4 existir.
 - [ ] Não existe `appsettings.Production.json` na pasta da aplicação. Se existir, alguém
       pôs a configuração no único sítio que a publicação seguinte apaga.
 
@@ -335,6 +425,20 @@ por isso confirmam se os dois e não um.
       UNION ALL SELECT 'Vote', COUNT(*) FROM Vote
       UNION ALL SELECT 'Comment', COUNT(*) FROM Comment;
       ```
+- [ ] **O `sqlite_sequence` tem zero linhas**, numa base acabada de provisionar:
+      ```powershell
+      sqlite3 "C:\IdeaBoard\data\ideaboard.db" "SELECT COUNT(*) FROM sqlite_sequence;"
+      ```
+      Tem de devolver `0`.
+
+      **As quatro contagens acima dizem que não há nada lá dentro. Esta diz que nunca
+      houve**, e as duas coisas não são a mesma. Uma base onde alguém submeteu ideias para
+      experimentar e depois as apagou passa as quatro contagens sem uma falha: as tabelas
+      ficam a zero e o `sqlite_sequence` guarda a marca de água dos identificadores, pelo
+      que a primeira ideia da equipa nasce com o número 4 ou 11 em vez de 1.
+
+      Esta secção chama se "sem dados de teste", e é literalmente isto que esta linha
+      verifica e as outras quatro não.
 - [ ] A `__EFMigrationsHistory` tem as **três** linhas esperadas e nenhuma a mais.
 - [ ] `PRAGMA integrity_check;` devolve `ok`.
 
@@ -369,7 +473,32 @@ por isso confirmam se os dois e não um.
       propósito, conforme [06](06-Operacao-e-Publicacao.md). Confirmar aqui serve para
       que quem a encontrar daqui a meses saiba que foi decidida e não que escapou.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
-- [ ] Modo WAL ativo no ficheiro da base de dados.
+- [ ] **Modo WAL activo no ficheiro da base de dados**, lido no caminho final e num
+      processo novo:
+      ```powershell
+      sqlite3 "C:\IdeaBoard\data\ideaboard.db" "PRAGMA journal_mode;"
+      ```
+      Tem de devolver `wal`.
+
+      **O comando que põe o modo e o comando que o lê imprimem a mesma palavra, e são
+      actos diferentes.** O primeiro responde `wal` por ter sido executado agora, naquele
+      processo e naquele ficheiro. Este responde `wal` por ser verdade no ficheiro que a
+      aplicação vai abrir, e é a segunda coisa que esta caixa pede.
+
+      A condição que mais importa, além do processo novo: **corrê lo contra o caminho que
+      está na cadeia de ligação do `web.config`**, e não contra a base onde o
+      provisionamento a construiu. Se forem o mesmo caminho, o item sai mais barato e
+      continua a valer.
+
+      Apanha o que o comando de escrita não pode apanhar: a base ter sido provisionada
+      noutro sítio e copiada, ter vindo de um restauro, o modo ter sido mudado depois, ou
+      a pessoa estar a olhar para um ficheiro diferente daquele que a aplicação abre.
+
+      **Há uma rede por baixo, e convém saber o que esta caixa acrescenta a ela.** A
+      aplicação lê este pragma no arranque e recusa arrancar se não for `wal`, portanto um
+      arranque bem sucedido já prova o modo. O que fica por cobrir, e que é o que esta
+      caixa cobre, é o intervalo entre provisionar e arrancar pela primeira vez, e o dia
+      em que alguém mexer na base sem reiniciar.
 - [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com
       origem `IdeaBoard`. Sem este passo, uma origem por criar não tem sintoma nenhum:
       as páginas servem, as pessoas votam, e o registo de erros simplesmente não existe.
