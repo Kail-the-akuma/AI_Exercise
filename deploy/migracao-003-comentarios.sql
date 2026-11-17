@@ -13,7 +13,10 @@
 --   2. Aplicar com sqlite3 em modo -bail, para parar na primeira instrucao que falhe.
 --   3. Confirmar o codigo de saida igual a zero.
 --
--- Esta e a primeira tabela do produto de onde se apagam linhas por accao de uma pessoa.
+-- Nao ha coluna a marcar um comentario como apagado, e isso e decisao e nao omissao. Quem
+-- escreveu um comentario pode remove-lo, e a linha sai da tabela. Quem for procurar aqui
+-- um campo de apagado logico nao o encontra porque nunca existiu.
+--
 -- As chaves estrangeiras ficam em RESTRICT como todas as outras: apagar um comentario e
 -- uma pessoa a apagar as proprias palavras, e nao ha nada neste produto que apague uma
 -- ideia ou uma pessoa.
