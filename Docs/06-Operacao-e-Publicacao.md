@@ -160,8 +160,21 @@ põe a definição e, no fim, relê a e pára se ela não ficou.
 **A aplicação não tem site próprio.** É servida como aplicação dentro de um site que já
 existe, no caminho virtual `/IdeaBoard`, e herda as ligações desse site.
 
-O endereço desta instalação é **`http://SERVIDOR-APP/IdeaBoard`**. HTTP, nome curto do
-servidor, sem porta, porque o site que a recebe já serve na porta 80.
+O endereço desta instalação é **`http://servidor-app.dominio.interno/IdeaBoard`**. HTTP,
+**nome qualificado**, sem porta, porque o site que a recebe já serve na porta 80.
+
+**É o nome qualificado e não o nome curto, e isso foi medido e não escolhido.** A 18 de
+novembro de 2026, no dia da publicação, `http://SERVIDOR-APP/IdeaBoard` pede credenciais no
+browser e `http://servidor-app.dominio.interno/IdeaBoard` entra sozinho.
+
+A causa não está no IIS nem na aplicação: **quem decide o início de sessão silencioso é o
+browser**, pela zona de intranet, e uma das regras por omissão dessa zona é incluir os
+sítios que não passam pelo proxy. É a lista de excepções do proxy que decide, e o nome
+curto fica de fora dela. O raciocínio completo está no
+[ADR-024](ADR/ADR-024-http-sem-certificado.md).
+
+**É o endereço a dar à equipa**, e dar o nome curto produz um pedido de credenciais que
+se lê como avaria da aplicação e não é.
 
 | | |
 |---|---|

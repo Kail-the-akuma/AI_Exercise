@@ -587,11 +587,14 @@ por isso confirmam se os dois e não um.
       **Enquanto isto não for medido na máquina, não está errado.** As duas leituras que
       sustentam a dúvida são de documentação, feitas por duas pessoas em separado, e
       documentação lida não é comportamento observado.
-- [ ] Entrar a partir de uma máquina do domínio, em **`http://SERVIDOR-APP/IdeaBoard`**,
-      que é o endereço exato que vai ser dado à equipa, e confirmar que a entrada é
-      silenciosa, sem pedido de credenciais. A forma do nome é o que decide: um pedido de
-      credenciais aqui não é um defeito da aplicação, é configuração de zona por resolver
-      antes do lançamento.
+- [ ] Entrar a partir de uma máquina do domínio, em **`http://servidor-app.dominio.interno/IdeaBoard`**, que é o endereço exacto que vai ser dado à
+      equipa, e confirmar que a entrada é silenciosa, sem pedido de credenciais.
+
+      **Um pedido de credenciais aqui não é um defeito da aplicação**, é a zona de
+      segurança do browser. E a forma do nome é o que decide: a 18 de novembro de 2026,
+      naquele servidor, o nome curto `http://SERVIDOR-APP/IdeaBoard` **pediu credenciais** e
+      o nome qualificado entrou sozinho. Fazer o item com o endereço errado prova o
+      contrário do que ele pergunta.
 - [ ] **A outra aplicação do mesmo site continua a servir**, depois do provisionamento e
       depois de uma publicação. É o risco em torno do qual os três scripts foram
       escritos, e é o único item desta lista que não é sobre o IdeaBoard. Nenhum teste o

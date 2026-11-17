@@ -68,8 +68,9 @@ mudança de autenticação deixar em aberto quando o ADR for escrito.
 ### Fechadas, e ficam aqui para quem se lembrar delas em aberto
 
 - **Endereço.** Esteve aqui com a forma decidida e o valor por preencher. Ficou fechado a
-  17 de novembro de 2026 em `http://SERVIDOR-APP/IdeaBoard`, como aplicação dentro de um
-  site que já existe. Registado em [Docs/05](Docs/05-Plano-de-Entrega.md) e descrito em
+  17 de novembro de 2026 como aplicação dentro de um site que já existe, e a forma do
+  nome fechou a 18, no dia da publicação, em `http://servidor-app.dominio.interno/IdeaBoard`.
+  O nome curto foi tentado e pede credenciais. Registado em [Docs/05](Docs/05-Plano-de-Entrega.md) e descrito em
   [Docs/06](Docs/06-Operacao-e-Publicacao.md).
 
 ### Pendentes do ADR da autenticação
