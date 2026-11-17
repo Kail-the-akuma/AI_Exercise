@@ -82,10 +82,11 @@ intranet local por omissão. Isso aplica se quando o parque não tem lista de se
 de autenticação definida por política, e havendo lista é ela que governa, passando a
 decidir o nome constar dela.
 
-O endereço decidido é **`http://SERVIDOR-APP/IdeaBoard`**. O que a zona de segurança olha é
-o nome da máquina, e `SERVIDOR-APP` não tem pontos, portanto é a forma favorável. Nem o
-caminho `/IdeaBoard` nem a ausência de porta mudam isso: a zona decide se pelo anfitrião e
-não pelo resto do endereço.
+O endereço decidido é **`http://SERVIDOR-APP/IdeaBoard`**, e `SERVIDOR-APP` não tem pontos,
+portanto é a forma favorável a esta zona. Nem o caminho `/IdeaBoard` nem a ausência de
+porta mudam isso, pela razão que o [ADR-024](ADR/ADR-024-http-sem-certificado.md) regista
+e que não repito aqui: as zonas são indexadas por anfitrião e esquema, e um caminho não
+entra nessa chave tal como uma porta não entrava.
 
 Mudar o endereço depois obriga a mudar a comunicação de lançamento, os atalhos e os
 marcadores de toda a gente, o que é razão bastante por si só.
