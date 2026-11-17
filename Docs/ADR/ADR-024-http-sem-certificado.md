@@ -219,7 +219,7 @@ responde a duas perguntas de uma vez, a lista de servidores de autenticação e 
 da porta.
 
 **Houve uma medição noutro servidor** que mostrou início de sessão automático apenas em
-três portas, as do Vizinha e do VizinhaBQA. Não é propriedade desta aplicação e não está
+três portas, as de duas aplicações vizinhas. Não é propriedade desta aplicação e não está
 confirmada no nosso ambiente. E a leitura mais económica dela é que essas três portas são
 as únicas onde existe aplicação a pedir autenticação integrada, porque uma porta onde
 nenhuma aplicação a pede não pode dar início de sessão automático, com zona ou sem zona.

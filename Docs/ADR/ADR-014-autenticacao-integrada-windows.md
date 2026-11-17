@@ -151,7 +151,7 @@ domínio que o dá.
 **Más.** Quem trabalhe fora da rede corporativa perde o acesso, sem contrapartida.
 
 **Isto deixou de ser raciocínio e passou a ter medição de outra equipa por trás.** O
-documento de instalação do AplicacaoVizinhaB, que corre no mesmo servidor com a mesma
+documento de instalação da AplicacaoVizinhaB, que corre no mesmo servidor com a mesma
 autenticação, regista um teste feito a 12 de novembro de 2026 contra o site de QA: um
 browser com autenticação ambiente desligada pediu uma página e **o IIS respondeu 401 com
 `WWW-Authenticate: Negotiate, NTLM` antes de o pedido chegar à aplicação**. Não houve pedido
