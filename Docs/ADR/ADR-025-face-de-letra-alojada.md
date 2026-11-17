@@ -1,6 +1,7 @@
 # ADR-025. Uma face de letra alojada no repositório e servida pela aplicação
 
-**Estado**: Aceite, com o motivo de desenho por registar. **Data**: 17 de novembro de 2026.
+**Estado**: Aceite quanto a alojar a face e a servi la pela aplicação. A escolha da face
+está em revisão desde 17 de novembro de 2026. **Data**: 17 de novembro de 2026.
 
 ## Contexto
 
@@ -13,11 +14,41 @@ Trazer uma face de letra para dentro do repositório é portanto uma excepção 
 uma regra do repositório, autorizada pelo Hugo a 16 de novembro de 2026 depois de a
 colisão lhe ter sido posta à frente.
 
-**O motivo de desenho dessa excepção não está escrito em lado nenhum, e não o invento
-aqui.** Procurei no CSS, nos oito documentos de `Docs/`, e no resto do repositório. O
-comentário junto à pilha explica o papel do sistema como recurso, e não explica por que
-razão se quis uma face própria à frente dele. Enquanto essa linha não existir, este
-registo documenta uma excepção sem a justificar, e é por isso que o estado acima o diz.
+O motivo é **aproximar o máximo possível do design system da empresa**, nas palavras do
+Hugo. Não estava escrito em parte nenhuma do repositório quando este registo foi
+começado, e foi preciso ir perguntar.
+
+## O motivo apareceu e não bate certo com a face que está no repositório
+
+O design system da empresa fixa **Lato**, nos pesos 300, 400 e 700. O que está no
+repositório é Public Sans, que foi escolhida por ser humanista, numa altura em que o
+motivo ainda não tinha sido dito a ninguém que estivesse a escolher.
+
+Ou seja, este registo esteve a um passo de afirmar que se alojou uma face para aproximar
+do sistema da empresa, ao lado de uma face que não é a desse sistema. As duas metades
+eram verdadeiras em separado e falsas juntas, que é a forma em que isto passa por uma
+revisão.
+
+**O Hugo decidiu trocar para Lato**, e a troca está a ser feita com a licença verificada
+antes, que foi o que mordeu à primeira. Até ela entrar, este registo **não diz qual é a
+face final**, e descreve o que está no repositório hoje.
+
+**Proveniência.** O conteúdo do design system, incluindo a Lato e os três pesos, foi
+verificado pelo ORQ contra o documento da empresa. Esse documento não está neste
+repositório, e a palavra Lato não aparece em ficheiro nenhum dele, confirmado hoje.
+
+## Isto não é autorização para adoptar o design system da empresa
+
+A regra mais importante deste repositório é o âmbito, e esta decisão toca lhe de raspão,
+por isso a fronteira fica escrita.
+
+O design system da empresa **continua não adoptado em tudo o resto, paleta incluída**,
+por decisão do Hugo repetida duas vezes. O que esta decisão autoriza é uma face de letra
+alojada e servida pela aplicação, e mais nada.
+
+Quem ler isto a seguir e concluir que o sistema da empresa passou a ser a referência do
+produto está a ler o que aqui não está. A aproximação é de uma coisa, e a decisão de
+adoptar o resto não foi tomada.
 
 ## Decisão
 
@@ -109,14 +140,20 @@ sintoma ter sido desenhado para não existir.
 ## Alternativas consideradas
 
 **Só a pilha do sistema.** Sem pedido, sem ficheiro, sem licença para ler e sem nada do
-que está escrito acima. É a alternativa que esta decisão rejeita, e é precisamente por
-isso que a falta do motivo de desenho importa: sem ele, esta secção não consegue dizer o
-que se ganhou.
+que está escrito acima. É a alternativa que esta decisão rejeita, e o que se ganha ao
+rejeitá la é a aproximação ao design system da empresa, que a pilha do sistema não
+consegue dar por depender do que cada máquina tenha instalado.
 
 **A mesma face servida por CDN.** Posta de lado pelas duas razões acima, a rede fechada e
 o terceiro a saber o que a pessoa está a ver.
 
 **Source Sans 3.** Posta de lado por licença e não por desenho, como acima.
+
+Esta rejeição fica escrita mesmo quando já não restar nenhum vestígio dela no código, e
+a razão é que ela é a origem de um procedimento. **Ler a primeira linha do `OFL.txt`
+antes de trazer uma face** parece zelo a quem chegue e veja só o resultado, e é a lição
+de uma face que já tinha sido escolhida e teve de ser deitada fora. Um procedimento sem
+a história que o produziu é o primeiro candidato a ser saltado por quem tem pressa.
 
 **Instâncias estáticas em vez da face variável.** Um ficheiro por peso em vez de um
 ficheiro para o intervalo de 300 a 700. Posta de lado porque seriam vários pedidos para
@@ -140,5 +177,9 @@ o que é o comportamento correto e nota se.
 como a que já existe para a folha de estilos. Enquanto não existir, esta decisão não tem
 nada que a verifique, e o modo de falha dela foi desenhado para não se ver.
 
-**O que fica por escrever.** O motivo de desenho da excepção. Quando existir, entra na
-secção do contexto e o estado deste registo passa a Aceite sem reservas.
+**O que fica por fechar.** A face. O motivo está registado e a troca para Lato está a ser
+feita. Quando entrar, este registo passa a descrever a face que o motivo implica, guarda
+as duas escolhas anteriores como história, e o estado deixa de ter a revisão em cima.
+
+Até lá, tudo o que está escrito sobre alojar, servir, comprimir, versionar e verificar
+vale tal e qual, porque nada disso depende de qual é a face.
