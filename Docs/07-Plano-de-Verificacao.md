@@ -58,6 +58,65 @@ daria confiança em algo que não é o que corre em produção.
 - Duas pessoas com o mesmo nome apresentado continuam a ser duas linhas.
 - A consulta do estado do botão de voto resolve se num só acesso, e não num por linha.
 
+### Os scripts de `deploy` são confrontados com as migrações
+
+Acrescentado a 17 de novembro de 2026. **Nada na aplicação chama `Migrate`**, portanto o
+esquema que corre no servidor é o que os scripts de `deploy` produzem, e não o que as
+migrações produzem. Eram duas coisas que se presumiam iguais e que ninguém comparava.
+
+- O `migracao.sql` construído de raiz dá a mesma estrutura que as migrações, e regista as
+  mesmas migrações aplicadas. As duas asserções são separadas de propósito: um script que
+  cria todas as tabelas e carimba uma migração a menos deixa uma base que parece certa e
+  faz o script gerado a seguir sair contra a base errada.
+- Cada script incremental leva o esquema ao sítio onde a sua migração o leva. A base é
+  migrada até à anterior, o script é aplicado por cima, e o resultado é comparado com uma
+  base que as migrações levaram um passo mais longe.
+- Existe um incremental por cada migração depois da primeira, sem saltos na numeração. É
+  o que impede que um script em falta se traduza apenas em menos um caso a correr, que é
+  a forma de uma teoria passar a dizer menos sem ninguém reparar.
+
+#### O que esta comparação não cobre, e o dia em que deixa de chegar
+
+> **A comparação é de estrutura e corre sobre uma base vazia.** Hoje chega, porque os
+> dois scripts incrementais que existem são aditivos: só acrescentam tabelas e colunas, e
+> numa base vazia não há linhas para se perderem.
+>
+> **Deixa de chegar no dia em que uma migração largar ou alterar uma coluna.** No SQLite
+> isso faz se por reconstrução da tabela, que é criar outra, copiar as linhas, largar a
+> antiga e renomear. Uma reconstrução escrita à mão que copie as colunas por ordem
+> trocada deixa a estrutura **idêntica** e os dados nas colunas erradas. Numa base vazia
+> não há nada para trocar, portanto o teste fica verde e no servidor desaparecem votos ou
+> comentários.
+>
+> **O gatilho observável, para quem lá chegar saber que chegou:** o dia em que um script
+> incremental tiver um `CREATE TABLE` seguido de `INSERT ... SELECT` e de um `DROP TABLE`
+> ou de um `RENAME TO`. Nesse dia a comparação de estrutura deixa de ser suficiente e é
+> preciso comparar também linhas, com dados postos de propósito antes de aplicar.
+
+### A invariante do artefacto publicado, e o desvio que fica em aberto
+
+Três testes afirmam que nada alcançável a partir do `IdeaBoard.Web` carrega identidade
+local: a pasta de saída não tem ficheiro nenhum com esse prefixo, o manifesto de
+dependências não o nomeia, e a caminhada pelas referências da assembly do host não lá
+chega.
+
+São a invariante e não a guarda que a defende. O `Directory.Build.targets` recusa a
+construção de quem declare uma referência de projeto proibida, e vê menos do que a
+invariante diz: uma DLL referenciada directamente, uma que chegue por pacote, uma copiada
+para a pasta de saída por um target, ou uma referência num projeto que ninguém se lembrou
+de pôr na lista vigiada, passam todas sem dar nas vistas.
+
+> **Há uma forma de a quebrar que passa aos três, e fica escrita por não ser fechável com
+> mais um teste do mesmo tipo.** Um `Compile Include` apontado ao ficheiro do handler de
+> identidade local traz esse código para dentro do `IdeaBoard.App`, sem criar assembly
+> nova e sem pôr ficheiro novo na pasta. As três perguntas são sobre nomes de ficheiros e
+> de assemblies, e nenhuma delas muda: o código passa a viver numa assembly que **tem** de
+> lá estar.
+>
+> Fechar isto pediria olhar para dentro dos tipos e não para os nomes, e nessa altura a
+> pergunta deixa de ser a mesma. Fica aqui em vez de ficar por dizer, porque uma
+> invariante que se julga fechada é pior do que uma que se sabe aberta.
+
 ---
 
 ## Ponta a ponta
@@ -314,10 +373,18 @@ por isso confirmam se os dois e não um.
 - [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com
       origem `IdeaBoard`. Sem este passo, uma origem por criar não tem sintoma nenhum:
       as páginas servem, as pessoas votam, e o registo de erros simplesmente não existe.
-- [ ] Entrar a partir de uma máquina do domínio, usando **o endereço exato** que vai
-      ser dado à equipa, e confirmar que a entrada é silenciosa, sem pedido de
-      credenciais. A forma do nome é o que decide: um pedido de credenciais aqui não é
-      um defeito da aplicação, é configuração de zona por resolver antes do lançamento.
+- [ ] Entrar a partir de uma máquina do domínio, em **`http://SERVIDOR-APP/IdeaBoard`**,
+      que é o endereço exato que vai ser dado à equipa, e confirmar que a entrada é
+      silenciosa, sem pedido de credenciais. A forma do nome é o que decide: um pedido de
+      credenciais aqui não é um defeito da aplicação, é configuração de zona por resolver
+      antes do lançamento.
+- [ ] **A outra aplicação do mesmo site continua a servir**, depois do provisionamento e
+      depois de uma publicação. É o risco em torno do qual os três scripts foram
+      escritos, e é o único item desta lista que não é sobre o IdeaBoard. Nenhum teste o
+      cobre, porque nenhum teste conhece o vizinho.
+- [ ] Nenhum 500.19 a falar de uma **secção duplicada**, que é o sintoma de a aplicação
+      herdar do `web.config` do site que a recebe. A cura habitual mexe no ficheiro do
+      vizinho, e nenhum script lhe toca, portanto esta é uma decisão para uma pessoa.
 
 ### Dados e operação
 

@@ -108,7 +108,9 @@ submeter e votar, e nada mais existe para fazer.
 **HTTP, sem certificado e sem HSTS.** Decisão do Hugo, registada em
 [ADR-024](ADR/ADR-024-http-sem-certificado.md), que substitui o ADR-013.
 
-O endereço é o nome curto do servidor com porta. Com autenticação integrada do Windows
+O endereço é `http://SERVIDOR-APP/IdeaBoard`, nome curto do servidor e sem porta, por a
+aplicação ser servida dentro de um site que já serve na porta 80. Ver
+[06](06-Operacao-e-Publicacao.md). Com autenticação integrada do Windows
 não há redirecionamento para um fornecedor externo nem cookie de sessão a proteger, e
 por isso o HTTPS deixou de ser condição de funcionamento, que é o que era com o Entra
 ID.

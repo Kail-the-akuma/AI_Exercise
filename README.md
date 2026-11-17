@@ -65,11 +65,12 @@ mudança de autenticação deixar em aberto quando o ADR for escrito.
 - **Valores alvo dos critérios de sucesso.** O briefing pede que sejam fixados pela
   equipa antes do lançamento.
 
-### Decididas, com o valor por preencher
+### Fechadas, e ficam aqui para quem se lembrar delas em aberto
 
-- **Endereço do site.** É o **nome curto do servidor com porta**, e não o nome
-  qualificado. A forma está decidida e o valor concreto ainda não, porque o servidor
-  ainda não está escolhido.
+- **Endereço.** Esteve aqui com a forma decidida e o valor por preencher. Ficou fechado a
+  17 de novembro de 2026 em `http://SERVIDOR-APP/IdeaBoard`, como aplicação dentro de um
+  site que já existe. Registado em [Docs/05](Docs/05-Plano-de-Entrega.md) e descrito em
+  [Docs/06](Docs/06-Operacao-e-Publicacao.md).
 
 ### Pendentes do ADR da autenticação
 

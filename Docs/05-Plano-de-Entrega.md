@@ -20,13 +20,14 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 | Identificador de código decidido | Equipa | Fase 1 | Fechado em `IdeaBoard` |
 | Nome de produto em prosa decidido | Equipa | Lançamento | **Em aberto** |
 | Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 | Por fazer |
-| Endereço do site decidido | Equipa | Fases 1 e 5 | Decidido na forma, **valor por preencher** |
+| Endereço decidido | Equipa | Fases 1 e 5 | Fechado em `http://SERVIDOR-APP/IdeaBoard` |
 | Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 | Por fazer |
 | Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento | **Em aberto** |
 | Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
-O **endereço é o nome curto do servidor com porta**, e não o nome qualificado. A forma
-está decidida e o valor concreto ainda não, porque o servidor ainda não está escolhido.
+O endereço é **`http://SERVIDOR-APP/IdeaBoard`**, nome curto e não nome qualificado, e sem
+porta, por a aplicação ir dentro de um site que já serve na porta 80. A forma estava
+decidida desde o início e o valor ficou fechado a 17 de novembro de 2026.
 
 > **Os pré requisitos de identidade saíram desta tabela por deixarem de existir.**
 > A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
@@ -81,8 +82,10 @@ intranet local por omissão. Isso aplica se quando o parque não tem lista de se
 de autenticação definida por política, e havendo lista é ela que governa, passando a
 decidir o nome constar dela.
 
-O endereço decidido é o **nome curto do servidor com porta**, que é a forma favorável a
-esta zona. O valor concreto fica por preencher.
+O endereço decidido é **`http://SERVIDOR-APP/IdeaBoard`**. O que a zona de segurança olha é
+o nome da máquina, e `SERVIDOR-APP` não tem pontos, portanto é a forma favorável. Nem o
+caminho `/IdeaBoard` nem a ausência de porta mudam isso: a zona decide se pelo anfitrião e
+não pelo resto do endereço.
 
 Mudar o endereço depois obriga a mudar a comunicação de lançamento, os atalhos e os
 marcadores de toda a gente, o que é razão bastante por si só.
@@ -179,7 +182,7 @@ em que abre.
 
 - Publicação em IIS conforme [06](06-Operacao-e-Publicacao.md), com autenticação Windows
   ativada no site e o acesso anónimo desligado.
-- Endereço fixado no valor concreto, com a forma já decidida em
+- Endereço a responder em `http://SERVIDOR-APP/IdeaBoard`, com a forma decidida em
   [ADR-024](ADR/ADR-024-http-sem-certificado.md).
 - Migração aplicada por script, com backup prévio.
 - Suite completa verde.

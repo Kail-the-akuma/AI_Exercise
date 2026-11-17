@@ -128,9 +128,45 @@ A limitação a um processo de trabalho é a definição mais fácil de esquecer
 difícil de diagnosticar depois. Fica registada aqui e é item da lista de verificação
 em [07](07-Plano-de-Verificacao.md).
 
-### Site
+### Site e aplicação
 
-HTTP, no nome curto do servidor com porta.
+**A aplicação não tem site próprio.** É servida como aplicação dentro de um site que já
+existe, no caminho virtual `/IdeaBoard`, e herda as ligações desse site.
+
+O endereço desta instalação é **`http://SERVIDOR-APP/IdeaBoard`**. HTTP, nome curto do
+servidor, sem porta, porque o site que a recebe já serve na porta 80.
+
+| | |
+|---|---|
+| Site | O que já existe na máquina, e que não é tocado |
+| Caminho virtual | `/IdeaBoard` |
+| Pool de aplicações | Próprio, `IdeaBoardPool`, e não o do site |
+| Pasta física | `C:\inetpub\IdeaBoard` |
+
+**O pool é próprio e isso não é detalhe.** Um pool por aplicação é o que mantém o limite
+de um processo de trabalho, que o SQLite exige, sem o impor ao vizinho que partilha o
+site. Partilhar o pool obrigaria a mudar as definições de outra aplicação, que é
+precisamente o que nada aqui faz.
+
+#### O que a aplicação herda do site que a recebe
+
+Uma aplicação dentro de um site lê a configuração do site **antes** da sua. Se o site pai
+tiver `web.config` próprio, o que lá estiver vale primeiro, e o `provisionar.ps1` imprime
+o conteúdo desse ficheiro para que quem provisiona o veja em vez de o descobrir depois.
+
+O sintoma de uma colisão é um 500.19 a falar de uma secção duplicada, ou uma aplicação
+que arranca e se comporta de maneira que o `web.config` dela não explica. **A cura
+habitual mexe no ficheiro do vizinho**, e nenhum destes scripts lhe toca, de propósito.
+
+#### O caminho base, e o que ele obriga a escrever
+
+Servida em `/IdeaBoard`, a aplicação recebe esse prefixo do IIS como caminho base. Não há
+`UsePathBase` no arranque, porque o módulo o entrega.
+
+Isso é transparente para quase tudo, e há um sítio onde não é: um redirecionamento é
+literal. Um `Location` escrito como `/nome` manda a pessoa para a raiz do servidor, que é
+outra aplicação, e não para `/IdeaBoard/nome`. O portão do nome leva o caminho base à
+frente por isso, e é o único sítio do produto que teve de saber disto.
 
 **O `web.config` não é gerado pela publicação.** Está versionado em
 `src/IdeaBoard.Web/web.config`, escrito à mão, e a publicação transforma o e leva o no
@@ -280,13 +316,16 @@ administrador. Os três scripts não a automatizam, dão lhe guardas.
 | Script | O que faz | Escreve? |
 |---|---|---|
 | `verificar-servidor.ps1` | Lê o que a máquina já tem e imprime um relatório | Não, nada |
-| `provisionar.ps1` | Cria as pastas, o pool, o site e a origem do Event Log | Sim, só o que não existia |
+| `provisionar.ps1` | Cria as pastas, o pool, a aplicação e a origem do Event Log | Sim, só o que não existia |
 | `publicar.ps1` | Produz o artefacto, confere o que lá está, e copia para o servidor | Sim, na pasta da aplicação |
 
 A ordem completa de uma instalação de raiz:
 
 1. **`verificar-servidor.ps1`.** Resolver o que ele apontar antes de continuar.
-2. **`provisionar.ps1`.** Pool, site, pastas, permissões e autenticação.
+2. **`provisionar.ps1`.** Pool, aplicação dentro do site existente, pastas, permissões
+   e autenticação. Corrido sem argumentos, usa os valores desta instalação, e imprime
+   cada um a dizer se veio dele ou de quem o chamou, para se poder parar na primeira
+   linha errada.
 3. **Criar a base de dados**, com o script da secção das migrações.
 4. **Ligar o modo WAL**, uma vez, conforme a secção acima. Este passo não está em script
    nenhum e é o mais fácil de saltar.
@@ -295,8 +334,9 @@ A ordem completa de uma instalação de raiz:
    teste automático cobre.
 
 O `publicar.ps1` arranca o pool no fim, se tiver sido ele a pará lo, portanto não há um
-passo separado para arrancar. O site é criado já a correr pelo `provisionar.ps1`, e entre
-o passo 2 e o passo 5 serve erros, por ainda não ter aplicação nenhuma na pasta.
+passo separado para arrancar. Entre o passo 2 e o passo 5 o endereço responde com erro,
+por a pasta ainda não ter aplicação nenhuma. **O resto do site continua a servir**, que é
+a diferença entre esta instalação e um site próprio.
 
 ### Quando um deles pára
 
@@ -307,8 +347,8 @@ o passo 2 e o passo 5 serve erros, por ainda não ter aplicação nenhuma na pas
 |---|---|
 | Que a consola não é de administrador | Faltou elevação. Abrir outra consola, nada foi alterado |
 | Que falta o ASP.NET Core Module v2, ou a Autenticação do Windows | Pré requisito por instalar. As duas causas dão o mesmo 500.19, por isso confirmar as duas |
-| Que já existe um pool ou um site com esse nome | Escolher outro nome, ou apagar o existente à mão depois de confirmar de quem é. O script não reconfigura o que encontra |
-| Que a porta já está ligada a outro site | Dois sites na mesma porta não arrancam os dois, e o que lá está serve pessoas |
+| Que já existe um pool com esse nome, ou uma aplicação naquele caminho virtual | Escolher outro nome ou outro caminho, ou apagar o existente à mão depois de confirmar de quem é. O script não reconfigura o que encontra |
+| Que o site que devia receber a aplicação não existe | O nome do site está errado, ou a máquina não é a que se pensava. O script não cria o site neste modo |
 | Que a autenticação não ficou como devia | O script releu o que escreveu e não bateu certo. Verificar à mão antes de continuar |
 | Que o artefacto leva identidade local | É a invariante do `CLAUDE.md`. Não se publica assim, e o problema está na construção e não na publicação |
 | Que o artefacto leva uma base de dados | A base vive em `C:\IdeaBoard\data` e nunca na pasta da aplicação, senão a publicação seguinte apaga a |
