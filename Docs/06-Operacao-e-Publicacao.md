@@ -100,6 +100,19 @@ para alojar aplicações ASP.NET Core com autenticação integrada.
 Sem o primeiro ou sem o segundo, o site responde com erro 500.19 ou 502. **O código não
 distingue as duas causas**, por isso verificar ambos antes de procurar noutro lado.
 
+E há uma **terceira** causa com o mesmo código, que não é um pré requisito da máquina mas
+aparece no mesmo sítio. O `web.config` que a publicação produz traz a secção de
+autenticação lá dentro, e o IIS tranca essa secção ao nível do servidor, por isso um site
+cujo `web.config` a traga pode responder 500.19 em vez de arrancar. O
+`deploy/provisionar.ps1` destranca a com `overrideMode` a `Allow` e **com `-Location` do
+site**, portanto só para este site e sem mexer no que vale para os outros.
+
+**Nenhum de nós verificou isto numa máquina com IIS**, nem quem escreveu o script nem
+quem escreve esta linha, e a referência do IIS consultada não diz qual é o valor por
+omissão. Fica como está em vez de ser afirmado: o gatilho observável é um 500.19 cuja
+mensagem fale de uma secção que não pode ser usada neste caminho, em vez de falar do
+módulo. É aí que esta causa é a certa, e é no script que se mexe.
+
 ### Pool de aplicações
 
 | Definição | Valor | Porquê |
@@ -482,6 +495,7 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Pessoas atiradas para fora da sessão ao acaso, ou erros em submissões | Chaves de Data Protection não persistidas. Ver [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Bloqueios ou tempos limite em escritas | Mais de um processo de trabalho no pool de aplicações |
 | Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado, **ou** o serviço de função Autenticação do Windows do IIS por instalar. As duas causas dão o mesmo código |
+| 500.19 cuja mensagem fala de uma **secção que não pode ser usada neste caminho** | A secção de autenticação continua trancada ao nível do servidor. O `deploy/provisionar.ps1` destranca a para este site, e é lá que se mexe. Esta é a causa que se distingue das outras duas pela mensagem, e não pelo código |
 | O site não arranca e a mensagem nomeia `ConnectionStrings:IdeaBoard` ou `DataProtection:KeysPath` | As variáveis do `web.config` não chegaram, ou alguém publicou por cima de um `appsettings.Production.json` que as trazia |
 | Caminho de base de dados na mensagem de erro que ninguém escreveu | O mesmo nome de variável definido no `web.config` **e** no ambiente do sistema ou do pool |
 | Nada da aplicação aparece no Event Log, com tudo o resto a funcionar | A origem `IdeaBoard` não foi criada no servidor |
