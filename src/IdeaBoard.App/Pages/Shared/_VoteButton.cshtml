@@ -34,6 +34,16 @@
     <input type="hidden" name="ideaId" value="@Model.IdeaId" />
 
     @*
+        The search travels with the vote. Dropping it here is not visible on this page and
+        only shows up one step later, as a vote that works and then lands the person back on
+        the unfiltered board without the row they were looking at.
+    *@
+    @if (IdeaSearch.Clean(Model.SearchTerm) is not null)
+    {
+        <input type="hidden" name="@IdeaSearch.QueryParameterName" value="@Model.SearchTerm" />
+    }
+
+    @*
         Announcing the new count after a vote is required by the Accessibility section of
         Docs/02, and the attribute below is only half of what makes it happen.
 

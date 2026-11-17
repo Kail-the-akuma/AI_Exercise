@@ -61,7 +61,63 @@
     --cor-foco: #0b63c5;
 
     --espaco: 1rem;
+
+    /*
+        Three radii, because one value meant for the edge of a field was doing duty for a
+        button and would have to do duty for the page surface as well. A surface that
+        curves as tightly as an input reads as an input that grew.
+    */
     --raio: 0.25rem;
+    --raio-medio: 0.625rem;
+    --raio-grande: 1rem;
+
+    /*
+        Elevation. The stylesheet already owned shadow as a way of drawing a one pixel
+        edge, inset, and owned none as a way of saying what is in front of what. These
+        two are that second thing, and both carry an offset and a soft blur: a shadow
+        with no offset is a halo, which is decoration and says nothing about light.
+    */
+    --sombra-pousada: 0 1px 2px rgba(24, 26, 26, 0.06), 0 10px 24px -14px rgba(24, 26, 26, 0.22);
+    --sombra-levantada: 0 2px 4px rgba(24, 26, 26, 0.09), 0 14px 30px -14px rgba(24, 26, 26, 0.26);
+
+    /* One duration and one easing, so that a state change is a change and not a jump. */
+    --transicao: 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+    The face is served by this application and never from another domain. A request to a
+    font host from an internal tool either fails on a closed network or tells whoever
+    answers it which page somebody here is reading, and neither is a trade worth making
+    for a file this small.
+
+    One variable file covers every weight the interface uses, 300 to 700, in the latin
+    subset the interface is written in. A glyph outside that subset, which in practice
+    means a name from the directory with a letter Portuguese does not use, falls back to
+    the system face for that glyph alone.
+
+    Licensed under the SIL Open Font License 1.1, whose text sits beside the file in
+    wwwroot/fonts/OFL.txt.
+
+    THE LICENCE IS WHY IT IS THIS FACE AND NOT ANOTHER. The one chosen on looks carries a
+    Reserved Font Name, and the file a font host serves is a subset, which the licence
+    counts as a modified version, and a modified version may not keep the reserved name.
+    This one is licensed by its authors without a reserved name, so the question does not
+    arise. It is a little wider and a little more neutral than the face it replaced, and
+    that was the price.
+*/
+@font-face
+{
+    font-family: "Public Sans";
+    font-style: normal;
+    font-weight: 300 700;
+
+    /*
+        The page is readable before the face arrives and stays readable if it never
+        does. Without this the first paint is blank text for as long as the file takes.
+    */
+    font-display: swap;
+
+    src: url("../fonts/public-sans-variable-latin.woff2") format("woff2");
 }
 
 *,
@@ -76,13 +132,43 @@ html
     font-size: 100%;
 }
 
+/*
+    The parts of a page nobody draws. The text selection, the caret, the scrollbar and
+    the offset of an underline all ship with browser defaults that belong to no design
+    system, and they are the cheapest thing here that says this page was built rather
+    than assembled.
+*/
+::selection
+{
+    background: rgba(0, 120, 133, 0.18);
+    color: var(--cor-texto);
+}
+
+html
+{
+    caret-color: var(--cor-destaque);
+    accent-color: var(--cor-destaque);
+    scrollbar-color: #b9bcbc var(--cor-fundo-suave);
+}
+
+/*
+    The page is the ground and the content sits on it. Everything used to be on one
+    plane, so nothing could be in front of anything, and the only way the layout could
+    say "this is the content" was by stopping.
+*/
 body
 {
     margin: 0;
     padding: 0;
-    background: var(--cor-fundo);
+    background: var(--cor-fundo-suave);
     color: var(--cor-texto);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /*
+        The system stack stays behind the served face, as the fallback that carries the
+        page while the file is in flight and for any glyph the latin subset does not
+        have.
+    */
+    font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -97,7 +183,8 @@ h3
 
 h1
 {
-    font-size: 1.625rem;
+    font-size: 1.875rem;
+    letter-spacing: -0.02em;
 }
 
 h2
@@ -113,6 +200,7 @@ p
 a
 {
     color: var(--cor-ligacao);
+    text-underline-offset: 0.18em;
 }
 
 /*
@@ -129,15 +217,24 @@ a
 
 /* Header and navigation */
 
+/*
+    The top surface rather than a grey band. It stays with the page because the list is
+    built to grow to dozens of rows and the way back to the form should not require
+    scrolling to the top to find it.
+*/
 .cabecalho
 {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--espaco);
     padding: var(--espaco);
-    border-bottom: 1px solid var(--cor-linha);
-    background: var(--cor-fundo-suave);
+    border-bottom: 0;
+    background: var(--cor-fundo);
+    box-shadow: var(--sombra-pousada);
 }
 
 .marca
@@ -190,6 +287,7 @@ a
     padding: 0.25rem 0;
     text-decoration: none;
     border-bottom: 3px solid transparent;
+    transition: color var(--transicao), border-color var(--transicao);
 }
 
 .separadores a:hover
@@ -207,17 +305,31 @@ a
 
 /* Buttons */
 
+/*
+    The edge used to come off --cor-linha, which measures 1.22:1 against what surrounds
+    it. A control whose edge is the only thing marking where it starts is held to 3:1,
+    and the comment on --cor-contorno-campo writes that rule down. It was being applied
+    to the fields and not to the buttons.
+*/
 .botao
 {
     display: inline-block;
     padding: 0.5rem 0.875rem;
-    border: 1px solid var(--cor-linha);
-    border-radius: var(--raio);
+    border: 1px solid var(--cor-contorno-campo);
+    border-radius: var(--raio-medio);
     background: var(--cor-fundo);
     color: var(--cor-ligacao);
     font: inherit;
     text-decoration: none;
     cursor: pointer;
+    transition: background var(--transicao), border-color var(--transicao), color var(--transicao), box-shadow var(--transicao);
+}
+
+.botao:hover
+{
+    background: var(--cor-fundo-suave);
+    border-color: var(--cor-destaque);
+    color: var(--cor-destaque);
 }
 
 .botao-principal
@@ -233,6 +345,16 @@ a
         print its label in the same colour as its own background.
     */
     color: #ffffff;
+    box-shadow: var(--sombra-pousada);
+}
+
+.botao-principal:hover
+{
+    background: var(--cor-destaque);
+    border-color: var(--cor-destaque);
+    color: #ffffff;
+    box-shadow: var(--sombra-levantada);
+    filter: brightness(1.12);
 }
 
 .botao-grande
@@ -244,11 +366,19 @@ a
 
 /* Content */
 
+/*
+    The content is a surface on the ground rather than the ground itself. It is also
+    wider than it was: at 48rem a 1280 screen carried 256px of nothing down each side,
+    which is margin when it is chosen and leftovers when it is not.
+*/
 .conteudo
 {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: calc(var(--espaco) * 1.5) var(--espaco) calc(var(--espaco) * 3) var(--espaco);
+    max-width: 52rem;
+    margin: calc(var(--espaco) * 1.5) auto calc(var(--espaco) * 3) auto;
+    border-radius: var(--raio-grande);
+    background: var(--cor-fundo);
+    box-shadow: var(--sombra-pousada);
+    padding: calc(var(--espaco) * 2) calc(var(--espaco) * 2) calc(var(--espaco) * 2.5) calc(var(--espaco) * 2);
 }
 
 
@@ -317,7 +447,7 @@ a
 .ideia
 {
     display: grid;
-    grid-template-columns: 5.5rem 12rem minmax(0, 1fr) auto;
+    grid-template-columns: 5.5rem 17rem minmax(0, 1fr) 6rem;
     column-gap: 0.75rem;
     row-gap: 0.5rem;
     align-items: start;
@@ -347,6 +477,7 @@ a
 .ideia-titulo a
 {
     text-decoration: none;
+    transition: color var(--transicao);
 }
 
 .ideia-titulo a:hover
@@ -411,6 +542,17 @@ a
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
+
+    /*
+        What this holds still is the LEFT edge of the number, not the start of the bar.
+        The bar starts where the grid says, in a fixed track, and no width of any digit
+        reaches it: measured with a proportional face and this property switched off, the
+        seven bars still began at the same pixel.
+
+        The count is set against the bar, so its right edge is pinned and its left edge
+        is the one that moves. With proportional figures that edge wandered over 0.60px
+        across the rows whose wording is the same; with these it does not move at all.
+    */
     font-variant-numeric: tabular-nums;
 
     /*
@@ -421,15 +563,21 @@ a
     text-align: right;
 }
 
+/*
+    The track is fixed and the button fills it. Left to size itself the button is wider
+    on the rows that say "Votado" than on the rows that say "Votar", and the bar, which
+    takes what is left, then runs a different length on those rows.
+*/
 .lista-ideias .ideia-voto [data-vote-button]
 {
     grid-column: 4;
     grid-row: 1 / 3;
     align-self: center;
-    width: auto;
+    width: 100%;
     min-width: 0;
-    padding-left: 0.875rem;
-    padding-right: 0.875rem;
+    border-radius: var(--raio-medio);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 /*
@@ -479,7 +627,7 @@ a
     grid-row: 2;
     align-self: center;
     width: 100%;
-    height: 4px;
+    height: 6px;
     border-radius: 999px;
     background: var(--cor-linha);
     overflow: hidden;
@@ -543,6 +691,33 @@ a
         padding-left: 0.375rem;
         padding-right: 0.375rem;
     }
+
+    /*
+        On a phone the surface stops being an object on a ground and becomes the page
+        again. Two centimetres of tint down each side buy nothing there, and they cost
+        the bar the width it needs to be read as a length.
+    */
+    body
+    {
+        background: var(--cor-fundo);
+    }
+
+    .conteudo
+    {
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: calc(var(--espaco) * 1.25) var(--espaco) calc(var(--espaco) * 2.5) var(--espaco);
+    }
+
+    /*
+        And the header stops following the page. On a screen this short a bar that never
+        leaves is a bar that takes a fifth of what there is to read.
+    */
+    .cabecalho
+    {
+        position: static;
+    }
 }
 
 
@@ -559,9 +734,14 @@ a
     height: 1.5rem;
     margin-right: 0.125rem;
     border-radius: 999px;
-    background: var(--cor-secundaria-fundo);
-    box-shadow: inset 0 0 0 1px var(--cor-secundaria);
-    color: var(--cor-secundaria);
+
+    /*
+        Solid rather than a one pixel ring on a near white fill, which was the thinnest
+        mark on the page and the first thing to disappear at a glance. The colour is the
+        same secondary it always was, moved from the edge to the fill.
+    */
+    background: var(--cor-secundaria);
+    color: #ffffff;
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -595,7 +775,14 @@ a
 [data-vote-button].votado
 {
     background: var(--cor-fundo-suave);
-    box-shadow: inset 0 0 0 1px var(--cor-destaque);
+
+    /*
+        The fill alone measures 1.09:1 against white, which is a mark nobody can see.
+        The surface is pressed in instead, which is the one state in this interface that
+        is about something the person has already done, and the edge keeps the colour.
+    */
+    box-shadow: inset 0 1px 2px rgba(24, 26, 26, 0.14), inset 0 0 0 1px var(--cor-destaque);
+    color: var(--cor-destaque);
 }
 
 [data-vote-count]
@@ -694,10 +881,11 @@ a
     width: 100%;
     padding: 0.5rem;
     border: 1px solid var(--cor-contorno-campo);
-    border-radius: var(--raio);
+    border-radius: var(--raio-medio);
     background: var(--cor-fundo);
     color: var(--cor-texto);
     font: inherit;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
 }
 
 .campo textarea
@@ -737,4 +925,700 @@ a
     border-radius: var(--raio);
     background: var(--cor-fundo-suave);
     word-break: break-all;
+}
+
+
+
+
+/* ================================================================
+   The board: a rail, a grid of cards, a mark of its own for each
+   person, the search, and the page with what somebody proposed and
+   what they supported.
+   ================================================================ */
+
+/*
+    SIX COLOURS, AND THEY ARE AN ADDITION TO THE PALETTE, named here rather than
+    smuggled in. Three are tokens this file already owns and three are new, and all six
+    sit in the band between the primary teal and the secondary navy, so a mark is still
+    recognisably from this palette and never from a generic avatar rainbow.
+
+    WHAT THEY MEAN IS THE PART THAT MATTERS. The colour comes from the person's name and
+    from nothing else, which the partial works out, so the same colleague carries the same
+    mark on every screen. It says "this person" and never "this kind of idea". A coloured
+    mark on a card is read as a category, and this board has no categories and is not
+    getting any, so a colour that came from nowhere would be saying something false in
+    visual form.
+
+    The worst of the six against white is 5.22:1.
+*/
+.iniciais[data-pessoa="0"] { background: var(--cor-destaque); }
+.iniciais[data-pessoa="1"] { background: var(--cor-ligacao); }
+.iniciais[data-pessoa="2"] { background: var(--cor-secundaria); }
+.iniciais[data-pessoa="3"] { background: #1F6B5E; }
+.iniciais[data-pessoa="4"] { background: #4A5A7C; }
+.iniciais[data-pessoa="5"] { background: #1D6577; }
+
+.iniciais
+{
+    background: var(--cor-secundaria);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+/*
+    A NAME OF ONE WORD GIVES ONE LETTER, and in a row of two letter marks that circle
+    reads lighter than the ones beside it. The partial publishes how many letters it
+    produced because a stylesheet cannot count characters.
+*/
+.iniciais[data-letras="1"]
+{
+    font-size: 0.875rem;
+}
+
+
+/* ---- Search ---- */
+
+.pesquisa
+{
+    margin: 0 0 calc(var(--espaco) * 1.25) 0;
+}
+
+/*
+    The label is on the screen and not only in the accessibility tree, and there is no
+    placeholder. A placeholder is not a label: it leaves as soon as somebody types, which
+    is exactly when they might want to check what the field searches.
+*/
+.pesquisa-etiqueta
+{
+    display: block;
+    margin-bottom: 0.375rem;
+    color: var(--cor-texto);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.pesquisa-controlos
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.pesquisa-campo
+{
+    flex: 1 1 18rem;
+    min-width: 0;
+    max-width: 28rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--cor-contorno-campo);
+    border-radius: var(--raio-medio);
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font: inherit;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.pesquisa-campo:hover
+{
+    border-color: var(--cor-destaque);
+}
+
+
+/* ---- The last few people to vote ---- */
+
+.ideia-ultimos-votos
+{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.625rem 0 0 0;
+}
+
+.ideia-ultimos-votos .etiqueta
+{
+    color: var(--cor-texto-suave);
+    font-size: 0.8125rem;
+}
+
+/*
+    They overlap, which is what makes a stack read as a group of people rather than as a
+    line of badges. Each keeps a ring in the surface colour so the one in front does not
+    look like it is cutting the one behind.
+*/
+.ideia-ultimos-votos .iniciais
+{
+    width: 1.625rem;
+    height: 1.625rem;
+    margin-right: 0;
+    font-size: 0.6875rem;
+    box-shadow: 0 0 0 2px var(--cor-fundo);
+}
+
+.ideia-ultimos-votos .iniciais[data-letras="1"]
+{
+    font-size: 0.8125rem;
+}
+
+.ideia-ultimos-votos .iniciais + .iniciais
+{
+    margin-left: -0.5rem;
+}
+
+
+/* ---- "de N pessoas no quadro" ---- */
+
+.ideia-de-quantos
+{
+    margin: 0;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+    line-height: 1.3;
+}
+
+
+/* ---- Who is signed in ---- */
+
+/*
+    The board publishes who voted for what, permanently. Telling somebody which name
+    their vote will carry is not a profile, it is a label on the session, and the name
+    was already the only thing the layout can reach.
+*/
+.identificacao
+{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+.identificacao .iniciais
+{
+    flex: 0 0 auto;
+    margin-right: 0;
+}
+
+.identificacao-nome
+{
+    color: var(--cor-texto);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ---- The page with a person's own ideas and the ones they supported ---- */
+
+.area-pessoal
+{
+    margin-bottom: calc(var(--espaco) * 2);
+}
+
+.area-pessoal > h2
+{
+    margin-bottom: calc(var(--espaco) * 0.75);
+}
+
+/*
+    TWO LISTS THAT CAN BE EMPTY FOR TWO DIFFERENT REASONS, and on the first day everybody
+    is in both at once. Having proposed nothing and having voted on nothing are not the
+    same news, and the model keeps them apart on purpose, so each section says its own
+    sentence rather than sharing one that says neither.
+*/
+.area-pessoal .estado-vazio
+{
+    text-align: left;
+    padding: calc(var(--espaco) * 1.25);
+}
+
+.area-pessoal .estado-vazio p
+{
+    margin-bottom: calc(var(--espaco) * 0.75);
+}
+
+.area-pessoal .estado-vazio .botao
+{
+    margin-top: 0;
+}
+
+
+/* ================================================================
+   Wide screens: the rail and the cards.
+
+   SHUT INSIDE A MINIMUM WIDTH ON PURPOSE. A rule written without a
+   query wins at every width, including the ones the rules above have
+   already decided, which is how a seventeen rem track ends up on a
+   390px screen. Below this width the page keeps the row, the top bar
+   and the measure line, which is the shape earlier rounds were spent
+   getting right, and which measures shorter than the card does.
+   ================================================================ */
+
+@media (min-width: 60.0625rem)
+{
+    body
+    {
+        display: grid;
+        grid-template-columns: 15rem minmax(0, 1fr);
+        min-height: 100vh;
+
+        /*
+            THE TINTED GROUND IS GIVEN UP HERE, AND THE PALETTE IS THE REASON. A board of
+            cards wants the tint behind the cards, which puts the standing warning and
+            the bar's legend directly on it, and --cor-texto-suave measures 4.78:1 on
+            white and 4.38:1 on the tint, which is under the floor. There is no step
+            between: the comment on that token already records it is the only one of the
+            eleven neutrals that clears 4.5. So a tinted board costs the quiet text either
+            its contrast or its quietness. The cards carry their own figure instead, with
+            an edge and a shadow, on white.
+        */
+        background: var(--cor-fundo);
+    }
+
+    /* The same header element, the same nav, the same list, turned on its side. */
+    .cabecalho
+    {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        display: block;
+        height: 100vh;
+        padding: calc(var(--espaco) * 1.5) var(--espaco);
+        border-bottom: 0;
+        border-right: 1px solid var(--cor-linha);
+        box-shadow: none;
+    }
+
+    .navegacao
+    {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+        margin-left: 0;
+        height: 100%;
+    }
+
+    .separadores
+    {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+        width: 100%;
+    }
+
+    /*
+        The destination you are on becomes a filled shape rather than an underline. An
+        underline is a horizontal device and in a column of them it was reading as one
+        more rule.
+    */
+    .separadores a
+    {
+        display: block;
+        padding: 0.625rem 0.75rem;
+        border-bottom: 0;
+        border-radius: var(--raio-medio);
+        color: var(--cor-texto);
+        font-weight: 600;
+    }
+
+    .separadores a:hover
+    {
+        background: var(--cor-fundo-suave);
+        text-decoration: none;
+    }
+
+    .separadores a[aria-current="page"]
+    {
+        background: var(--cor-destaque);
+        border-bottom-color: transparent;
+        color: #ffffff;
+    }
+
+    /*
+        The way into the form stops being the quietest thing on the page. It is the one
+        affordance the briefing's measure of success depends on.
+    */
+    .navegacao > .botao
+    {
+        margin-left: 0;
+        margin-top: calc(var(--espaco) * 1.25);
+        border-color: var(--cor-destaque);
+        background: var(--cor-destaque);
+        color: #ffffff;
+        text-align: center;
+        font-weight: 600;
+        box-shadow: var(--sombra-pousada);
+    }
+
+    .navegacao > .botao:hover
+    {
+        background: var(--cor-destaque);
+        border-color: var(--cor-destaque);
+        color: #ffffff;
+        box-shadow: var(--sombra-levantada);
+        filter: brightness(1.12);
+    }
+
+    .identificacao
+    {
+        margin-top: auto;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--cor-linha);
+    }
+
+    .conteudo
+    {
+        max-width: 68rem;
+        margin: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        padding: calc(var(--espaco) * 2) calc(var(--espaco) * 2) calc(var(--espaco) * 3) calc(var(--espaco) * 2);
+    }
+
+    .lista-ideias
+    {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: calc(var(--espaco) * 1.25);
+        align-items: stretch;
+    }
+
+    /*
+        THE PAGE IS CALLED "MAIS VOTADAS" AND A GRID IS WORSE AT SAYING SO THAN A COLUMN.
+
+        In a column every step down the ranking is a step down the screen, so the order
+        needs no convention at all. In two columns three of the six steps are sideways,
+        measured, and sideways means "next" only to somebody who already knows the list is
+        ranked.
+
+        The leader takes the whole width, which gives the top of the ranking back the one
+        thing the grid takes away. It costs nothing on the recent tab, where the first item
+        is the newest and being first is equally what it has to say.
+    */
+    .lista-ideias > li:first-child
+    {
+        grid-column: 1 / -1;
+    }
+
+    /* The row becomes a card. Not one attribute changes. */
+    .ideia
+    {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto auto auto;
+        row-gap: 0;
+        column-gap: var(--espaco);
+        align-content: start;
+        padding: calc(var(--espaco) * 1.25);
+        border: 1px solid var(--cor-linha);
+        border-bottom: 1px solid var(--cor-linha);
+        border-radius: var(--raio-grande);
+        background: var(--cor-fundo);
+        box-shadow: var(--sombra-pousada);
+        transition: box-shadow var(--transicao), border-color var(--transicao);
+    }
+
+    .ideia:hover
+    {
+        border-color: var(--cor-contorno-campo);
+        box-shadow: var(--sombra-levantada);
+    }
+
+    /*
+        The rule inside the card separates what the idea is from how it is doing, which is
+        the one division a card of this shape has to make.
+    */
+    .ideia-corpo
+    {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        padding-bottom: calc(var(--espaco) * 0.875);
+        margin-bottom: calc(var(--espaco) * 0.875);
+        border-bottom: 1px solid var(--cor-linha);
+    }
+
+    .ideia-titulo
+    {
+        font-size: 1.1875rem;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Two lines of title, so one long one does not make its card taller than its row. */
+    .ideia-titulo a
+    {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .lista-ideias .ideia-voto [data-vote-count]
+    {
+        grid-column: 1;
+        grid-row: 2;
+        text-align: left;
+        align-self: end;
+        margin-bottom: 0;
+    }
+
+    .ideia-de-quantos
+    {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    /*
+        THE BAR KEEPS A FIXED TRACK, AND THIS IS THE REASON.
+
+        It measures against the leader of the same list, so two bars only mean anything
+        side by side when they are drawn at the same scale. A bar that filled its card
+        would be drawn at one scale in the wide leader card and another in the narrow ones,
+        and a full bar in a wide card would look like more support than a full bar in a
+        narrow one.
+
+        Fixing the track costs the card some white space on the right and keeps the only
+        thing the bar is for.
+    */
+    .lista-ideias .apoio
+    {
+        grid-column: 1;
+        grid-row: 4;
+        width: 11rem;
+        max-width: 100%;
+        align-self: center;
+        margin-top: 0.5rem;
+    }
+
+    .lista-ideias .ideia-voto [data-vote-button]
+    {
+        grid-column: 2;
+        grid-row: 2 / 5;
+        align-self: center;
+        width: auto;
+        min-width: 5.5rem;
+        padding-left: 0.875rem;
+        padding-right: 0.875rem;
+    }
+
+    /*
+        The wide card keeps its footer beside the measure instead of stretching it to the
+        far edge. Spanning two columns doubles the card and would otherwise put nine
+        hundred pixels of nothing between the bar and the button.
+    */
+    .lista-ideias > li:first-child
+    {
+        grid-template-columns: auto auto minmax(0, 1fr);
+    }
+
+    .lista-ideias > li:first-child .ideia-corpo
+    {
+        grid-column: 1 / -1;
+    }
+
+    .lista-ideias > li:first-child .ideia-voto [data-vote-count],
+    .lista-ideias > li:first-child .ideia-de-quantos,
+    .lista-ideias > li:first-child .apoio
+    {
+        grid-column: 1;
+    }
+
+    .lista-ideias > li:first-child .ideia-voto [data-vote-button]
+    {
+        grid-column: 2;
+    }
+
+    /*
+        On the person's own page every card is the full width, so every one of them aligns
+        its footer the same way. Writing that rule for the first card only left the others
+        with a thousand pixels between the bar and the button.
+    */
+    .area-pessoal .lista-ideias
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .area-pessoal .lista-ideias > li
+    {
+        grid-template-columns: auto auto minmax(0, 1fr);
+    }
+
+    .area-pessoal .lista-ideias > li .ideia-corpo
+    {
+        grid-column: 1 / -1;
+    }
+
+    .area-pessoal .lista-ideias > li .ideia-voto [data-vote-count],
+    .area-pessoal .lista-ideias > li .ideia-de-quantos,
+    .area-pessoal .lista-ideias > li .apoio
+    {
+        grid-column: 1;
+    }
+
+    .area-pessoal .lista-ideias > li .ideia-voto [data-vote-button]
+    {
+        grid-column: 2;
+    }
+}
+
+
+/* ---- Text for a screen reader, and off the screen for everybody else ---- */
+
+/*
+    Where a mark or a number carries something in shape that a sentence has to carry in
+    words. Not display:none, which takes it out of the accessibility tree as well, and not
+    a negative text-indent, which drags the focus ring across the page when the hidden
+    thing is focusable.
+*/
+.so-leitor
+{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 0;
+    clip-path: inset(50%);
+}
+
+
+/* ---- The notice of votes nobody has seen yet ---- */
+
+/*
+    A number on the way in, and a line on each idea once you are there.
+
+    The accent and not --cor-erro. Red in this palette says something went wrong, and
+    people voting for your idea is the opposite of that. A count does not need alarm to
+    be noticed.
+*/
+.aviso-novos
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: var(--cor-destaque);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/*
+    On the day the marker is applied the column is null for everybody, which means
+    nobody has opened the page, which means every person's first screen carries the
+    highest number they will ever see. It has to hold its shape at two digits.
+*/
+.separadores a[aria-current="page"] .aviso-novos
+{
+    background: #ffffff;
+    color: var(--cor-destaque);
+}
+
+/*
+    On the idea itself, a word and not only a colour, so that somebody who cannot tell
+    the accent from the grey still reads that something is new.
+*/
+.ideia-votos-novos
+{
+    margin: 0 0 0.375rem 0;
+    color: var(--cor-destaque);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+
+/* ================================================================
+   Narrow: the row keeps the two new pieces instead of letting them
+   stack on top of it.
+   ================================================================ */
+
+@media (max-width: 60rem)
+{
+    /*
+        THE BAR BROKE WHEN IT GAINED A THIRD DESTINATION. The three tabs, the button and
+        the name were sharing one wrapping line, and what came out was two tabs, then the
+        third on its own, then the button and the name floating in the middle with nothing
+        under them.
+
+        So the tabs take a line of their own and the two things that are not navigation
+        take the next one, the name on the left and the way into the form on the right.
+        Both lines then have a shape rather than a leftover.
+    */
+    .separadores
+    {
+        flex: 1 0 100%;
+    }
+
+    .identificacao
+    {
+        order: 1;
+        margin-right: auto;
+    }
+
+    .navegacao > .botao
+    {
+        order: 2;
+        margin-left: auto;
+    }
+
+    /*
+        The field gives up its wide minimum so that it and the button share one line.
+        Below that minimum the button was dropping to a line of its own and sitting under
+        nothing.
+    */
+    .pesquisa-campo
+    {
+        flex: 1 1 8rem;
+    }
+    /*
+        The stack of recent voters comes off. In a row there is no width for it beside
+        everything else, and the names it carries are on the idea's own page.
+    */
+    .ideia-ultimos-votos
+    {
+        display: none;
+    }
+
+    /*
+        The denominator keeps its place under the measure, because nothing else on a
+        narrow screen says what the votes are a share of.
+    */
+    /*
+        Under the bar and not across the row. Set against the right edge it ended up a
+        hand's width from the count it finishes the sentence of, with the bar in between,
+        and "7 votos" and "de 8 pessoas no quadro" stopped reading as one thing.
+    */
+    .ideia-de-quantos
+    {
+        grid-column: 2;
+        grid-row: 3;
+        text-align: left;
+        font-size: 0.8125rem;
+        margin-top: 0.25rem;
+    }
+}
+
+
+/*
+    Motion is an enhancement and never a requirement. Somebody who has told their system
+    they want less of it gets the same interface with none, and nothing here depends on a
+    transition having run.
+*/
+@media (prefers-reduced-motion: reduce)
+{
+    *,
+    *::before,
+    *::after
+    {
+        transition: none !important;
+    }
 }

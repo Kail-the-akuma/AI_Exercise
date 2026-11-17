@@ -15,3 +15,9 @@
 *.png  binary
 *.jpg  binary
 *.pfx  binary
+
+# text=auto detects these correctly on its own today. They are named anyway, because a
+# font file silently rewritten by an end of line conversion is not a file that fails to
+# load, it is a file that loads as nothing while every tool reports success.
+*.woff2 binary
+*.woff  binary

@@ -5,4 +5,6 @@
 }
 <h1>@UiText.RecentTab</h1>
 
-<partial name="_IdeaList" model="Model.Ideas" />
+<partial name="_Pesquisa" model="Model.SearchTerm" />
+
+<partial name="_IdeaList" model="@(new IdeaListView { Items = Model.Ideas, SearchTerm = Model.SearchTerm, ArrivedPeopleCount = Model.ArrivedPeopleCount })" />

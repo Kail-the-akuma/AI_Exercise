@@ -1,4 +1,4 @@
-@model IReadOnlyList<IdeaListItem>
+@model IdeaListView
 @*
     The body of both tabs. They differ only in the heading and in the order the ideas
     arrive in, so the markup lives here once.
@@ -7,7 +7,18 @@
     structure and check both tabs, so two copies could drift apart and the same scenario
     would quietly be checking different things on each page.
 *@
-@if (Model.Count == 0)
+@if (Model.FoundNothing)
+{
+    @*
+        A search that matched nothing is not an empty board, and the two must not share a
+        sentence. The invitation to be the first person to propose an idea belongs only to
+        the board that really has none.
+    *@
+    <div class="estado-vazio">
+        <p>@UiText.NoSearchResults</p>
+    </div>
+}
+else if (Model.Items.Count == 0)
 {
     <div class="estado-vazio">
         <p>@UiText.EmptyList</p>
@@ -18,18 +29,24 @@ else
 {
     @* The warning sits once above the list, and before every vote button in document
        order. Repeating it on each row would read it out dozens of times to somebody
-       using a screen reader, for a rule that is the same for the whole page. *@
-    <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
+       using a screen reader, for a rule that is the same for the whole page.
 
-    @*
-        What the bar in each row is measured against. It sits outside the list rather than
-        as its first item, because the end to end scenarios count the direct children of
-        this ul and expect that number to be the number of ideas.
-    *@
-    <p class="legenda-apoio">@UiText.SupportBarLegend</p>
+       A page that draws this partial more than once says both notes itself and turns
+       these off, because they are about the page and not about one of its lists. *@
+    @if (Model.ShowNotes)
+    {
+        <p class="aviso aviso-voto">@UiText.PublicVoteWarning</p>
+
+        @*
+            What the bar in each row is measured against. It sits outside the list rather
+            than as its first item, because the end to end scenarios count the direct
+            children of this ul and expect that number to be the number of ideas.
+        *@
+        <p class="legenda-apoio">@UiText.SupportBarLegend</p>
+    }
 
     <ul class="lista-ideias">
-        @foreach (IdeaListItem idea in Model)
+        @foreach (IdeaListItem idea in Model.Items)
         {
             @*
                 The row is a grid of two columns, and the wrapper below is what gives the
@@ -48,10 +65,58 @@ else
                         <span class="ideia-autor">@idea.AuthorDisplayName</span>
                         <time datetime="@(idea.CreatedAt.ToString("s", CultureInfo.InvariantCulture))">@TimeZoneInfo.ConvertTimeFromUtc(idea.CreatedAt, displayTimeZone).ToString("d")</time>
                     </p>
+
+                    @*
+                        The last few people to vote, newest first. Nothing here is private
+                        that was not already public: the warning above this list says a vote
+                        is public, and the complete list of voters has always been on the
+                        idea's own page. What changed is where a few of those names appear.
+
+                        An idea nobody has voted on carries none, and then nothing is drawn
+                        rather than an empty label standing on its own.
+                    *@
+                    @*
+                        Only ever filled on the personal page, and only for this person's
+                        own ideas. Everywhere else it is zero and nothing is drawn.
+                    *@
+                    @if (idea.NewVoteCount > 0)
+                    {
+                        <p class="ideia-votos-novos">@UiText.FormatNewVotes(idea.NewVoteCount)</p>
+                    }
+
+                    @if (idea.RecentVoterNames.Count > 0)
+                    {
+                        <p class="ideia-ultimos-votos">
+                            <span class="etiqueta">@UiText.RecentVotesLabel</span>
+                            @foreach (string voterName in idea.RecentVoterNames)
+                            {
+                                <partial name="_Iniciais" model="@voterName" />
+                            }
+                        </p>
+                    }
                 </div>
 
                 <partial name="_VoteButton"
-                         model="@(new VoteButtonModel { IdeaId = idea.Id, HasVoted = idea.HasVoted, VoteCount = idea.VoteCount })" />
+                         model="@(new VoteButtonModel { IdeaId = idea.Id, HasVoted = idea.HasVoted, VoteCount = idea.VoteCount, SearchTerm = Model.SearchTerm })" />
+
+                @*
+                    "7 votos" and then "de 8 pessoas no quadro". The count keeps the
+                    wording the specification fixes and this finishes the sentence, so the
+                    number the votes are a share of is on the card rather than in a
+                    percentage that hides it.
+
+                    That denominator moves: it is the people who have opened the board,
+                    and it grows. Written as a share, the day a colleague arrives every
+                    number on the page falls at once with nobody unvoting, and it reads as
+                    support lost. Written out, the cause sits beside the effect.
+
+                    Nothing is said on a card with no votes. "Sem votos de 8 pessoas" is a
+                    sentence about nobody, and the empty bar already says it.
+                *@
+                @if (idea.VoteCount > 0 && Model.ArrivedPeopleCount > 0)
+                {
+                    <p class="ideia-de-quantos">@UiText.FormatArrivedPeople(Model.ArrivedPeopleCount)</p>
+                }
 
                 @*
                     How much support this idea has against the one leading the same list,

@@ -144,7 +144,7 @@ public class IdeaSupportBarTests
                 new IdeaSeed { Title = "Nenhum voto", VoteCount = 0 },
             ]);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(100, BarOf(ranking, "Tres votos"));
         Assert.Equal(66, BarOf(ranking, "Dois votos"));
@@ -171,7 +171,7 @@ public class IdeaSupportBarTests
                 new IdeaSeed { Title = "Metade", VoteCount = 1 },
             ]);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(100, BarOf(ranking, "Empatada primeira"));
         Assert.Equal(100, BarOf(ranking, "Empatada segunda"));
@@ -205,7 +205,7 @@ public class IdeaSupportBarTests
                 new IdeaSeed { Title = "Terceira", VoteCount = 0 },
             ]);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(3, ranking.Count);
 
@@ -225,7 +225,7 @@ public class IdeaSupportBarTests
 
         IdeaService service = await SeedAsync(context, []);
 
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Empty(ranking);
     }
@@ -258,7 +258,7 @@ public class IdeaSupportBarTests
                 new IdeaSeed { Title = "Recente e sozinha", VoteCount = 1 },
             ]);
 
-        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> recent = await service.GetRecentAsync(null, Cancellation);
 
         Assert.Equal("Recente e sozinha", recent[0].Title);
         Assert.Equal(25, recent[0].SupportPercent);
@@ -266,7 +266,7 @@ public class IdeaSupportBarTests
 
         // And the same idea carries the same bar on both tabs, because the two lists hold
         // the same ideas and the leader belongs to the set and not to the order.
-        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(Cancellation);
+        IReadOnlyList<IdeaListItem> ranking = await service.GetRankingAsync(null, Cancellation);
 
         Assert.Equal(BarOf(ranking, "Antiga e apoiada"), BarOf(recent, "Antiga e apoiada"));
         Assert.Equal(BarOf(ranking, "Recente e sozinha"), BarOf(recent, "Recente e sozinha"));
