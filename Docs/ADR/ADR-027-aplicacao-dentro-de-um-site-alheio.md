@@ -7,14 +7,38 @@
 ## Contexto
 
 O servidor é o `SERVIDOR-APP`, e **já serve outra aplicação** no `Default Web Site`, na porta
-80. O IdeaBoard entra ali dentro, como aplicação em `/IdeaBoard`.
+80, com duas ligações, uma delas sem nome de anfitrião. O IdeaBoard entra ali dentro, como
+aplicação em `/IdeaBoard`.
+
+A porta 80 estar ocupada é o que tira do caminho a hipótese que o repositório assumia. Um
+site próprio deixa de poder ter o endereço mais curto da máquina, e passa a precisar de
+outra porta ou de outro nome.
 
 Até hoje este repositório assumia site próprio em toda a parte. O ADR-024 decidia um
 endereço com porta, e o script de provisionamento criava um site novo e recusava continuar
 se já existisse um com aquele nome.
 
-Decisão do Hugo a 17 de novembro de 2026, tomada com as alternativas à frente. **As razões
-dele não me foram relatadas e não são inventadas aqui**, que é diferente de não existirem.
+Decisão do Hugo a 17 de novembro de 2026, tomada com três caminhos à frente: porta própria
+em `http://SERVIDOR-APP:8080/`, nome próprio na porta 80 com um registo de DNS, ou outra
+porta qualquer.
+
+**Não escolheu nenhum dos três. Perguntou se dava para ser o servidor mais o nome da
+aplicação**, que é a forma que acabou por ser decidida.
+
+A pergunta dele diz o critério melhor do que uma resposta diria. **Um endereço sem porta
+escrita e sem depender de ninguém.** A porta própria obrigava trinta pessoas a escrever
+`:8080` para sempre. O nome próprio obrigava a um registo de DNS que alguém da
+infraestrutura teria de criar, e até lá não havia nada para mostrar a funcionar.
+
+A aplicação dentro do site dá `http://SERVIDOR-APP/IdeaBoard` no minuto a seguir ao
+provisionamento, sem pedir nada a ninguém. **E isso não é comodidade.** Num produto interno
+que ainda não serviu uma única pessoa, não depender da infraestrutura para o mostrar a
+funcionar é a diferença entre haver uma coisa para ver e haver um pedido em fila.
+
+É também o mesmo critério que o [ADR-024](ADR-024-http-sem-certificado.md) e o
+[ADR-013](ADR-013-certificado-no-arranque.md) já tinham encontrado duas vezes, por tirar do
+caminho crítico uma dependência externa com duração que a equipa não controla. A terceira
+vez que o mesmo critério decide deixa de ser preferência e passa a ser padrão desta equipa.
 
 ## Decisão
 
@@ -23,6 +47,24 @@ O IdeaBoard é servido como **aplicação dentro do `Default Web Site`**, no cam
 
 O pool próprio não é uma preferência de isolamento. É requisito, e a secção seguinte é o
 porquê.
+
+## O que se sabia quando isto foi decidido, e o que se soube a seguir
+
+Vale a pena fixar a ordem, porque muda o que significa reabrir o assunto.
+
+**Nada do que está escrito abaixo era conhecido quando a forma foi escolhida.** A herança
+do `web.config` do vizinho, a colisão de handlers, o requisito do pool e o quarto sítio das
+variáveis apareceram depois, ao ler a configuração para perceber o que mudava com a
+mudança de forma.
+
+Isto não torna a decisão pior nem a põe em causa. Os três caminhos continuam a existir, e a
+troca que o Hugo fez continua a ser a mesma troca. **O que muda é o que um leitor daqui a um
+ano deve concluir.** Sem esta secção, ele lê a lista de consequências e assume que foram
+pesadas e aceites. Foram descobertas.
+
+A diferença tem efeito prático num sítio só, e é o caminho de saída. Se a convivência vier a
+custar mais do que o que está escrito aqui, **pedir um site próprio não é reverter uma
+decisão ponderada, é acabar de a tomar** com a informação que ela não teve.
 
 ## O pool próprio é requisito, e é o ADR-009 que o cobra
 
@@ -113,26 +155,47 @@ não vai estar na cabeça de ninguém.
 
 ## Alternativas consideradas
 
-**Site próprio, com porta, que era o que estava decidido.** Funcionava e estava escrito.
-Exigia uma porta livre e uma ligação novas na máquina, e trazia consigo a questão de a
-porta entrar no nome do serviço pedido ao Kerberos, tratada no
-[ADR-024](ADR-024-http-sem-certificado.md). Posta de lado por decisão do Hugo.
+**Site próprio noutra porta, em `http://SERVIDOR-APP:8080/`, que era o que estava decidido.**
+Funcionava, estava escrito, e não dependia de ninguém de fora. Posta de lado porque obriga
+toda a gente a escrever a porta, todos os dias, num endereço que vai para atalhos e
+marcadores e para uma comunicação à equipa. Trazia ainda a questão de a porta entrar no
+nome do serviço pedido ao Kerberos, tratada no
+[ADR-024](ADR-024-http-sem-certificado.md), que nesta forma desaparece.
+
+**Nome próprio na porta 80, com um registo de DNS.** É a melhor das quatro em estado
+estacionário: endereço curto, sem porta, sem caminho, sem vizinho, e sem nada do que está
+escrito neste registo. Posta de lado porque põe no caminho crítico um pedido a outra equipa,
+e porque até esse pedido ser satisfeito **não há nada para mostrar**. É a mesma troca que o
+ADR-013 e o ADR-024 já tinham feito duas vezes, e pela mesma razão.
+
+Fica como a saída natural se esta convivência se tornar cara. O custo de lá chegar mais
+tarde é um registo de DNS e uma comunicação à equipa, e não é mudança de arquitetura
+nenhuma.
 
 **Alojamento out-of-process, que permitiria partilhar pool.** Resolveria o requisito do
 pool por remoção. Posta de lado porque o in-process é decisão do ADR-009 e porque é também o
 que faz a identidade negociada chegar no mesmo pedido. Trocar o modelo de alojamento para
 poupar um pool é pagar arquitetura por uma definição.
 
-**Pedir à outra equipa um site só para nós.** Não foi rejeitada, não foi pedida. Se a
-convivência vier a custar mais do que o que está escrito acima, é o caminho de saída, e não
-obriga a mudar nada no artefacto, apenas o provisionamento.
+**Um site só nosso naquela máquina, sem mais nada.** Parece uma quarta via e não é. O
+`Default Web Site` já tem uma ligação na porta 80 **sem nome de anfitrião**, que é a que
+responde a tudo o que nenhuma ligação mais específica apanhe. Um site nosso ao lado dele
+só se distingue por porta ou por nome de anfitrião, portanto desemboca numa das duas
+primeiras e não acrescenta uma terceira. Raciocínio sobre como o IIS resolve ligações, e
+não medição.
+
+Fica escrito porque é a alternativa que alguém vai propor primeiro, por soar à solução
+óbvia, e porque descobrir sozinho que ela não existe custa meia hora.
 
 ## Consequências
 
-**Boas.** Não é preciso pedir porta nem ligação nova. Por ser porta 80, a política
-`EnableAuthNegotiatePort` deixa de poder decidir seja o que for, conforme o
-[ADR-024](ADR-024-http-sem-certificado.md). O endereço fica mais curto e mais fácil de
-comunicar à equipa.
+**Boas, e a primeira é a que motivou tudo.** O endereço existe no minuto a seguir ao
+provisionamento, sem pedido a equipa nenhuma, o que num produto que ainda não serviu uma
+pessoa é a diferença entre haver uma coisa para mostrar e haver um pedido em fila.
+
+O endereço não leva porta escrita, portanto cabe numa comunicação à equipa e num atalho sem
+explicação ao lado. E, por ser porta 80, a política `EnableAuthNegotiatePort` deixa de poder
+decidir seja o que for, conforme o [ADR-024](ADR-024-http-sem-certificado.md).
 
 **Más.** Passa a haver configuração alheia no nosso caminho de herança, com a colisão de
 handlers por fechar, um quarto sítio para as variáveis de ambiente colidirem, e uma equipa
