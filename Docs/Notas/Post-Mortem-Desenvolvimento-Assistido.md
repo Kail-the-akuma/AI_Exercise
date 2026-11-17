@@ -1,182 +1,168 @@
-# Post mortem: o IdeaBoard, e o modo de trabalho que o construiu
+# Trabalhar com uma equipa de agentes
 
 Escrito a 17 de novembro de 2026, no dia em que a aplicação entrou em produção.
 
-Este documento não é sobre o IdeaBoard. É sobre **como** o IdeaBoard foi feito, porque a
-aplicação era o pretexto e o modo de trabalho era o exercício. Quem quiser saber o que a
-aplicação faz lê o `BRIEFING.md` e o `Docs/02`.
+Este documento não é sobre o IdeaBoard. A aplicação foi o pretexto, e o exercício era
+outro: **perceber se um conjunto de agentes com papéis separados produz melhor trabalho
+do que um agente a fazer tudo, e o que é preciso montar à volta deles para que isso
+aconteça.**
 
-## O que se construiu, em números
+Quem quiser saber o que a aplicação faz lê o [briefing](../../BRIEFING.md). Quem quiser
+saber como se organiza uma equipa destas, continue.
+
+## O que se montou
+
+Uma pessoa, cinco papéis de agente em sessões separadas, catorze dias. No fim, uma
+aplicação em produção num servidor da empresa, com autenticação integrada do Windows,
+usada por uma pessoa real.
 
 | | |
 |---|---|
-| Período | 4 a 17 de novembro de 2026, catorze dias |
-| Commits | mais de 140, dos quais cerca de metade no último dia |
-| Código | 122 ficheiros C# e 19 de Razor, cerca de 24 300 linhas em `src` e `tests` |
-| Testes | 282 de unidade e integração, 37 ponta a ponta |
-| Registos de decisão | 27 ADR |
+| Período | 4 a 17 de novembro de 2026 |
+| Papéis | cinco, em sessões independentes |
 | Pessoas | uma |
-| Agentes | cinco papéis em sessões separadas |
+| Registos de decisão | 27 |
+| Testes | 282 de unidade e integração, 37 ponta a ponta |
 
-Os números de ficheiros, de linhas e de registos foram contados neste repositório. O de
-commits está arredondado de propósito, porque a história foi reescrita no último dia para
-substituir nomes internos por marcadores e um número exacto fica errado à primeira
-contagem seguinte. **O de testes é relatado e não medido aqui**, e é o único da tabela que
-não foi confirmado por quem a escreve.
+Os registos e os testes aparecem aqui não como medida de produtividade, mas porque são o
+que a equipa produziu **além do código**, e é aí que a diferença entre um agente e cinco
+se nota.
 
-A aplicação é uma plataforma interna de ideias com quatro funcionalidades: submeter,
-votar, ver um ranking e ver quem votou. Corre em ASP.NET Core sobre SQLite, com
-autenticação integrada do Windows, servida por IIS numa máquina da empresa.
+## O briefing veio primeiro, e é a peça que torna o resto possível
 
-## O modo de trabalho
+Antes de existir um único papel, existia um briefing. Define o problema, os utilizadores,
+quatro funcionalidades, os critérios de sucesso e os riscos aceites. São 158 linhas.
 
-Cinco papéis, cada um numa sessão própria, cada um dono de um conjunto de ficheiros e de
-mais nenhum:
+A secção que faz o trabalho não é nenhuma dessas. É a lista do que fica **fora** do
+âmbito, e a frase que a acompanha: as exclusões não são omissões nem oportunidades de
+melhoria.
+
+**Isto não é zelo documental, é uma peça de engenharia dirigida a um comportamento
+conhecido.** Um agente competente, posto a construir uma lista de ideias com votos,
+propõe categorias, filtros, pesquisa, estados, aprovação e notificações. Cada proposta é
+razoável, bem argumentada, e desloca o produto. Multiplicado por cinco papéis, o âmbito
+desfaz-se numa semana, e desfaz-se por acumulação de boas sugestões, que é a forma mais
+difícil de travar.
+
+A lista de exclusões transforma uma discussão de gosto numa verificação. Perante uma
+proposta, a pergunta deixa de ser "isto é boa ideia" e passa a ser "isto está na lista".
+
+E a lista encolheu **duas vezes**, nos dois casos por decisão explícita de quem é dono do
+produto, cada uma registada com data e com a razão. Isso importa tanto como a lista
+existir: um âmbito que nunca cede é ignorado, e um âmbito que cede por insistência deixa
+de ser âmbito. Ceder por decisão datada mantém as duas coisas de pé.
+
+**Se houvesse uma só coisa a levar deste exercício, era esta.** O briefing não foi
+documentação do trabalho, foi a condição para o trabalho poder ser distribuído.
+
+## Os cinco papéis
 
 | Papel | É dono de |
 |---|---|
 | **ORQ**, orquestrador | Nada. Abre e fecha o trabalho, e verifica |
-| **ARQ**, arquitectura | `Docs/ADR/` |
-| **DEV** | `src/`, `tests/IdeaBoard.Tests/` |
-| **QA** | `tests/IdeaBoard.E2E/` e a lista de verificação manual |
-| **DOC** | `Docs/` excepto os ADR, e o `README.md` |
+| **ARQ**, arquitectura | Os registos de decisão |
+| **DEV** | O código e os testes de unidade e integração |
+| **QA** | Os testes ponta a ponta e a lista de verificação manual |
+| **DOC** | A documentação |
 
-Três regras governam isto, e as três foram postas à prova.
+A divisão óbvia é por especialidade. Não é essa que interessa.
 
-**Todo o trabalho passa pelo orquestrador.** A pessoa fala com o ORQ e com mais ninguém.
-Os papéis não falam entre si sem ele saber. Custa um salto em cada passagem e paga-se em
-não haver duas versões de uma decisão a correr em paralelo.
+**O que a divisão faz, e que nenhuma outra prática conseguiu, é produzir para cada um o
+gatilho que nenhum produz para si.** Quem escreve uma afirmação não tem como duvidar
+dela, porque a escreveu precisamente por acreditar nela. Quem a recebe para fazer outra
+coisa com ela, para a testar, para a documentar, para a registar, tropeça nela a partir
+de fora.
 
-**O orquestrador não é dono de nenhum ficheiro.** Não escreve código, não escreve
-documentação, não escreve registos. Se o fizesse, deixava de poder verificar com
-independência o que os outros escreveram.
+Isto apanhou coisas que nenhuma releitura apanharia, porque não davam erro nenhum. Um
+teste que passava por não haver nada a validar. Um item de verificação manual que
+confirmava a sobrevivência de uma sessão que não existe. Um requisito sustentado por três
+razões que tinham morrido todas no mesmo dia. Todos verdes, todos com óptimo aspecto.
 
-> **Este documento é a excepção, e convém que isso se leia aqui e não só no histórico.**
-> Foi escrito pelo orquestrador, a pedido da pessoa, porque é sobre o modo de trabalho e
-> não sobre o produto. Passou para o papel de documentação no momento em que entrou em
-> `Docs/`, e foi esse papel que verificou os números acima e escreveu esta nota.
->
-> Uma regra enunciada num documento que a quebra, sem o dizer, é precisamente o género de
-> coisa que este post mortem diz ter custado caro noutros sítios.
+Uma segunda propriedade, mais simples: **quem verifica nunca está a verificar trabalho
+seu.** O orquestrador não é dono de ficheiro nenhum precisamente para não ter de confiar
+em si próprio no momento em que verifica.
 
-**O orquestrador não acredita em relatórios.** Verifica por comando. Esta é a regra que
-mais vezes salvou o trabalho e a que mais custou a cumprir, porque um relatório bem escrito
+## Como a equipa trabalha
+
+**Tudo passa pelo orquestrador.** A pessoa fala com um só interlocutor. Os papéis não
+decidem entre si. O custo é um salto a mais em cada passagem. O benefício é não haver
+duas versões da mesma decisão a correr em paralelo, que é o modo de falhar mais caro de
+descobrir.
+
+**Um de cada vez.** Enquanto um trabalha, os outros estão parados. É mais lento do que
+trabalhar em paralelo e elimina por completo a classe de problemas em que um agente revê
+código que entretanto já mudou.
+
+**O orquestrador não acredita em relatórios.** Verifica por comando. Foi a regra que mais
+vezes mudou o resultado, e a mais difícil de cumprir, porque um relatório bem escrito
 parece-se muito com um facto.
 
-## O que funcionou
+## O que a conversa entre agentes produziu
 
-**A fronteira de ficheiros.** Nenhuma colisão de escrita em catorze dias. Quando um papel
-encontrou um defeito fora do que lhe pertence, relatou em vez de corrigir, e isso aconteceu
-dezenas de vezes. O custo é um salto a mais; o benefício é que quem verifica nunca está a
-verificar trabalho seu.
+Esta é a parte que não se antecipa lendo sobre o assunto.
 
-**A verificação por comando.** Num único dia, três afirmações de agentes que pareciam
-verdadeiras foram desmentidas por medição: um bloqueador que não se reproduzia, uma causa
-atribuída ao mecanismo errado, e uma explicação de um erro que o próprio código tornava
-impossível. Nenhuma delas se via na leitura. Todas se viram ao correr alguma coisa.
+**Correcções em todas as direcções, e não de cima para baixo.** O orquestrador despachou
+trabalho para corrigir um defeito que não existia, e quem o recebeu mediu-o e devolveu-o
+em vez de o fazer. Um papel relatou um bloqueador, o orquestrador não o reproduziu, e ao
+medirem os dois em conjunto descobriram que estavam ambos certos e a medir formas
+diferentes de invocar a mesma coisa. Uma afirmação passou de um papel ao orquestrador e
+deste a um terceiro, e foi o terceiro que a mediu e a desmentiu.
 
-**Escrever a condição que falsifica.** Um dos registos previu, com confiança alta e
-documentação a sustentar, exactamente o contrário do que viria a acontecer no servidor:
-dizia que o nome curto do servidor entraria sem pedir credenciais, e no dia da publicação é
-o nome qualificado que entra. Esse registo tinha escrito, no primeiro dia, a circunstância
-em que a sua afirmação deixaria de valer.
+**Nenhuma dessas correcções foi pedida.** Vieram de cada papel ter uma razão própria para
+ir ver, que não era desconfiança de quem mandou.
 
-> **E aqui é preciso cuidado, porque esta é a lição mais fácil de contar bem de mais.** Que
-> a afirmação era condicional está escrito e é verdade. Que foi **aquela** condição que se
-> realizou **não está medido**. O próprio registo diz, duas linhas abaixo, que o porquê não
-> está verificado e que a explicação mais económica é apenas a mais económica. Há pelo
-> menos um segundo mecanismo capaz de produzir o mesmo resultado, e distinguir os dois pede
-> uma leitura numa máquina do parque que ainda ninguém fez.
->
-> O que se pode afirmar hoje é mais modesto e continua a ser a lição: **ter escrito a
-> condição foi o que permitiu saber, no dia em que a previsão falhou, que havia uma
-> condição por verificar em vez de um registo simplesmente errado.** O que não se pode
-> afirmar é que a condição escrita foi a que disparou.
->
-> E vale a pena dizer porque é que esta passou, sendo que este documento é inteiro sobre
-> apanhar afirmações largas: **uma história que fecha bem demais não se verifica com o
-> mesmo rigor de uma que incomoda.** Esta fechava bem para toda a gente que a leu,
-> incluindo para quem a escreveu e para quem a elogiou.
+**A melhor delas é um exemplo pequeno.** Um papel estava prestes a apagar um comentário
+no código por o achar errado. Antes de o apagar, foi medir. O comentário estava certo, e
+a frase que ele ia escrever no lugar é que estava errada. Ninguém lhe pediu aquela
+verificação, e ela nasceu de uma regra que ele próprio tinha formulado nesse dia: apagar
+um sintoma documentado é a mesma classe de erro que escrever um sem ir ao código.
 
-**Registar a razão e não só a decisão.** Quando o endereço da aplicação teve de mudar no
-dia da publicação, a razão que sustentava o anterior caiu com ele. Por estar escrita,
-soube-se que tinha caído. Se só estivesse escrita a decisão, ter-se-ia trocado um endereço
-por outro sem ninguém perceber que o argumento tinha morrido.
+**É isto que distingue uma equipa de um agente com uma lista de tarefas.** As regras que
+os papéis formularam uns para os outros foram mais úteis do que as que lhes foram dadas
+de início, porque nasceram de um caso concreto em que alguém se enganou à frente de outra
+pessoa.
 
-## O que correu mal, e é a parte útil
+## O que custou, e onde o método pode ser melhor
 
-**A mesma falha repetiu-se o mês inteiro, com caras diferentes.** Afirmar mais largo do que
-se mediu. Pesquisar restrito e concluir em geral. Um exemplo de cada direcção, todos reais:
+**Houve conversa a mais.** Nem todas as passagens entre papéis precisaram de existir.
+Algumas mensagens confirmaram o que já estava confirmado, outras levaram contexto que o
+destinatário não ia usar, e o orquestrador respondeu a relatórios que não pediam
+resposta. O canal único garante consistência e paga-se em volume, e nem todo esse volume
+rendeu alguma coisa.
 
-- Uma procura que **não devolve nada** lida como prova de ausência.
-- Uma procura que **devolve** lida como prova de presença, quando os dois resultados eram
-  prosa dentro de comentários a dizer que a coisa não existe.
-- Uma medição feita numa forma de invocação, afirmada para todas.
-- Um comando que **parece** ecoar o que lhe pediram, e não ecoa.
+**E o orquestrador devia ter travado mais cedo.** Houve trabalho em curso que não era
+necessário e que ele viu passar sem o cortar, limitando-se a limitá-lo. Quem o travou foi
+a pessoa, com uma instrução directa a dizer que mediar inclui parar o que não é preciso.
+A partir desse momento o comportamento mudou e não voltou atrás, mas **a correcção veio
+de fora e devia ter vindo de dentro**.
 
-Nenhuma destas se apanha a reler. Apanham-se a exercitar.
+As duas coisas têm a mesma raiz. Um orquestrador que verifica tudo trata qualquer
+trabalho em curso como legítimo por omissão, porque a pergunta que lhe é natural é "isto
+está certo" e não "isto é preciso". **A segunda pergunta tem de estar escrita, senão não
+é feita.**
 
-**O destinatário de uma afirmação também viaja, e ninguém o verifica.** Numa passagem entre
-papéis reverifica-se a citação, o número de linha, o ficheiro. Não se reverifica quem pediu
-nem a quem se respondeu, porque um nome de papel não tem aspecto de afirmação. Quando essa
-mensagem traz uma instrução colada ao lado, executa-se sobre o endereço errado.
+## O que se leva para o próximo exercício
 
-**Uma decisão tomada em conversa e não despachada no mesmo dia está perdida.** Aconteceu
-duas vezes. O que a torna invisível é o texto antigo continuar a ler-se bem.
+**O briefing antes dos agentes.** Sem uma lista explícita do que fica de fora, uma equipa
+de agentes desloca o produto por acumulação de boas sugestões, e ninguém consegue apontar
+o momento em que isso aconteceu.
 
-**Verificar o artefacto errado com precisão.** Houve um dia inteiro de medições correctas
-sobre a coisa errada. A pergunta que apanha isto não é "a medição está certa", é "qual foi
-a âncora".
+**Papéis separados por propriedade de ficheiros, e não por especialidade.** O valor não
+está em cada um saber mais da sua área. Está em o trabalho de um chegar às mãos de outro,
+que o lê de fora e tropeça no que o autor não tinha como ver.
 
-## O que o servidor ensinou em duas horas
+**Um interlocutor só para a pessoa.** Escala mal, e com cinco papéis compensa. A
+alternativa troca o estrangulamento por versões divergentes da mesma decisão, e isso é
+muito mais caro de descobrir do que de evitar.
 
-A publicação foi o primeiro contacto com a realidade, e desmentiu coisas que catorze dias
-de trabalho cuidadoso não tinham desmentido.
+**Verificação por categoria, e não verificação de tudo.** Verificar tudo não se cumpre num
+dia com pressa, e toda a gente sabe que não se cumpre. Duas categorias nomeadas
+cumprem-se: uma afirmação sobre o comportamento de uma ferramenta confirma-se em segundos,
+e apagar algo documentado é a mesma classe de erro que escrevê-lo sem ir à fonte. Nenhuma
+das duas pede juízo sobre quem mandou a afirmação, e é isso que as torna repetíveis por
+quem vier a seguir e não conhecer ninguém.
 
-Um módulo do servidor que o guião mandava procurar num caminho, e que vivia noutro. Um
-runtime que se presumia instalado por a máquina já servir aplicações do mesmo tipo, e que
-não estava, porque as aplicações vizinhas o levam dentro delas. Um endereço que a
-documentação dizia ser o certo e que pede credenciais, enquanto a forma qualificada do mesmo
-nome entra sozinha.
-
-Nada disto era descoberto por mais revisão. **Uma suite verde não é prova de que a
-aplicação funciona**, e foi preciso ir à máquina para saber.
-
-## O que se levaria para o próximo exercício
-
-**Três mecanismos valem mais do que todas as outras práticas juntas.** Verificar por comando
-em vez de acreditar. Escrever ao lado de cada afirmação a condição em que ela deixa de valer.
-E não deixar nenhum papel ser dono do que também verifica.
-
-**E uma precisão sobre o primeiro, que é o que o torna cumprível.** "Verificar tudo" não se
-cumpre, e toda a gente sabe que não se cumpre, portanto não é regra nenhuma. O que se
-cumpre é verificar **duas categorias nomeadas**, e as duas custam segundos:
-
-| Categoria | Porquê | O que custa confirmar |
-|---|---|---|
-| Uma afirmação sobre como uma **ferramenta** se comporta | Um comportamento lembrado é uma hipótese, e as ferramentas mudam entre versões sem avisar | Correr a ferramenta |
-| **Apagar ou alterar um sintoma documentado** por relato de outra pessoa | É a mesma classe de erro que escrever um sem ir ao código, que foi como o sintoma errado nasceu | Abrir o ficheiro |
-
-**Nenhuma das duas pede juízo sobre quem mandou a afirmação**, e é isso que as torna
-repetíveis por quem vier a seguir e não conhecer ninguém. Uma regra que obrigue a avaliar a
-fonte não sobrevive a um dia com pressa, nem a uma equipa onde as pessoas mudam.
-
-Nos três casos deste exercício em que a versão medida acabou por ser diferente da que tinha
-chegado pelo caminho, foi uma destas duas categorias que fez alguém ir medir, e não
-desconfiança de quem a mandou.
-
-**O canal único pelo orquestrador escala mal e vale a pena na mesma.** Com cinco papéis
-funciona. Com dez seria um estrangulamento. A alternativa, que é deixá-los falar entre si,
-troca o estrangulamento por versões divergentes da mesma decisão, e isso é mais caro de
-descobrir do que de evitar.
-
-**O trabalho em bloco em vez de um pedido de integração por correcção.** Durante a maior
-parte do exercício abriu-se um pedido de integração por cada peça, e o custo de revisão
-passou a ser maior do que o do trabalho. A mudança para um ramo de desenvolvimento dominante,
-com passagens ao ramo principal só quando um bloco está validado e testado, foi a decisão
-que mais tempo libertou.
-
-**A parte que um agente não faz.** Decidir o âmbito. Decidir o endereço. Aceitar um risco.
-Instalar o que falta numa máquina da empresa. Olhar para um ecrã e dizer que está feio.
-Nenhuma destas apareceu por iniciativa de ninguém, e todas as vezes que uma delas foi
-assumida em vez de perguntada, teve de ser desfeita.
+**E a parte que a equipa não faz.** Decidir o âmbito. Aceitar um risco. Escolher um
+endereço. Parar trabalho desnecessário antes de alguém o apontar. Olhar para um ecrã e
+dizer que está feio. Todas as vezes que uma destas foi assumida em vez de perguntada,
+teve de ser desfeita.
