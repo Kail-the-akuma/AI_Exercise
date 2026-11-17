@@ -735,12 +735,77 @@ foreach ($section in @("windowsAuthentication", "anonymousAuthentication"))
         -Metadata "overrideMode" `
         -Value "Allow"
 
-    Write-Done ($section + " destrancada para este site")
+    Write-Done ($section + " destrancada para este alvo")
 }
 
-Write-Host "   NAO VERIFICADO NUMA MAQUINA COM IIS a partir daqui, e por isso fica dito." -ForegroundColor Yellow
-Write-Host "   Se o site responder 500.19 a falar de uma seccao que nao pode ser usada neste" -ForegroundColor Yellow
-Write-Host "   caminho, e isto que falhou, e e aqui que se mexe." -ForegroundColor Yellow
+
+Write-Step "A reler o destrancamento, em vez de supor que a escrita pegou"
+
+<#
+    Writing this and never reading it back was the gap. Both neighbouring applications on
+    this server close it, and their guides require OverrideModeEffective to say Allow
+    before anything else is done.
+
+    THE TRAP IS THAT THIS SERVER CANNOT TELL US WHETHER OUR CALL DID ANYTHING. The global
+    unlock was already run once here, by the RepositorioVizinhoA team, with appcmd unlock config.
+    So the site starts whether our write worked or not, and a step that does nothing passes
+    unnoticed on the one machine where it is not needed. The day it is noticed is the day
+    somebody installs this on a clean server, and by then nobody remembers this block.
+
+    The two values together are what separate the cases, which is why both are printed:
+
+      OverrideModeEffective is what actually applies to this target.
+      OverrideMode is what OUR entry says, at our own location.
+
+    Allow and Allow means our own entry is doing the work. Allow with anything else means
+    it is inherited from the global unlock and OUR call changed nothing, which is a warning
+    and not a failure here, and would be a failure on a clean machine.
+
+    The RepositorioVizinhoA guide records, dated 2026-09-07, that Set-WebConfiguration against
+    "IIS:\" with no -Location silently fails to unlock, and that the target it needs is
+    MACHINE/WEBROOT/APPHOST. That measurement is about a DIFFERENT call from ours: theirs
+    has no -Location and ours does, and writing to a location entry is not the same as
+    unlocking at the root. It may well be right as it is. This read is what will say so,
+    and it is the reason not to change the call on a hunch.
+#>
+
+foreach ($section in @("windowsAuthentication", "anonymousAuthentication"))
+{
+    try
+    {
+        $unlocked = Get-WebConfiguration `
+            -Filter ("/system.webServer/security/authentication/" + $section) `
+            -PSPath "IIS:\" `
+            -Location $targetLocation
+
+        Write-Host ("   {0}: OverrideMode {1}, OverrideModeEffective {2}" -f `
+            $section, $unlocked.OverrideMode, $unlocked.OverrideModeEffective)
+
+        if ($unlocked.OverrideModeEffective -eq "Deny")
+        {
+            Stop-WithReason "A seccao $section continua trancada para '$targetLocation'. Um site cujo web.config a traga responde 500.19 em vez de arrancar, portanto continuar seria provisionar algo que nao arranca. O guia do RepositorioVizinhoA traz duas formas confirmadas de destrancar: 'appcmd unlock config /section:system.webServer/security/authentication/$section', ou Set-WebConfiguration com -PSPath MACHINE/WEBROOT/APPHOST. Correr uma delas e repetir."
+        }
+
+        if ($unlocked.OverrideMode -ne "Allow")
+        {
+            Write-Host "   AVISO: esta destrancada, mas NAO por causa desta escrita." -ForegroundColor Yellow
+            Write-Host "   O OverrideMode da nossa entrada nao diz Allow, portanto o Allow efectivo vem" -ForegroundColor Yellow
+            Write-Host "   de outro sitio, provavelmente do appcmd unlock global que outra equipa correu" -ForegroundColor Yellow
+            Write-Host "   nesta maquina uma vez. Aqui isso nao faz mal nenhum e o site arranca." -ForegroundColor Yellow
+            Write-Host "   NUM SERVIDOR LIMPO FARIA, porque este passo nao estaria a destrancar nada." -ForegroundColor Yellow
+        }
+    }
+    catch
+    {
+        # Read failure is not evidence that the write failed, and stopping here would leave
+        # a machine with the pool, the folders and the application already created. So this
+        # says loudly that it could not answer, and goes on.
+        Write-Host ("   NAO FOI POSSIVEL RELER o destrancamento de " + $section + ".") -ForegroundColor Magenta
+        Write-Host "   Isso nao e o mesmo que estar trancada, e tambem nao e o mesmo que estar bem." -ForegroundColor Magenta
+        Write-Host "   O sintoma, se estiver trancada: o site responde 500.19 a falar de uma seccao" -ForegroundColor Magenta
+        Write-Host "   que nao pode ser usada neste caminho." -ForegroundColor Magenta
+    }
+}
 
 
 Write-Step "A configurar a autenticacao de $targetDescription"
