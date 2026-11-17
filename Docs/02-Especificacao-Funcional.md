@@ -314,7 +314,8 @@ na página da ideia. O que mudou foi onde algumas dessas pessoas aparecem.
 > daquelas pessoas naquele sítio, e estão marcadas como `aria-hidden`. Nos outros quatro
 > sítios onde as mesmas iniciais aparecem há sempre o nome escrito ao lado, que é o que
 > justifica escondê las de quem usa leitor de ecrã. Aqui não há, portanto quem usa leitor
-> de ecrã ouve a etiqueta e mais nada. Relatado ao DEV.
+> de ecrã ouve a etiqueta e mais nada. Relatado a quem trata da interface, que tinha
+> previsto um texto com os nomes para leitor de ecrã que não chegou ao código.
 
 ### Quantas pessoas no quadro
 
