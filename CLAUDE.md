@@ -8,18 +8,22 @@ Plataforma interna de ideias. Leia `BRIEFING.md` antes de qualquer trabalho, e
 O briefing fixa quatro funcionalidades e exclui tudo o resto de forma deliberada.
 As exclusões não são omissões nem oportunidades de melhoria.
 
-**Não acrescentar**, mesmo que pareça óbvio, barato ou útil: comentários, categorias,
-etiquetas, filtros, administração, edição ou remoção de ideias, deteção de duplicados,
-estados, triagem, aprovação, notificações por email, páginas por pessoa, ou qualquer
-mecanismo de inscrição em ideias de outros.
+**Não acrescentar**, mesmo que pareça óbvio, barato ou útil: categorias, etiquetas,
+filtros, administração, edição ou remoção de ideias, deteção de duplicados, estados,
+triagem, aprovação, notificações por email, páginas por pessoa, ou qualquer mecanismo de
+inscrição em ideias de outros.
 
 A lista em vigor está no fim de `Docs/02`. Esta é um resumo dela, e em caso de divergência
 vale a de lá.
 
-**A pesquisa e o aviso de votos novos saíram desta lista a 16 de novembro de 2026**, por
-decisão do Hugo tomada com a lista à frente. Que ela tenha encolhido uma vez não a torna
-negociável: cede por decisão explícita de quem é dono do produto, registada com data, e
-não por já existir código que a contraria nem por alguém a achar razoável.
+**A lista já encolheu duas vezes, cada uma por decisão do Hugo tomada com ela à frente.** A
+16 de novembro de 2026 saíram a pesquisa e o aviso de votos novos. A 17 saíram os
+comentários, que podem ser escritos por quem está autenticado e mudados ou apagados apenas
+por quem os escreveu.
+
+Ter encolhido duas vezes não a torna negociável: cede por decisão explícita de quem é dono
+do produto, registada com data, e não por já existir código que a contraria, nem por
+alguém a achar razoável, nem por ser pedido numa mensagem.
 
 O briefing lista riscos conhecidos destas decisões e diz de forma explícita que nenhum
 deles é motivo para mudar o âmbito. Uma proposta de funcionalidade que resolva um
