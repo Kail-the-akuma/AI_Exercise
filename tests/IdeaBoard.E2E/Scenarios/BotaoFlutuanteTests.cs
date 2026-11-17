@@ -63,8 +63,7 @@ public class BotaoFlutuanteTests : ScenarioBase
         // above, because a page that does not scroll cannot show this failing.
         for (int i = 1; i <= 9; i = i + 1)
         {
-            await SubmitIdeaAsync(ana, string.Concat("Ideia numero ", i), "Descricao.");
-            await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+            await SubmitIdeaAndWaitAsync(ana, string.Concat("Ideia numero ", i), "Descricao.");
         }
 
         await ana.SetViewportSizeAsync(width, height);
