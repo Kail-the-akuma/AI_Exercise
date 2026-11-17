@@ -266,7 +266,7 @@ a
     margin-left: auto;
 }
 
-.navegacao > .botao
+.botao-submeter
 {
     margin-left: auto;
 }
@@ -1244,30 +1244,25 @@ a
         destination you are on is a filled shape rather than an underline: an underline
         is a horizontal device and in a column of them it read as one more rule.
     */
-    .separadores a,
-    .navegacao > .botao
+    .separadores a
     {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        height: 2.75rem;
-        padding: 0 0.75rem;
+        min-height: 2.75rem;
+        padding: 0.4375rem 0.75rem;
         border: 0;
         border-radius: var(--raio);
         background: none;
         color: #ffffff;
         font-weight: 600;
-        white-space: nowrap;
         box-shadow: none;
     }
 
-    .separadores a:hover,
-    .navegacao > .botao:hover
+    .separadores a:hover
     {
         background: #2c4450;
         color: #ffffff;
-        filter: none;
-        box-shadow: none;
         text-decoration: none;
     }
 
@@ -1279,12 +1274,6 @@ a
         color: #ffffff;
     }
 
-    .navegacao > .botao
-    {
-        margin-left: 0;
-        margin-top: calc(var(--espaco) * 1.25);
-    }
-
     .icone
     {
         flex: 0 0 auto;
@@ -1293,20 +1282,88 @@ a
     }
 
     /*
-        The words fade in place, clipped by each item's own overflow, rather than being
+        THE WAY INTO THE FORM IS NOT NAVIGATION ANY MORE, IT IS THE ACTION.
+
+        It used to sit in the bar, where it was one item among the destinations and moved
+        with them: on the left rail it was under the three tabs, on the narrow bar it was
+        beside the name. Fixed to the lower right it is in the same place on every screen and
+        on every page, and it stops competing with the tabs for the eye.
+
+        It stays inside the navigation in the markup. Taking it out would leave it in no
+        landmark at all, and fixed positioning does not care where an element sits in the
+        document.
+    */
+    .botao-submeter
+    {
+        position: fixed;
+        right: calc(var(--espaco) * 1.5);
+        bottom: calc(var(--espaco) * 1.5);
+        z-index: 30;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0.75rem 1.125rem;
+        border: 1px solid var(--cor-destaque);
+        border-radius: 999px;
+        background: var(--cor-destaque);
+        color: #ffffff;
+        font-weight: 600;
+        box-shadow: 0 6px 20px -6px rgba(24, 26, 26, 0.45);
+        transition: box-shadow var(--transicao), filter var(--transicao);
+    }
+
+    .botao-submeter:hover
+    {
+        background: var(--cor-destaque);
+        border-color: var(--cor-destaque);
+        color: #ffffff;
+        box-shadow: 0 10px 26px -8px rgba(24, 26, 26, 0.55);
+        filter: brightness(1.12);
+        text-decoration: none;
+    }
+
+    /*
+        AND IT GIVES WAY TO THE EMPTY STATE. A board with nothing on it carries its own
+        prominent invitation, which Docs/02 requires and a scenario checks, and two filled
+        calls to the same action on one screen is one too many. The empty state is the louder
+        of the two and it is the one that stays.
+    */
+    body:has(.estado-vazio) .botao-submeter
+    {
+        display: none;
+    }
+
+    /*
+        The words fade in place, clipped by the rail's own overflow, rather than being
         taken out of the layout. Removed instead of faded, they drag the icon beside them
         as they go.
+
+        THE FADE WAITS FOR THE WIDTH. Measured at 140ms into the opening: the rail is at
+        228px and the label is already fully opaque, so the longest of them runs 10px past
+        the edge and is cut for the whole of the animation. That is what a screenshot of a
+        rail being opened catches. Closing has no delay, so the words go first and the
+        rail narrows after, which never spills either.
     */
     .rotulo
     {
         opacity: 1;
-        transition: opacity 140ms linear;
+        white-space: normal;
+        transition: opacity 120ms linear 200ms;
     }
 
     .cabecalho:not(:hover):not(:focus-within) .rotulo
     {
         opacity: 0;
         pointer-events: none;
+        transition-delay: 0ms;
+
+        /*
+            And it stops wrapping while the rail is closed. Allowed to wrap at 72px a long
+            label becomes a tall stack of invisible lines, and the item grows to hold a
+            thing nobody can see. Clipped on one line it costs nothing.
+        */
+        white-space: nowrap;
     }
 
     .identificacao
@@ -1652,12 +1709,6 @@ a
         margin-right: auto;
     }
 
-    .navegacao > .botao
-    {
-        order: 2;
-        margin-left: auto;
-    }
-
     /*
         The field gives up its wide minimum so that it and the button share one line.
         Below that minimum the button was dropping to a line of its own and sitting under
@@ -1666,6 +1717,18 @@ a
     .pesquisa-campo
     {
         flex: 1 1 8rem;
+    }
+
+    /*
+        AND THE WAY INTO THE FORM STAYS IN THE BAR HERE. Floated to the lower right it
+        was measured sitting on top of a vote button, which is not a near miss: tapping
+        where "Votado" is would submit an idea instead. A phone has no spare corner,
+        and the bar at the top already has a place for this.
+    */
+    .botao-submeter
+    {
+        order: 2;
+        margin-left: auto;
     }
     /*
         The stack of recent voters comes off. In a row there is no width for it beside

@@ -96,12 +96,21 @@
             </ul>
 
             @*
-                Secondary, and on every page, because the empty list has to carry a
-                prominent one of its own by Docs/02 and two of them side by side is one
-                too many. The header is the one that gives way: this is the way back to
-                the form from anywhere, not the invitation to use it.
+                On every page, and fixed to the lower right rather than sitting among the
+                destinations. It is the action and not a place to go, and in the bar it
+                moved with the layout: under the tabs on the rail, beside the name on the
+                narrow bar.
+
+                It stays inside this nav in the markup on purpose. Out of it, it would be
+                a link in no landmark at all, and where an element sits in the document
+                has nothing to do with where fixed positioning puts it on the screen.
+
+                The empty list still carries its own prominent invitation, which Docs/02
+                requires and a scenario checks. The stylesheet hides this one while that
+                one is on screen, because two filled calls to the same action is one too
+                many and the empty state is the louder of the two.
             *@
-            <a class="botao" asp-page="/Nova"><partial name="_Icone" model="@("plus")" /><span class="rotulo">@UiText.SubmitIdeaButton</span></a>
+            <a class="botao botao-submeter" asp-page="/Nova"><partial name="_Icone" model="@("plus")" />@UiText.SubmitIdeaButton</a>
 
             @*
                 Who you are signed in as. Only the name is available here, and that is on
