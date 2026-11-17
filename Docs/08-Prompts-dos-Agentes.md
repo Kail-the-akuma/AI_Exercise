@@ -2,8 +2,39 @@
 
 **Versão 2, 13 de novembro de 2026.**
 
-Cinco papéis, cinco sessões separadas do Claude Code, cada uma na sua janela. Cada uma
-trabalha na sua própria árvore de trabalho do git, e não todas na mesma.
+Cinco papéis, cinco sessões separadas do Claude Code, cada uma na sua janela.
+
+**Cada sessão trabalha na sua própria árvore de trabalho do git, criada a partir do
+`dev`.** A regra mantém se, e o que vem a seguir é o que custa quando ela não é seguida,
+porque uma regra sem o custo escrito lê se como preferência de arrumação.
+
+#### O que aconteceu a 17 de novembro de 2026
+
+As cinco sessões trabalharam na mesma árvore, e isso produziu três coisas, todas
+observadas e nenhuma delas um erro de quem as apanhou.
+
+**Um `push` levou o commit de outro papel.** Um papel commitou, outro empurrou minutos
+depois, e o `push` levou os dois, porque um `push` empurra o ramo e não o commit. Quem
+empurrou não sabia, e quem commitou podia continuar a pensar que tinha trabalho por
+empurrar. É por isso que existe a regra de relatar o intervalo, mais abaixo.
+
+**Ninguém sabia o que era seu na árvore partilhada.** Antes de um `reset --hard` houve
+alterações por committar que não eram de nenhum dos papéis e que tiveram de ser conferidas
+uma a uma. Numa árvore própria, tudo o que lá está é de quem lá trabalha, e a pergunta não
+se chega a pôr.
+
+**E as árvores antigas ficaram penduradas numa história que deixou de existir.** No fim
+do dia havia **sete** árvores de trabalho, três delas em `detached HEAD`. Contadas aqui:
+**cinco das sete apontam para commits que já não estão no `dev`**, porque a história foi
+reescrita nesse dia para substituir nomes internos por marcadores.
+
+É este o custo que não se adivinha. Enquanto a história não é reescrita, uma árvore velha
+é só desarrumação. No dia em que é, **quem está em `detached` fica com commits que
+deixaram de existir e sem ramo que os traga de volta**, e quem está num ramo de fase
+antigo tem um ramo que já não tem relação nenhuma com o `dev`.
+
+A arrumação é portanto parte da regra e não etiqueta: uma árvore que acabou o seu trabalho
+remove se, em vez de ficar à espera de um dia que a torne cara.
 
 Os prompts abaixo são para colar na primeira mensagem de cada sessão.
 
@@ -14,8 +45,36 @@ Os prompts abaixo são para colar na primeira mensagem de cada sessão.
 | **ORQ** | Nada. Abre e fecha cada fase, e verifica | Todos os ficheiros do repositório |
 | **ARQ** | `Docs/ADR/`, incluindo o índice `Docs/ADR/README.md` | `src/`, `tests/`, o resto de `Docs/` |
 | **DEV** | `src/`, `tests/IdeaBoard.Tests/` | `tests/IdeaBoard.E2E/`, `Docs/` |
-| **QA** | `tests/IdeaBoard.E2E/`, a lista manual de [07](07-Plano-de-Verificacao.md) | `src/`, `tests/IdeaBoard.Tests/` |
-| **DOC** | `Docs/` exceto `Docs/ADR/`, mais `README.md` | `src/`, `tests/`, `Docs/ADR/` |
+| **QA** | `tests/IdeaBoard.E2E/`, e as **afirmações** da lista manual de [07](07-Plano-de-Verificacao.md) | `src/`, `tests/IdeaBoard.Tests/`, e escrever em `Docs/` |
+| **DOC** | `Docs/` exceto `Docs/ADR/`, mais `README.md`, incluindo o **ficheiro** da lista manual | `src/`, `tests/`, `Docs/ADR/` |
+
+### A lista manual tem dois donos, e não é a mesma coisa vista duas vezes
+
+Esta é a única sobreposição da tabela, e é deliberada desde 17 de novembro de 2026, por
+arbitragem do orquestrador depois de a prática se ter mostrado melhor do que o que aqui
+estava escrito.
+
+**São duas coisas diferentes com o mesmo nome.**
+
+| | É de quem | O que é |
+|---|---|---|
+| A afirmação | **QA** | O que vale a pena verificar, o que um item prova, e quando um item deixou de provar o que diz provar |
+| O ficheiro e a prosa | **DOC** | Como está escrito, onde vive, se contradiz outro documento, e se a razão sobrevive à frase |
+
+**O que torna isto robusto é a asserção e a redacção estarem em mãos diferentes.** Quem
+mede um item não é quem decide como ele fica escrito, e quem o escreve teve de o entender
+ao ponto de o conseguir formular, que é uma segunda leitura que ninguém pediu de propósito.
+
+A forma de trabalho que isto descreve foi exercida nesse dia: o QA percorreu a lista
+inteira e mediu que sete itens não provavam o que diziam provar, relatou os com os comandos
+e as razões, o DOC confirmou por sua conta antes de escrever, e num deles escreveu a
+versão corrigida pelo próprio QA em vez da que lhe tinha chegado pelo caminho. Nenhum dos
+sete teria sido visto por quem só lê.
+
+**A fronteira, e é a única regra que esta divisão precisa.** Quando o QA propõe e o DOC
+discorda da **forma**, o DOC escreve como entender. Quando discorda da **afirmação**, sobe
+ao orquestrador e não arbitra. A asserção não lhe pertence, e trocar uma afirmação por
+outra ao escrevê la é exactamente o que esta divisão existe para impedir.
 
 O **`Docs/01-Arquitetura.md` continua do DOC**, e não do ARQ, apesar do nome. Descreve
 uma arquitetura, não a decide. Quem decide escreve o ADR, e quem descreve o resultado
@@ -155,7 +214,7 @@ cinco papéis à volta.
 
 ### Dois comandos que imprimem a mesma palavra podem provar coisas diferentes
 
-Observação do papel de verificação, a 18 de novembro de 2026, e é a pergunta aplicada ao
+Observação do papel de verificação, a 17 de novembro de 2026, e é a pergunta aplicada ao
 caso mais escorregadio: quando a prova não falha por estar errada, falha por ter sido
 feita no momento errado ou contra a coisa errada.
 
@@ -619,12 +678,47 @@ verificas por ti:
 Uma pesquisa que não devolve nada é prova fraca. Antes de escreveres que algo não
 existe, confirmas de segunda maneira, com outro termo ou lendo o ficheiro.
 
+E O TEXTO TAMBÉM SE PARTE, PORTANTO A FRASE PODE LÁ ESTAR E NÃO SER ENCONTRADA
+Numa prosa com mudança de linha a 90 colunas, **qualquer expressão de três ou mais
+palavras tem probabilidade real de atravessar uma mudança de linha**, e aí uma procura
+pela frase inteira não a vê. O resultado é zero, e zero lê se como ausência.
+
+Medido a 17 de novembro de 2026, com uma data escrita errada em dezasseis sítios. Depois
+de corrigidos os que se viam, a procura ingénua devolvia **zero** em todo o repositório e
+a que atravessa mudanças de linha devolvia **duas**, uma em cada metade da equipa. As duas
+estavam partidas entre o fim de uma linha e o princípio da seguinte.
+
+Antes de escrever que uma expressão não existe, repetir a procura sobre o texto com os
+**espaços todos** achatados, e não só as mudanças de linha:
+
+```bash
+for f in $(git ls-files '*.md'); do
+  n=$(tr '\r\n' '  ' < "$f" | tr -s ' ' | grep -o "a expressão" | wc -l)
+  if [ "$n" -gt 0 ]; then echo "$f : $n"; fi
+done
+```
+
+**O `\r` é a parte que custa, e não o `\n`.** Os ficheiros deste repositório têm fins de
+linha CRLF na árvore de trabalho. Uma receita que troque só o `\n` por espaço deixa o
+`\r` entre as duas metades da frase, e devolve zero sobre um ficheiro que a contém.
+Medido a 17 de novembro de 2026: a receita com `tr '\n'` deu **zero** num ficheiro onde a
+receita com `tr '\r\n'` deu **uma**.
+
+É o mesmo erro mais uma vez, uma camada abaixo: a ferramenta que serve para confirmar que
+uma procura não mentiu pode, ela própria, devolver nada por uma razão que nada tem a ver
+com a pergunta.
+
+**E não confiar numa contagem que outra pessoa deu**, pela mesma razão: ela foi feita com
+uma procura que falha do mesmo modo. Nesse dia duas contagens relatadas ficaram curtas, e
+em ambos os casos só não passou despercebido porque quem as recebeu voltou a procurar em
+vez de confiar no número.
+
 E UMA QUE DEVOLVE TAMBÉM É PROVA FRACA, PELA MESMA RAZÃO AO CONTRÁRIO
 Um resultado pode estar num comentário, num exemplo, numa mensagem de erro ou numa
 frase que diz que aquilo NÃO existe. Antes de escreveres que algo existe, vais ver a
 linha e confirmas que é código a correr e não prosa a falar dele.
 
-Medido a 18 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
+Medido a 17 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
 duas vezes, e as duas ocorrências são comentários a dizer que não há nenhum. A mesma
 procura sobre o código com os comentários removidos não devolve nada.
 

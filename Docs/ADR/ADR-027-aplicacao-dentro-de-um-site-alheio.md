@@ -28,7 +28,7 @@ em `http://SERVIDOR-APP:8080/`, nome próprio na porta 80 com um registo de DNS,
 porta qualquer.
 
 **A 8080 daquele exemplo já estava ocupada, e isso só se soube depois.** O documento de
-instalação do AplicacaoVizinhaB, lido a 18 de novembro de 2026, regista que o RepositorioVizinhoA
+instalação da AplicacaoVizinhaB, lido a 17 de novembro de 2026, regista que o RepositorioVizinhoA
 ocupa naquele servidor a porta 80 em produção **e a 8080 em QA**. A escolha não foi
 afectada, porque o que a decidiu foi não querer porta escrita de todo, e o terceiro caminho
 oferecido era precisamente outra porta qualquer. Fica corrigido para que ninguém leia o
@@ -141,7 +141,7 @@ ficheiro do vizinho tem o atributo, e então não há nada a fazer, ou não tem,
 
 ## A dependência não é só no vizinho, é no servidor, e foi outra equipa que a criou
 
-Esta secção foi escrita a 18 de novembro de 2026, depois de ler os documentos de instalação
+Esta secção foi escrita a 17 de novembro de 2026, depois de ler os documentos de instalação
 das duas aplicações que já correm naquela máquina. **Tudo o que ela afirma sobre o servidor
 vem desses documentos, com as datas que eles próprios trazem, e não de uma medição nossa.**
 Estamos a ler o que outra equipa escreveu sobre um servidor, e não o servidor.
@@ -196,10 +196,10 @@ altura e porque o raciocínio que lá chegou é reaproveitável.
 
 ### O que estava escrito como hipótese, antes de ser medido
 
-Os documentos de instalação das duas aplicações vizinhas, lidos a 18 de novembro de 2026,
+Os documentos de instalação das duas aplicações vizinhas, lidos a 17 de novembro de 2026,
 dizem duas coisas que encaixam. O do RepositorioVizinhoA oferece, como uma das três saídas para o
 caso de a porta 80 estar ocupada, **reaproveitar o `Default Web Site`** apontando lhe o
-caminho físico e o pool. O do AplicacaoVizinhaB diz que o RepositorioVizinhoA ocupa a porta 80 naquele
+caminho físico e o pool. O da AplicacaoVizinhaB diz que o RepositorioVizinhoA ocupa a porta 80 naquele
 servidor.
 
 **Juntas, sugerem que o `Default Web Site` pode ser o RepositorioVizinhoA** e não um site vazio por

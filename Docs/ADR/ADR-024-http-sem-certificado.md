@@ -75,19 +75,30 @@ e apoiada em documentação de desenho do Chromium, que um nome sem pontos entra
 intranet local e um nome com pontos fica fora dela, e concluía que o nome curto era a forma
 favorável. **A conclusão estava errada neste parque.**
 
-**E o que salvou este registo foi a condição que ele próprio escreveu no primeiro dia.** Logo
-a seguir àquela afirmação está escrito que a deteção automática de intranet só acontece
+**O que este registo ganhou por ter escrito uma condição, e é menos do que parece.** Logo a
+seguir àquela afirmação está escrito que a deteção automática de intranet só acontece
 **quando a lista de servidores de autenticação não está definida por política**, que havendo
 lista é ela que governa, e que **num parque gerido a lista estar definida é o caso provável e
-não o improvável**. Foi exactamente esse o caso. A afirmação não era falsa, era condicional, e
-realizou se a condição que a limitava.
+não o improvável**.
 
-**O porquê não está verificado, e é o que a medição não diz.** Ela diz o quê e não o porquê. A
-leitura mais económica é a da lista de servidores de autenticação, com o nome qualificado lá
-dentro e o curto fora, que é o mecanismo que este registo já nomeava como provável. **Não foi
-confirmado.** A página que o resolve é a que já estava escrita mais abaixo, `edge://policy`
-numa máquina do parque. Até lá, a confiança desta explicação é baixa, e é menor do que a da
-afirmação que ela substitui, como tem de ser.
+**O que se pode afirmar é que havia uma condição por verificar, e não que foi aquela que
+disparou.** A medição diz o quê e não diz o porquê. Ter escrito a condição evitou ficarmos
+com um registo simplesmente errado, e deixou uma pergunta em vez de uma surpresa. Não previu
+nada.
+
+**E há três mecanismos candidatos, não um.** A lista de servidores de autenticação definida
+por política, que é a condição escrita aqui no primeiro dia. A deteção automática de intranet
+a comportar se neste parque de outra maneira. E a **lista de excepções do proxy**, levantada
+pelo ORQ a 17 de novembro de 2026, que não está escrita em parte nenhuma deste registo.
+
+**Se for a terceira, a condição que disparou não é a que estava escrita**, e o mérito de a
+ter escrito encolhe para o que está no parágrafo anterior: saber que havia uma condição, sem
+saber qual.
+
+**Nenhum dos três está medido.** Resolve se com uma leitura numa máquina do parque,
+`edge://policy`, que já estava mandada fazer mais abaixo neste registo e que ninguém fez. Até
+lá a confiança de qualquer explicação aqui é baixa, e é menor do que a da afirmação que elas
+substituem, como tem de ser.
 
 ## A decisão não mudou, mudou o endereço que a satisfaz
 
@@ -114,6 +125,12 @@ Vale a pena reparar que esta conclusão **já estava contida no que este registo
 escrito**, e não precisou de informação nenhuma que não estivesse cá. É o inverso do que
 costuma acontecer neste repositório: uma decisão a jusante costuma matar uma razão
 escrita, e desta vez confirmou uma.
+
+**E isto não se estende à secção seguinte, que é sobre a forma do nome.** Aqui o registo
+continha mesmo a conclusão, porque dizia que a política da porta só decide quando a porta não
+é 80 nem 443, e o endereço novo é porta 80. Ali continha apenas uma condição, e qual delas se
+realizou ainda não está medido. **Duas coisas parecidas com destinos diferentes, e juntá las
+num elogio só seria dar a esta casa um crédito que só metade merece.**
 
 **O que esta emenda não trata, de propósito.** Entrar dentro de um site que outra equipa
 já usa é uma decisão sobre a superfície de alojamento, com consequências próprias que não
@@ -219,7 +236,7 @@ responde a duas perguntas de uma vez, a lista de servidores de autenticação e 
 da porta.
 
 **Houve uma medição noutro servidor** que mostrou início de sessão automático apenas em
-três portas, as do Vizinha e do VizinhaBQA. Não é propriedade desta aplicação e não está
+três portas, as de duas aplicações vizinhas. Não é propriedade desta aplicação e não está
 confirmada no nosso ambiente. E a leitura mais económica dela é que essas três portas são
 as únicas onde existe aplicação a pedir autenticação integrada, porque uma porta onde
 nenhuma aplicação a pede não pode dar início de sessão automático, com zona ou sem zona.

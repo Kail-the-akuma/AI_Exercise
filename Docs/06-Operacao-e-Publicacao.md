@@ -90,6 +90,28 @@ São **dois** pré requisitos na máquina, e falhar qualquer um deles dá o mesm
 **ASP.NET Core Hosting Bundle** correspondente ao .NET 10, que instala o ASP.NET Core
 Module v2.
 
+#### Não se presume o runtime por a máquina já servir ASP.NET Core
+
+**Medido a 17 de novembro de 2026**, e custou uma paragem. Aquele servidor servia ASP.NET
+Core havia meses e tinha apenas o runtime **8.0.34**, porque as duas aplicações vizinhas
+são publicadas **auto contidas**: levam o runtime dentro do artefacto e não precisam de
+nenhum instalado na máquina.
+
+**O IdeaBoard é publicado dependente do framework**, portanto o runtime da versão maior
+com que foi construído é requisito **nosso** e não uma coisa que se herde do estado da
+máquina. Foi preciso instalar o Hosting Bundle do 10.
+
+A forma disto é a que interessa guardar. "A máquina já serve ASP.NET Core" é verdade e
+**não responde à pergunta**, que é se serve a versão de que precisamos e no modelo de
+publicação que usamos. Sem a verificação, o provisionamento teria terminado bem, o site
+teria sido criado, e a aplicação falharia depois com um `500.30` ou um `502.5`, **nenhum
+dos quais diz uma palavra sobre versões de runtime** e ambos mandam quem os lê procurar
+noutro sítio.
+
+O `deploy/provisionar.ps1` passou a exigi lo, e lê as pastas do framework partilhado em
+vez de correr o `dotnet`, porque num servidor o `dotnet` muitas vezes não está no
+caminho.
+
 #### Não se pergunta ao disco se o módulo está instalado, pergunta se ao IIS
 
 **O ficheiro do módulo vive em sítios diferentes consoante a instalação**, e os dois
@@ -97,7 +119,7 @@ existem na natureza:
 
 | Caminho | |
 |---|---|
-| `%ProgramFiles%\IIS\Asp.Net Core Module\V2\` | É onde está no `SERVIDOR-APP`, medido a 18 de novembro de 2026 |
+| `%ProgramFiles%\IIS\Asp.Net Core Module\V2\` | É onde está no `SERVIDOR-APP`, medido a 17 de novembro de 2026 |
 | `%SystemRoot%\System32\inetsrv\` | O outro sítio habitual, e o primeiro onde quase toda a gente vai procurar |
 
 **A lição não é "é neste".** É que testar um caminho é adivinhar onde outra pessoa pôs
@@ -110,7 +132,7 @@ Get-WebGlobalModule | Where-Object { $_.Name -eq "AspNetCoreModuleV2" }
 Se devolver alguma coisa, o módulo está registado, que é a pergunta que interessa. A
 propriedade `Image` diz onde o ficheiro está, e serve para imprimir e não para decidir.
 
-**Isto custou uma paragem a 18 de novembro de 2026.** O `verificar-servidor.ps1` testava o
+**Isto custou uma paragem a 17 de novembro de 2026.** O `verificar-servidor.ps1` testava o
 caminho em `System32\inetsrv`, não o encontrou, e disse que o módulo faltava num servidor
 que o tinha. Quem seguisse essa resposta ia instalar o que já lá estava. O
 `provisionar.ps1` passou a perguntar ao IIS, e a medição foi feita de uma consola de 64
@@ -170,7 +192,7 @@ em [07](07-Plano-de-Verificacao.md).
 #### As aplicações de 32 bits, e porque é que a razão tem fonte e âmbito
 
 **Isto é uma observação sobre este servidor e não um facto geral sobre o IIS.** Está
-registada no guia de instalação do AplicacaoVizinhaB, em `RepositorioVizinhoB`, na primeira
+registada no guia de instalação da AplicacaoVizinhaB, em `RepositorioVizinhoB`, na primeira
 instalação a sério, de 7 de setembro de 2026, com as palavras "confirmed the hard way":
 nesta máquina o `New-WebAppPool` cria o pool com as aplicações de 32 bits **ligadas**.
 
@@ -196,7 +218,7 @@ existe, no caminho virtual `/IdeaBoard`, e herda as ligações desse site.
 O endereço desta instalação é **`http://servidor-app.dominio.interno/IdeaBoard`**. HTTP,
 **nome qualificado**, sem porta, porque o site que a recebe já serve na porta 80.
 
-**É o nome qualificado e não o nome curto, e isso foi medido e não escolhido.** A 18 de
+**É o nome qualificado e não o nome curto, e isso foi medido e não escolhido.** A 17 de
 novembro de 2026, no dia da publicação, `http://SERVIDOR-APP/IdeaBoard` pede credenciais no
 browser e `http://servidor-app.dominio.interno/IdeaBoard` entra sozinho.
 
@@ -211,10 +233,56 @@ se lê como avaria da aplicação e não é.
 
 | | |
 |---|---|
-| Site | O que já existe na máquina, e que não é tocado |
+| Site | `Default Web Site`, que já existe e não é tocado |
 | Caminho virtual | `/IdeaBoard` |
 | Pool de aplicações | Próprio, `IdeaBoardPool`, e não o do site |
 | Pasta física | `C:\inetpub\IdeaBoard` |
+
+#### Os nomes dos vizinhos, que são marcadores e não nomes
+
+Os nomes reais do servidor, do domínio e das duas aplicações vizinhas foram substituídos
+por marcadores em todo o repositório, que é público. **Há dois marcadores por vizinho, um
+para a aplicação e outro para o repositório dela**, e o sufixo é o que os liga:
+
+| Vizinho | A aplicação | O repositório |
+|---|---|---|
+| Primeiro | `AplicacaoVizinhaA` | `RepositorioVizinhoA` |
+| Segundo | `AplicacaoVizinhaB` | `RepositorioVizinhoB` |
+
+`AplicacaoVizinhaA` e `RepositorioVizinhoA` são **o mesmo vizinho**, e o mesmo vale para o
+B. Fica escrito porque quem desenhou os marcadores já sabia a correspondência quando olhou
+para eles, e quem vier a ler não sabe: sem esta tabela, uma página que fale dos dois lê se
+como falando de quatro coisas.
+
+#### O mapa daquele servidor, medido e já não suposto
+
+Durante dois dias este documento e o [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md)
+descreveram o site que nos recebe como um site de que se sabia a porta e não se sabia o
+conteúdo. **Ficou medido a 17 de novembro de 2026.**
+
+O `Default Web Site` tem `physicalPath` igual a `C:\AplicacaoVizinhaA`. Ou seja, **o site
+da porta 80 é a aplicação vizinha**, e não um site vazio por omissão. O IdeaBoard é uma
+aplicação filha dentro dela.
+
+| Camada | O que é |
+|---|---|
+| Servidor | `SERVIDOR-APP`, partilhado com duas aplicações de outra equipa |
+| Site da porta 80 | `Default Web Site`, servido a partir de `C:\AplicacaoVizinhaA` |
+| Aplicação vizinha | ASP.NET Core, alojada em processo, com pool próprio |
+| **O IdeaBoard** | Aplicação em `/IdeaBoard`, pasta `C:\inetpub\IdeaBoard`, pool `IdeaBoardPool` |
+
+**Isto muda a gravidade de uma coisa e não muda a decisão de nenhuma.** A colisão de
+handlers descrita abaixo era o cenário remoto enquanto o pai podia ser um site vazio.
+Sendo o pai uma aplicação ASP.NET Core alojada em processo, somos exactamente o caso que a
+documentação da Microsoft trata por nome, e o cenário passa a ser o provável.
+
+O que salva hoje é uma propriedade do ficheiro deles e não nossa: **o `web.config` da
+aplicação vizinha traz `inheritInChildApplications="false"`**, portanto o que eles
+declaram não desce até nós. É uma propriedade que ninguém se comprometeu a manter, e que
+desaparece no dia em que eles republicarem com um ficheiro diferente.
+
+**Fica escrito aqui e não só no registo de decisão** porque é o mapa que falta a quem
+chega ao servidor para diagnosticar e encontra duas aplicações que não conhece.
 
 **O pool é próprio e isso não é detalhe.** Um pool por aplicação é o que mantém o limite
 de um processo de trabalho, que o SQLite exige, sem o impor ao vizinho que partilha o
@@ -584,7 +652,7 @@ O `provisionar.ps1` destranca as secções de autenticação ao nível da **apli
 `-Location Site/IdeaBoard`, porque o IIS as tranca ao nível do servidor por omissão e uma
 aplicação cujo `web.config` as traga responde 500.19 em vez de arrancar.
 
-**Escrever e nunca reler era a lacuna, e fechou a 18 de novembro de 2026.** As duas
+**Escrever e nunca reler era a lacuna, e fechou a 17 de novembro de 2026.** As duas
 aplicações vizinhas desta máquina fecham a nos guias delas, que exigem o
 `OverrideModeEffective` a dizer `Allow` antes de se fazer o que quer que seja.
 
@@ -1016,7 +1084,7 @@ correlação, conforme [04](04-Requisitos-Nao-Funcionais-e-Seguranca.md).
 
 Está no `RepositorioVizinhoA/Docs/Instalation/INSTALLATION-IIS.md`, na secção sobre uma pessoa
 reconhecida e sem conta na aplicação. **É afirmação deles, datada de 13 de outubro de
-2026**, lida pelo ARQ a 18 de novembro, e não medição nossa. Fica aqui resumida, com o
+2026**, lida pelo ARQ a 17 de novembro, e não medição nossa. Fica aqui resumida, com o
 apontador, e não copiada.
 
 **O valor dela não está nos passos, está no passo zero.**
