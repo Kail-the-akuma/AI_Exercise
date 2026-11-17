@@ -1,6 +1,6 @@
 # Briefing: plataforma interna de ideias
 
-**Versão 1, 30 de outubro de 2026.**
+**Versão 2, 17 de novembro de 2026.**
 
 ## Resumo
 
@@ -54,13 +54,51 @@ melhorias ao dia a dia, protótipos, temas de partilha, tudo cabe na mesma lista
 
 Decidido, não esquecido.
 
-Sem comentários. Sem categorias nem pesquisa. Sem administração. Sem edição ou remoção
-de ideias depois de submetidas. Sem deteção de duplicados. Sem estados, triagem ou
-aprovação. Sem mecanismo formal de exploração, inscrição em ideias ou registo do que
-se aprendeu.
+Sem categorias. Sem administração. Sem edição ou remoção de ideias depois de
+submetidas. Sem deteção de duplicados. Sem estados, triagem ou aprovação. Sem mecanismo
+formal de exploração, inscrição em ideias de outros ou registo do que se aprendeu.
 
 O que acontece a uma ideia muito votada fica em aberto, por decisão. Quem quiser
 pegar nela organiza se fora da plataforma.
+
+### O âmbito já foi alargado duas vezes, e cada uma fica datada aqui
+
+**Decisões do Hugo, tomadas com esta lista à frente, e não deslizes de construção.** Ficam
+registadas aqui com a data porque esta lista é a referência contra a qual tudo o resto se
+mede, e uma exclusão que desaparece sem explicação é indistinguível de uma que ninguém
+respeitou.
+
+#### 16 de novembro de 2026
+
+Saiu daqui a **pesquisa**, que era excluída pela palavra e passou a existir, por título e
+por quem propôs.
+
+Entraram, sem estarem nesta lista mas contra o espírito dela de produto mínimo, um
+**separador pessoal** com as ideias propostas e apoiadas, um **aviso de votos novos** nas
+ideias de cada pessoa, as **iniciais de quem votou** ao lado de cada ideia na lista, e o
+**número de pessoas que já entrou no quadro**.
+
+#### 17 de novembro de 2026
+
+Saíram daqui os **comentários**, que abriam esta lista. Quem comenta é quem está
+autenticado, só o autor de um comentário o muda ou apaga, e um comentário apagado
+desaparece sem deixar marca. O que ficou construído está especificado em
+[Docs/02](Docs/02-Especificacao-Funcional.md).
+
+A **edição e a remoção de ideias** não saíram, e continuam excluídas. A diferença é
+deliberada e está escrita na especificação: uma ideia foi votada, e mudá la depois mudava
+aquilo em que se votou.
+
+#### O que estes dois registos não são
+
+Não são autorização para continuar a alargar. Duas exclusões saíram desta lista, cada uma
+por decisão explícita de quem é dono do produto, e a seguinte precisa exatamente do mesmo.
+
+**Esta secção regista o que saiu, e não repete o que fica.** A lista em vigor é a do fim
+de [Docs/02](Docs/02-Especificacao-Funcional.md), e é lá que se confirma o que continua
+excluído. Um parágrafo aqui a enumerar o que se mantém já ficou desmentido duas vezes, uma
+por cada alargamento, por ser uma cópia da lista escrita no sítio onde se registam as
+mudanças dela.
 
 ## Critérios de sucesso
 
@@ -100,6 +138,13 @@ criticar trabalho existente. Vale a pena perguntar às pessoas passado um mês.
 
 **Sem categorias nem pesquisa, a navegação degrada se.** Acima de cerca de cinquenta
 ideias a lista torna se difícil de percorrer.
+
+> Risco parcialmente mitigado a 16 de novembro de 2026. A pesquisa por título e por quem
+> propôs passou a existir. As categorias continuam fora do âmbito, e a lista continua a
+> ser percorrida por inteiro quando ninguém procura nada, portanto o sinal a observar
+> mantém se.
+
+
 
 ## Notas técnicas
 

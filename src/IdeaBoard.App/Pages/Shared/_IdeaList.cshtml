@@ -92,6 +92,20 @@ else
                             {
                                 <partial name="_Iniciais" model="@voterName" />
                             }
+
+                            @*
+                                The marks above are hidden from assistive technology, each
+                                one of them, because a row of two letter abbreviations read
+                                out is noise. Without this they were hidden and nothing
+                                took their place: the label was announced and then silence,
+                                a heading over an empty list.
+
+                                So the names go here in full, off the screen and in the
+                                accessibility tree, which is the same trade the marks beside
+                                a name make everywhere else in this interface. There the
+                                name is already on screen; here it was not.
+                            *@
+                            <span class="so-leitor">@string.Join(", ", idea.RecentVoterNames)</span>
                         </p>
                     }
                 </div>

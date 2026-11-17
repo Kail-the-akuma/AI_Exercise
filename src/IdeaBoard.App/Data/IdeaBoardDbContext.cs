@@ -42,11 +42,22 @@ public class IdeaBoardDbContext : DbContext
     /// <summary>People who have signed in at least once.</summary>
     public DbSet<User> Users { get; set; } = null!;
 
-    /// <summary>Every idea ever submitted. Nothing removes a row.</summary>
+    /// <summary>Every idea ever submitted. Nothing removes an idea.</summary>
     public DbSet<Idea> Ideas { get; set; } = null!;
 
     /// <summary>Current votes. Withdrawing a vote deletes the row.</summary>
     public DbSet<Vote> Votes { get; set; } = null!;
+
+    /// <summary>
+    /// Comments on ideas. Whoever wrote one may change it or remove it, and nobody else
+    /// may do either.
+    ///
+    /// This used to say, one line up, that nothing removes a row. That was true of the
+    /// whole product until comments existed, and it is the kind of sentence that goes on
+    /// being read as a property of the schema long after it stopped being one. Two tables
+    /// here do delete: this one, and votes when somebody withdraws.
+    /// </summary>
+    public DbSet<Comment> Comments { get; set; } = null!;
 
     #endregion
 
@@ -61,6 +72,7 @@ public class IdeaBoardDbContext : DbContext
         ConfigureUser(modelBuilder);
         ConfigureIdea(modelBuilder);
         ConfigureVote(modelBuilder);
+        ConfigureComment(modelBuilder);
     }
 
 
@@ -122,6 +134,10 @@ public class IdeaBoardDbContext : DbContext
     /// Maps <see cref="Idea"/>. There is no state column, no category column and no vote
     /// count column: the first two because they do not exist in the product, the third
     /// because the count is aggregated at read time and never stored.
+    ///
+    /// There is also no comment count column, for the same reason as the vote count. A
+    /// stored count is a second copy of something the rows already say, and it can only
+    /// ever be the one that is wrong.
     /// </summary>
     private static void ConfigureIdea(ModelBuilder modelBuilder)
     {
@@ -204,6 +220,65 @@ public class IdeaBoardDbContext : DbContext
         vote.HasIndex(entity => new { entity.IdeaId, entity.UserId })
             .IsUnique()
             .HasDatabaseName(VoteUniqueIndexName);
+    }
+
+
+    /// <summary>
+    /// Maps <see cref="Comment"/>.
+    ///
+    /// The foreign keys restrict on delete, like every other relationship here, and that is
+    /// not left over from copying. Removing a comment is a thing one person does to their
+    /// own words. Removing an idea or a person is not something this product does at all,
+    /// and a cascade would quietly make it possible by making it cheap.
+    ///
+    /// The index is on the idea and the date together, because the only way comments are
+    /// ever read is all of one idea's, in the order they arrived.
+    /// </summary>
+    private static void ConfigureComment(ModelBuilder modelBuilder)
+    {
+        EntityTypeBuilder<Comment> comment = modelBuilder.Entity<Comment>();
+
+        comment.ToTable("Comment");
+        comment.HasKey(entity => entity.Id);
+
+        comment.Property(entity => entity.Id)
+            .HasColumnName("id")
+            .ValueGeneratedOnAdd();
+
+        comment.Property(entity => entity.IdeaId)
+            .HasColumnName("ideaId")
+            .IsRequired();
+
+        comment.Property(entity => entity.AuthorUserId)
+            .HasColumnName("authorUserId")
+            .IsRequired();
+
+        comment.Property(entity => entity.Text)
+            .HasColumnName("text")
+            .HasMaxLength(CommentLimits.TextMaximumLength)
+            .IsRequired();
+
+        comment.Property(entity => entity.CreatedAt)
+            .HasColumnName("createdAt")
+            .IsRequired();
+
+        // Nullable, and the null means never edited. A column defaulted to the creation
+        // date would make every comment look as though it had been changed once.
+        comment.Property(entity => entity.UpdatedAt)
+            .HasColumnName("updatedAt");
+
+        comment.HasOne(entity => entity.Idea)
+            .WithMany()
+            .HasForeignKey(entity => entity.IdeaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        comment.HasOne(entity => entity.Author)
+            .WithMany()
+            .HasForeignKey(entity => entity.AuthorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        comment.HasIndex(entity => new { entity.IdeaId, entity.CreatedAt })
+            .HasDatabaseName("IX_Comment_ideaId_createdAt");
     }
 
     #endregion

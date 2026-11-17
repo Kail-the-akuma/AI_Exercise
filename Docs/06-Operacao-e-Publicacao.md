@@ -1,6 +1,6 @@
 # 06. Operação e publicação
 
-**Versão 2, 13 de novembro de 2026.**
+**Versão 3, 17 de novembro de 2026.**
 
 Destina se a quem publica e mantém a aplicação no servidor interno. Os caminhos usam
 o nome de trabalho `IdeaBoard` e têm de ser ajustados ao nome final.
@@ -185,6 +185,45 @@ anterior nem o seguinte, e que nenhum script sabe reparar. O comando é portanto
 ```
 sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db" < deploy\migracao.sql
 ```
+
+#### Qual dos três scripts aplicar, e é preciso escolher
+
+A pasta `deploy` tem **três** ficheiros, e aplicar o errado falha.
+
+| Ficheiro | Para que base de dados |
+|---|---|
+| `migracao.sql` | Uma base de dados **nova**. Contém tudo, incluindo o aviso de votos novos e os comentários |
+| `migracao-002-aviso-de-votos-novos.sql` | Uma base **já em uso** que tem apenas a migração inicial |
+| `migracao-003-comentarios.sql` | Uma base **já em uso** que tem a inicial e a do aviso de votos novos |
+
+Numa base já em uso o script completo falha logo na primeira instrução, por as tabelas já
+existirem, e é para esse caso que os outros dois ficheiros existem. Eles empilham: uma
+base parada na migração inicial leva o 002 e depois o 003, por esta ordem.
+
+O enquadramento é o mesmo das outras migrações, por verificação e não por idempotência:
+
+1. Ler a `__EFMigrationsHistory` antes de aplicar. Se a migração do script já lá estiver,
+   `20261116185858_AvisoDeVotosNovos` ou `20261117102626_Comentarios`, não aplicar nada.
+2. Aplicar com `-bail`.
+3. Confirmar o código de saída igual a zero.
+
+**O primeiro passo não é formalidade, e isso está medido.** Aplicar o 003 a uma base que
+já o tem pára na criação da tabela, com `table "Comment" already exists`, e sai com código
+1. Medido aqui, sobre uma base construída a partir do `migracao.sql` anterior aos
+comentários: a primeira aplicação sai com zero e a `__EFMigrationsHistory` fica com as
+três linhas, e a segunda sai com 1. É o comportamento esperado de um script que não é
+idempotente, e é exactamente por isso que a verificação está antes e não depois.
+
+**O 003 já foi aplicado uma vez a uma base de dados em uso**, com este procedimento, e o
+código de saída foi zero. Reportado pelo orquestrador, que o fez, e é a primeira vez que
+um destes scripts correu contra uma base real em vez de ter sido apenas gerado. Fica com
+a proveniência à vista porque não é uma medição minha.
+
+A coluna `lastNotificationsSeenAt` entra a `NULL` em todas as linhas existentes, e isso é
+deliberado. `NULL` quer dizer que a pessoa nunca abriu a página que lhe mostra os votos
+recebidos, o que é verdade para toda a gente no momento em que a coluna passa a existir.
+Um valor por omissão com a data desse dia declararia em silêncio que toda a gente tinha
+acabado de ler tudo.
 
 ## Backup e restauro
 

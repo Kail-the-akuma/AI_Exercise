@@ -114,11 +114,17 @@ public class AppHostFixture : IAsyncLifetime
         using IdeaBoardDbContext context = CreateContext();
 
         // Deleted in dependency order, because the foreign keys are restrictive.
+        //
+        // A TABLE MISSING FROM THIS LIST DOES NOT SHOW UP AS A MISSING TABLE. It shows up
+        // as "FOREIGN KEY constraint failed" in whichever scenario happens to run after the
+        // one that left a row behind, which looks like a fault in that second scenario and
+        // is not. A new table belongs here on the day it is mapped.
+        await context.Database.ExecuteSqlRawAsync("DELETE FROM Comment;");
         await context.Database.ExecuteSqlRawAsync("DELETE FROM Vote;");
         await context.Database.ExecuteSqlRawAsync("DELETE FROM Idea;");
         await context.Database.ExecuteSqlRawAsync("DELETE FROM User;");
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM sqlite_sequence WHERE name IN ('Vote', 'Idea', 'User');");
+            "DELETE FROM sqlite_sequence WHERE name IN ('Comment', 'Vote', 'Idea', 'User');");
     }
 
 

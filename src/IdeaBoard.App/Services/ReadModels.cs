@@ -101,6 +101,52 @@ public class IdeaDetail
 
     /// <summary>Everyone who voted, oldest vote first. Transparency is deliberate here.</summary>
     public IReadOnlyList<IdeaVoter> Voters { get; set; } = new List<IdeaVoter>();
+
+    /// <summary>
+    /// What people said about it, oldest first, which is the order a conversation is read
+    /// in. An idea nobody commented on carries an empty list.
+    /// </summary>
+    public IReadOnlyList<IdeaComment> Comments { get; set; } = new List<IdeaComment>();
+}
+
+
+/// <summary>One comment, as the page shows it.</summary>
+public class IdeaComment
+{
+    /// <summary>Identifier, which the edit and remove forms carry.</summary>
+    public int Id { get; set; }
+
+    /// <summary>Name of whoever wrote it.</summary>
+    public string AuthorDisplayName { get; set; } = string.Empty;
+
+    /// <summary>The text, rendered as plain text with line breaks kept.</summary>
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>Instant it was written, in UTC, which orders the list.</summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>Instant it was last changed, in UTC, or null if it never was.</summary>
+    public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>Whether it was changed after it was written.</summary>
+    public bool WasEdited
+    {
+        get
+        {
+            return UpdatedAt is not null;
+        }
+    }
+
+    /// <summary>
+    /// Whether the person looking at the page wrote this one.
+    ///
+    /// IT DECIDES WHAT IS DRAWN AND NEVER WHAT IS ALLOWED. Hiding a control is a courtesy
+    /// to whoever cannot use it; the refusal that actually protects the comment is in the
+    /// service, which checks ownership inside the query that loads the row. A page that
+    /// trusted this flag would be exactly as safe as a page with no check at all, because
+    /// nothing stops a request from being made without the page.
+    /// </summary>
+    public bool IsMine { get; set; }
 }
 
 
