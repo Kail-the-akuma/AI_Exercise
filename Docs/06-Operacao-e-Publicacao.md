@@ -90,6 +90,36 @@ São **dois** pré requisitos na máquina, e falhar qualquer um deles dá o mesm
 **ASP.NET Core Hosting Bundle** correspondente ao .NET 10, que instala o ASP.NET Core
 Module v2.
 
+#### Não se pergunta ao disco se o módulo está instalado, pergunta se ao IIS
+
+**O ficheiro do módulo vive em sítios diferentes consoante a instalação**, e os dois
+existem na natureza:
+
+| Caminho | |
+|---|---|
+| `%ProgramFiles%\IIS\Asp.Net Core Module\V2\` | É onde está no `SERVIDOR-APP`, medido a 18 de novembro de 2026 |
+| `%SystemRoot%\System32\inetsrv\` | O outro sítio habitual, e o primeiro onde quase toda a gente vai procurar |
+
+**A lição não é "é neste".** É que testar um caminho é adivinhar onde outra pessoa pôs
+alguma coisa, e o IIS sabe onde os módulos dele estão:
+
+```powershell
+Get-WebGlobalModule | Where-Object { $_.Name -eq "AspNetCoreModuleV2" }
+```
+
+Se devolver alguma coisa, o módulo está registado, que é a pergunta que interessa. A
+propriedade `Image` diz onde o ficheiro está, e serve para imprimir e não para decidir.
+
+**Isto custou uma paragem a 18 de novembro de 2026.** O `verificar-servidor.ps1` testava o
+caminho em `System32\inetsrv`, não o encontrou, e disse que o módulo faltava num servidor
+que o tinha. Quem seguisse essa resposta ia instalar o que já lá estava. O
+`provisionar.ps1` passou a perguntar ao IIS, e a medição foi feita de uma consola de 64
+bits, portanto não era redirecionamento do sistema de ficheiros.
+
+**Convém reparar em como isto se parece com o resto deste documento.** Não era uma
+afirmação falsa, era uma pergunta feita ao sítio errado, e a resposta vinha com o aspecto
+exacto de uma resposta verdadeira.
+
 **O serviço de função Autenticação do Windows do IIS**, em Servidor Web, Segurança,
 Autenticação do Windows. Não vem instalado por omissão. Sem ele, o elemento
 `windowsAuthentication` que o `web.config` da aplicação traz não é reconhecido pelo
@@ -112,11 +142,14 @@ caminho da aplicação e não no do site. E importa pela propriedade que dá, qu
 forte do que destrancar ao nível do site: **nem o site que recebe a aplicação nem o
 vizinho que o partilha mudam de comportamento.**
 
-**Nenhum de nós verificou isto numa máquina com IIS**, nem quem escreveu o script nem
-quem escreve esta linha, e a referência do IIS consultada não diz qual é o valor por
-omissão. Fica como está em vez de ser afirmado: o gatilho observável é um 500.19 cuja
-mensagem fale de uma secção que não pode ser usada neste caminho, em vez de falar do
-módulo. É aí que esta causa é a certa, e é no script que se mexe.
+O gatilho observável é um 500.19 cuja mensagem fale de uma secção que não pode ser usada
+neste caminho, em vez de falar do módulo. É aí que esta causa é a certa, e é no script que
+se mexe.
+
+O tratamento completo, incluindo o que o script relê e o que faz com cada resposta, está
+mais abaixo, em **O destrancamento da autenticação, que agora se relê**. Este parágrafo
+afirmava que ninguém tinha verificado isto numa máquina com IIS, o que deixou de ser a
+descrição certa quando a releitura entrou, e ficava a contradizer a secção de baixo.
 
 ### Pool de aplicações
 
