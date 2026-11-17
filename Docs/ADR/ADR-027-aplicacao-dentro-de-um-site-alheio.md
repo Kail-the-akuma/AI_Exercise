@@ -10,6 +10,11 @@ O servidor é o `SERVIDOR-APP`, e **já serve outra aplicação** no `Default We
 80, com duas ligações, uma delas sem nome de anfitrião. O IdeaBoard entra ali dentro, como
 aplicação em `/IdeaBoard`.
 
+**Proveniência desta frase, porque é ela que sustenta a decisão toda.** Vem de um relatório
+corrido na máquina e relatado pelo ORQ, e não de suposição. O que está medido é que o
+`Default Web Site` é dono da porta 80 e com que ligações. **O que não está medido é o que
+esse site serve**, e isso é tratado na secção da hipótese, mais abaixo.
+
 A porta 80 estar ocupada é o que tira do caminho a hipótese que o repositório assumia. Um
 site próprio deixa de poder ter o endereço mais curto da máquina, e passa a precisar de
 outra porta ou de outro nome.
@@ -21,6 +26,13 @@ se já existisse um com aquele nome.
 Decisão do Hugo a 17 de novembro de 2026, tomada com três caminhos à frente: porta própria
 em `http://SERVIDOR-APP:8080/`, nome próprio na porta 80 com um registo de DNS, ou outra
 porta qualquer.
+
+**A 8080 daquele exemplo já estava ocupada, e isso só se soube depois.** O documento de
+instalação do AplicacaoVizinhaB, lido a 18 de novembro de 2026, regista que o RepositorioVizinhoA
+ocupa naquele servidor a porta 80 em produção **e a 8080 em QA**. A escolha não foi
+afectada, porque o que a decidiu foi não querer porta escrita de todo, e o terceiro caminho
+oferecido era precisamente outra porta qualquer. Fica corrigido para que ninguém leia o
+exemplo como um endereço que esteve disponível.
 
 **Não escolheu nenhum dos três. Perguntou se dava para ser o servidor mais o nome da
 aplicação**, que é a forma que acabou por ser decidida.
@@ -125,6 +137,37 @@ habitual mexe no ficheiro de outra equipa.
 ficheiro do vizinho tem o atributo, e então não há nada a fazer, ou não tem, e então o
 `<remove>` entra no nosso.
 
+## A dependência não é só no vizinho, é no servidor, e foi outra equipa que a criou
+
+Esta secção foi escrita a 18 de novembro de 2026, depois de ler os documentos de instalação
+das duas aplicações que já correm naquela máquina. **Tudo o que ela afirma sobre o servidor
+vem desses documentos, com as datas que eles próprios trazem, e não de uma medição nossa.**
+Estamos a ler o que outra equipa escreveu sobre um servidor, e não o servidor.
+
+O resto deste registo trata a herança que desce do site pai. **Há uma camada acima dessa, e
+é mais perigosa por ser global.**
+
+**O papel `Web-Windows-Auth` tem de estar instalado**, e está, posto lá para a primeira
+daquelas aplicações. Sem ele o elemento de autenticação do nosso ficheiro não é sequer
+reconhecido.
+
+**E as duas secções de autenticação tiveram de ser destrancadas ao nível do servidor.** O
+documento do RepositorioVizinhoA regista que isso foi feito uma vez, com `appcmd unlock config`, e
+que sem isso um site cujo `web.config` traga aquelas secções responde 500.19 no instante em
+que o IIS o lê.
+
+**Nenhuma das duas foi feita por nós nem para nós.** Foram feitas por outra equipa, por
+outra razão, meses antes de este projeto existir, e quem as fez não tem razão nenhuma para
+saber que dependemos delas. Voltar a trancar as secções, ou remover o papel, parte nos sem
+tocar em nada que seja nosso.
+
+**O que isto obriga a escrever ao lado, e é a parte acionável.** Perante um 500.19 que fale
+de uma secção que não pode ser usada naquele caminho, a pergunta não é o que mudou no nosso
+`web.config`. É se as duas secções continuam destrancadas e se o papel continua instalado.
+Os documentos dos vizinhos verificam isso lendo `OverrideModeEffective` e exigindo `Allow`,
+que é a leitura de volta que o nosso provisionamento não faz, e esse é assunto do
+`deploy/` e não deste registo.
+
 ## O quarto sítio onde as mesmas variáveis podem existir
 
 O [ADR-026](ADR-026-onde-vive-a-configuracao.md) manda definir cada nome num sítio só, e
@@ -134,6 +177,38 @@ quarto**, e não está lá escrito porque não existia quando aquele registo foi
 A avaria é a mesma e chega com o mesmo disfarce: os valores combinam se, o arranque falha a
 queixar se de uma cadeia de ligação, e o caminho que aparece na mensagem é um que ninguém
 escreveu.
+
+## O que o `Default Web Site` serve é hipótese, e a pergunta que a resolve
+
+Isto fica escrito como hipótese de propósito, porque é hipótese.
+
+Os documentos de instalação das duas aplicações vizinhas, lidos a 18 de novembro de 2026,
+dizem duas coisas que encaixam. O do RepositorioVizinhoA oferece, como uma das três saídas para o
+caso de a porta 80 estar ocupada, **reaproveitar o `Default Web Site`** apontando lhe o
+caminho físico e o pool. O do AplicacaoVizinhaB diz que o RepositorioVizinhoA ocupa a porta 80 naquele
+servidor.
+
+**Juntas, sugerem que o `Default Web Site` pode ser o RepositorioVizinhoA** e não um site vazio por
+omissão. Se for, o nosso pai não é neutro: é uma aplicação ASP.NET Core alojada em processo,
+e nós somos o caso de sub-aplicação debaixo de aplicação ASP.NET Core que a documentação da
+Microsoft trata por nome, com a colisão de handlers descrita acima a ser o cenário provável
+e não o remoto.
+
+**E há uma boa notícia já verificada por leitura**, que é o `web.config` deles trazer
+`<location path="." inheritInChildApplications="false">`. Com ele lá, o que eles declaram
+não desce para nós, incluindo as remoções de WebDAV que o ficheiro deles traz. **Isso é uma
+propriedade do ficheiro de outra equipa**, que ninguém se comprometeu a manter.
+
+**A pergunta que fecha isto é uma só**: qual é o caminho físico e o pool do `Default Web
+Site`. Se apontar para a pasta de uma daquelas aplicações, está respondido. O
+`deploy/verificar-servidor.ps1` passou a listar as aplicações dentro de cada site
+precisamente para a responder, e isto fecha se com a máquina a dizer e não com dois
+documentos a sugerir.
+
+**Até lá, o que este registo afirma e o que supõe.** Afirma que o `Default Web Site` é dono
+da porta 80, porque isso saiu de um relatório da máquina. Supõe tudo o resto sobre o que ele
+serve. A decisão de entrar lá dentro não depende da diferença, mas a gravidade da colisão de
+handlers depende, e por isso a distinção fica escrita em vez de ser arrumada.
 
 ## A consequência que não é técnica, e é a que mais custa daqui a um ano
 

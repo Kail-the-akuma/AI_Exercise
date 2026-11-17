@@ -44,6 +44,18 @@ Só que o procedimento publicado não usa essas ferramentas. Aplica o script SQL
 um ficheiro, e esse caminho deixa o ficheiro no modo por omissão. É exatamente aí que a
 verificação ganha o seu lugar, e é um caminho que nenhum teste local percorre.
 
+**Essa última frase é a que ganhou corroboração de fora, e não a escolha do WAL.** O
+documento de instalação do RepositorioVizinhoA, lido a 18 de novembro de 2026, regista que a 13 de
+outubro de 2026 a aplicação deles **criou em silêncio a base de dados que lhe faltava**, no
+caminho errado, correu as migrações nela, e só se notou por uma mensagem noutra parte do
+produto. É afirmação deles e não medição nossa.
+
+A ligação a este registo não é sobre o modo de journal, é sobre o princípio: **o que uma
+aplicação cria ou corrige por baixo deixa de poder ser verificado, e a falha que daí sai
+aparece longe e disfarçada.** É esse o argumento que fez esta decisão verificar em vez de
+aplicar, e aqui está ele pago por outra equipa, num caminho que também nenhum teste local
+deles percorria.
+
 Apanha ainda outras três situações, todas reais: uma cópia de segurança restaurada, um
 ficheiro produzido por outra ferramenta, e um modo alterado à mão por alguém a
 diagnosticar um problema.

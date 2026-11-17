@@ -17,6 +17,20 @@ O caminho da base de dados tem a mesma forma. Mal configurado, a aplicação cri
 ficheiro dentro da pasta de publicação e funciona na perfeição, até à republicação
 seguinte apagar os dados todos.
 
+**E isto aconteceu mesmo, a outra equipa, no servidor para onde vamos.** O documento de
+instalação do RepositorioVizinhoA regista um incidente de 13 de outubro de 2026, no primeiro
+arranque do servidor novo: um caminho de base de dados desactualizado no `web.config` fez a
+aplicação **ler e criar em silêncio uma base de dados diferente e vazia**, correr as
+migrações nela, e responder que a pessoa não tinha conta. Perderam a maior parte de um dia a
+investigar e a excluir, uma a uma, teorias sobre Kerberos, SPN duplicados, replicação do
+Active Directory e políticas de restrição de NTLM, todas reais e nenhuma relacionada.
+
+Lido no documento deles a 18 de novembro de 2026, e é afirmação deles e não medição nossa.
+Fica aqui porque **é exactamente a falha que esta decisão existe para impedir**, com a
+forma completa: nada falhou, nada ficou vermelho, e o sintoma apareceu noutro sítio
+disfarçado de outra coisa. Uma decisão justificada por raciocínio passou a ter um incidente
+de fora por trás, e é a diferença entre ser defensável e ser difícil de reabrir.
+
 ## Decisão
 
 A configuração é validada no arranque, e a aplicação **recusa arrancar** quando algo
