@@ -678,6 +678,41 @@ verificas por ti:
 Uma pesquisa que não devolve nada é prova fraca. Antes de escreveres que algo não
 existe, confirmas de segunda maneira, com outro termo ou lendo o ficheiro.
 
+E O TEXTO TAMBÉM SE PARTE, PORTANTO A FRASE PODE LÁ ESTAR E NÃO SER ENCONTRADA
+Numa prosa com mudança de linha a 90 colunas, **qualquer expressão de três ou mais
+palavras tem probabilidade real de atravessar uma mudança de linha**, e aí uma procura
+pela frase inteira não a vê. O resultado é zero, e zero lê se como ausência.
+
+Medido a 17 de novembro de 2026, com uma data escrita errada em dezasseis sítios. Depois
+de corrigidos os que se viam, a procura ingénua devolvia **zero** em todo o repositório e
+a que atravessa mudanças de linha devolvia **duas**, uma em cada metade da equipa. As duas
+estavam partidas entre o fim de uma linha e o princípio da seguinte.
+
+Antes de escrever que uma expressão não existe, repetir a procura sobre o texto com os
+**espaços todos** achatados, e não só as mudanças de linha:
+
+```bash
+for f in $(git ls-files '*.md'); do
+  n=$(tr '\r\n' '  ' < "$f" | tr -s ' ' | grep -o "a expressão" | wc -l)
+  if [ "$n" -gt 0 ]; then echo "$f : $n"; fi
+done
+```
+
+**O `\r` é a parte que custa, e não o `\n`.** Os ficheiros deste repositório têm fins de
+linha CRLF na árvore de trabalho. Uma receita que troque só o `\n` por espaço deixa o
+`\r` entre as duas metades da frase, e devolve zero sobre um ficheiro que a contém.
+Medido a 17 de novembro de 2026: a receita com `tr '\n'` deu **zero** num ficheiro onde a
+receita com `tr '\r\n'` deu **uma**.
+
+É o mesmo erro mais uma vez, uma camada abaixo: a ferramenta que serve para confirmar que
+uma procura não mentiu pode, ela própria, devolver nada por uma razão que nada tem a ver
+com a pergunta.
+
+**E não confiar numa contagem que outra pessoa deu**, pela mesma razão: ela foi feita com
+uma procura que falha do mesmo modo. Nesse dia duas contagens relatadas ficaram curtas, e
+em ambos os casos só não passou despercebido porque quem as recebeu voltou a procurar em
+vez de confiar no número.
+
 E UMA QUE DEVOLVE TAMBÉM É PROVA FRACA, PELA MESMA RAZÃO AO CONTRÁRIO
 Um resultado pode estar num comentário, num exemplo, numa mensagem de erro ou numa
 frase que diz que aquilo NÃO existe. Antes de escreveres que algo existe, vais ver a

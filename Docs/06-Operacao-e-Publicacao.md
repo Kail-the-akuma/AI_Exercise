@@ -218,7 +218,7 @@ existe, no caminho virtual `/IdeaBoard`, e herda as ligações desse site.
 O endereço desta instalação é **`http://servidor-app.dominio.interno/IdeaBoard`**. HTTP,
 **nome qualificado**, sem porta, porque o site que a recebe já serve na porta 80.
 
-**É o nome qualificado e não o nome curto, e isso foi medido e não escolhido.** A 18 de
+**É o nome qualificado e não o nome curto, e isso foi medido e não escolhido.** A 17 de
 novembro de 2026, no dia da publicação, `http://SERVIDOR-APP/IdeaBoard` pede credenciais no
 browser e `http://servidor-app.dominio.interno/IdeaBoard` entra sozinho.
 

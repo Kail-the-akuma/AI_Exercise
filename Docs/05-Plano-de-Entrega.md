@@ -85,7 +85,7 @@ e o certificado de substituição. Não há certificado e não há registo de ap
 em que zona de segurança o browser coloca o site, e a zona determina se a autenticação
 integrada acontece sem pedir credenciais.
 
-**E esta é a parte que foi medida e saiu ao contrário do que estava escrito aqui.** Até 18
+**E esta é a parte que foi medida e saiu ao contrário do que estava escrito aqui.** Até 17
 de novembro de 2026 este plano dizia que um nome sem pontos entra na zona de intranet
 local por omissão, e por isso o endereço decidido era o nome curto. No dia da publicação,
 no servidor e no browser de quem o usa:
