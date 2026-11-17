@@ -542,6 +542,31 @@ Write-Step "A configurar o pool"
 Set-ItemProperty -Path ("IIS:\AppPools\" + $PoolName) -Name "managedRuntimeVersion" -Value ""
 Write-Done "Versao do .NET CLR: Sem Codigo Gerido"
 
+<#
+    Sixty four bit, set explicitly rather than left to the default.
+
+    THIS IS AN OBSERVATION ABOUT THIS SERVER AND NOT A GENERAL FACT ABOUT IIS. The
+    AplicacaoVizinhaB installation guide, in RepositorioVizinhoB, records it under the first
+    real install of 2026-09-07 and with the words "confirmed the hard way": on this server
+    New-WebAppPool creates the pool with 32 bit applications ENABLED. Read there, not
+    repeated from somebody.
+
+    WHAT IT WOULD DO TO US IS NOT WHAT IT DID TO THEM, and the difference is why this
+    comment is longer than the line it explains. They publish self contained win-x64, which
+    a 32 bit pool cannot load at all, so they got an HTTP Error 500.32 and knew at once.
+
+    We publish framework dependent and in process, with processPath="dotnet" and
+    hostingModel="inprocess". The Hosting Bundle installs the x86 runtime as well, so in a
+    32 bit pool this would most likely start and serve, quietly, as a 32 bit process. Not a
+    failure anybody would see, which is worse to diagnose than their error page: an
+    application that works until the day something in it depends on being 64 bit.
+
+    So the honest claim is not that it breaks. It is that it diverges in silence from what
+    we think we deployed.
+#>
+Set-ItemProperty -Path ("IIS:\AppPools\" + $PoolName) -Name "enable32BitAppOnWin64" -Value $false
+Write-Done "Aplicacoes de 32 bits: desligadas"
+
 # One worker process, and this is the setting that is easiest to forget and hardest to
 # diagnose afterwards. SQLite takes one writer; a second process produces locking and
 # corrupted expectations. ADR-002.
@@ -759,6 +784,26 @@ $pool = Get-Item -Path ("IIS:\AppPools\" + $PoolName)
 
 Write-Host ("   Pool '{0}': CLR '{1}', maxProcesses {2}, startMode {3}" -f `
     $pool.Name, $pool.managedRuntimeVersion, $pool.processModel.maxProcesses, $pool.startMode)
+
+<#
+    The bitness is read back through Get-ItemProperty, which is the form the AplicacaoVizinhaB
+    guide uses on this server, and the refusal is written to fail SAFE on purpose.
+
+    If that read ever returns something other than a plain true or false, the comparison is
+    simply false and nothing is refused. The alternative shape, treating the returned object
+    as a boolean, is truthy for ANY object, so a provider that wrapped the value would make
+    this refuse a pool that is perfectly correct. Blocking a good deployment on an uncertain
+    read is worse than not checking, because the setting above has already been applied and
+    the line below prints what was found either way.
+#>
+$bitness = Get-ItemProperty -Path ("IIS:\AppPools\" + $PoolName) -Name "enable32BitAppOnWin64"
+
+Write-Host ("   Pool '{0}': 32 bits {1}" -f $PoolName, $bitness.Value)
+
+if ($bitness.Value -eq $true)
+{
+    Stop-WithReason "O pool ficou com as aplicacoes de 32 bits ligadas. Nesse estado a aplicacao provavelmente arranca na mesma, como processo de 32 bits, sem ninguem reparar, que e pior do que falhar."
+}
 
 $createdSite = Get-Website | Where-Object { $_.Name -eq $SiteName }
 

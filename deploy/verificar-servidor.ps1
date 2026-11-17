@@ -381,6 +381,42 @@ else
                 Write-Note ("{0}  [{1}]  pool: {2}" -f $site.Name, $site.State, $site.applicationPool)
                 Write-Note ("    bindings: {0}" -f $bindings)
                 Write-Note ("    caminho:  {0}" -f $site.physicalPath)
+
+                <#
+                    The applications inside each site, which the list of sites alone does
+                    not show. Knowing who owns port 80 answers one question; knowing which
+                    virtual paths are taken inside that site answers the one that decides
+                    whether an application can be created at /IdeaBoard, and which
+                    application is serving the site's own root.
+
+                    Without this it is only the provisioning script that finds out, by
+                    refusing, already on the server, on a trip that this would have saved.
+                #>
+                try
+                {
+                    $applications = Get-WebApplication -Site $site.Name -ErrorAction Stop
+
+                    if ($null -eq $applications -or @($applications).Count -eq 0)
+                    {
+                        Write-Note "    aplicacoes: nenhuma alem da raiz do site"
+                    }
+                    else
+                    {
+                        Write-Note ("    aplicacoes: {0}" -f @($applications).Count)
+
+                        foreach ($application in $applications)
+                        {
+                            Write-Note ("      {0}  pool: {1}" -f $application.path, $application.applicationPool)
+                            Write-Note ("        caminho: {0}" -f $application.PhysicalPath)
+                        }
+                    }
+                }
+                catch
+                {
+                    # Counted as unanswered rather than as "none", because the two are not
+                    # the same thing and this script exists to keep them apart.
+                    Write-Finding ("Aplicacoes de " + $site.Name) "Nao foi possivel ler" "desconhecido"
+                }
             }
         }
     }
