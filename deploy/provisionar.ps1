@@ -44,29 +44,43 @@
     .\provisionar.ps1 -PoolName IdeaBoard -SiteName IdeaBoard -Port 8080 -PhysicalPath C:\inetpub\IdeaBoard
 #>
 
-[CmdletBinding(DefaultParameterSetName = "NewSite")]
+<#
+    EVERY DEFAULT BELOW IS THE SERVIDOR-APP INSTALLATION, measured on that machine and not
+    guessed. They are written here so that the installation this repository is being
+    deployed for can be provisioned by running the script with no arguments at all.
+
+    THEY ARE NOT UNIVERSAL VALUES. An installation on another server passes its own on the
+    command line, and every one of them can be overridden that way. The script prints each
+    value before it does anything, saying whether it came from here or from the caller, so
+    that whoever runs it without arguments can stop at the first wrong line.
+
+    Nothing is mandatory any more, which is deliberate and which removes the net that
+    stopped an accidental run. What remains between an accidental run and a changed machine
+    is the guards: elevation, the site existing, the pool not existing, and no application
+    already at that virtual path. They all refuse before anything is created.
+#>
+[CmdletBinding(DefaultParameterSetName = "Application")]
 param(
-    [Parameter(Mandatory = $true)]
-    [string] $PoolName,
+    [string] $PoolName = "IdeaBoardPool",
 
-    # The site to create, in NewSite, or the site that already exists and is to receive the
-    # application, in Application.
-    [Parameter(Mandatory = $true)]
-    [string] $SiteName,
+    # The site that already exists and is to receive the application, in Application, or
+    # the site to create, in NewSite.
+    [string] $SiteName = "Default Web Site",
 
-    [Parameter(Mandatory = $true, ParameterSetName = "NewSite")]
+    # Giving a port is what picks the NewSite mode, where a site of its own is created. This
+    # deployment does not use it: the application goes inside a site that already serves on
+    # port 80, and inherits its bindings. It stays because the script is the repository's
+    # and the next installation may well need a site of its own, and because the two modes
+    # are parameter sets, so PowerShell itself refuses Port and VirtualPath together.
+    [Parameter(ParameterSetName = "NewSite")]
     [ValidateRange(1, 65535)]
     [int] $Port,
 
-    # The virtual path under the existing site, such as /IdeaBoard. Giving it is what picks
-    # the Application mode, and the two modes are parameter sets rather than a switch so
-    # that PowerShell itself refuses Port and VirtualPath together and demands whichever of
-    # the two the chosen mode needs. One script, one way of creating a pool.
-    [Parameter(Mandatory = $true, ParameterSetName = "Application")]
-    [string] $VirtualPath,
+    # The virtual path under the existing site. This is the default mode.
+    [Parameter(ParameterSetName = "Application")]
+    [string] $VirtualPath = "/IdeaBoard",
 
-    [Parameter(Mandatory = $true)]
-    [string] $PhysicalPath,
+    [string] $PhysicalPath = "C:\inetpub\IdeaBoard",
 
     [string] $DataRoot = "C:\IdeaBoard",
 
@@ -75,6 +89,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Captured here, at script scope, because inside a function $PSBoundParameters means that
+# function's own arguments. It is what lets each printed value say where it came from.
+$givenOnCommandLine = @($PSBoundParameters.Keys)
 
 #region Closing
 
@@ -160,6 +178,24 @@ function Write-Kept
 }
 
 
+function Write-Setting
+{
+    param(
+        [string] $Name,
+        [string] $Label,
+        [string] $Value)
+
+    $origin = "(omissao desta instalacao)"
+
+    if ($script:givenOnCommandLine -contains $Name)
+    {
+        $origin = "(dado na linha de comando)"
+    }
+
+    Write-Host ("  {0,-11}{1,-28}{2}" -f $Label, $Value, $origin)
+}
+
+
 function Stop-WithReason
 {
     param([string] $Text)
@@ -229,26 +265,34 @@ if ($isApplication)
 Write-Host ""
 Write-Host "Provisionamento do IdeaBoard no IIS." -ForegroundColor White
 Write-Host ""
-Write-Host "  Pool:      $PoolName"
+Write-Host "  Estes sao os valores que vao ser usados, e nada foi alterado ainda." -ForegroundColor White
+Write-Host ""
+
+Write-Setting "PoolName" "Pool:" $PoolName
 
 if ($isApplication)
 {
     Write-Host "  Modo:      aplicacao dentro de um site que ja existe"
-    Write-Host "  Site pai:  $SiteName  (lido, recebe uma aplicacao, e mais nada muda nele)"
-    Write-Host "  Caminho:   /$applicationName"
+    Write-Setting "SiteName" "Site pai:" $SiteName
+    Write-Setting "VirtualPath" "Caminho:" ("/" + $applicationName)
 }
 else
 {
     Write-Host "  Modo:      site proprio, com porta propria"
-    Write-Host "  Site:      $SiteName"
-    Write-Host "  Porta:     $Port"
+    Write-Setting "SiteName" "Site:" $SiteName
+    Write-Setting "Port" "Porta:" $Port
 }
 
-Write-Host "  Aplicacao: $PhysicalPath"
-Write-Host "  Dados:     $DataRoot"
+Write-Setting "PhysicalPath" "Aplicacao:" $PhysicalPath
+Write-Setting "DataRoot" "Dados:" $DataRoot
+
 Write-Host ""
-Write-Host "  O caminho dos dados nao foi adivinhado: ou veio por parametro, ou e o que o"
-Write-Host "  Docs/06 fixa. Esta aqui escrito para ser lido antes de continuar."
+Write-Host "  As omissoes sao as da instalacao do SERVIDOR-APP, medidas nessa maquina e nao" -ForegroundColor DarkGray
+Write-Host "  supostas. Nao sao valores universais: noutro servidor passam-se os de la na" -ForegroundColor DarkGray
+Write-Host "  linha de comando, e cada linha acima diz de onde veio o valor que vai usar." -ForegroundColor DarkGray
+Write-Host "  O caminho dos dados e o que o Docs/06 fixa." -ForegroundColor DarkGray
+Write-Host ""
+Write-Host "  Se alguma linha acima estiver errada, parar aqui com Ctrl+C." -ForegroundColor White
 
 Write-Step "A confirmar que a consola tem elevacao"
 
@@ -747,6 +791,7 @@ Write-Host ""
 if ($isApplication)
 {
     Write-Host ("Quando estiver publicada, responde em http://<maquina>/{0}" -f $applicationName) -ForegroundColor White
+    Write-Host ("Nesta instalacao, http://SERVIDOR-APP/{0}" -f $applicationName) -ForegroundColor White
     Write-Host ""
 }
 

@@ -66,7 +66,10 @@ param(
 
     [string] $DestinationPath = "C:\inetpub\IdeaBoard",
 
-    [string] $PoolName = "",
+    # The pool this application runs in, stopped for the copy and started again after,
+    # and never any other. The default is the SERVIDOR-APP installation's, like the
+    # destination above it. Another server passes its own.
+    [string] $PoolName = "IdeaBoardPool",
 
     [string] $DataRoot = "C:\IdeaBoard",
 
