@@ -74,7 +74,7 @@ já usa é uma decisão sobre a superfície de alojamento, com consequências pr
 são sobre transporte nem sobre endereço: a configuração do vizinho passa a estar no nosso
 caminho de herança, o modelo in-process exige pool próprio, e passa a haver quem nos possa
 partir sem tocar neste repositório. Isso não cabe num registo intitulado sobre
-certificados, e está proposto como registo separado.
+certificados, e está no [ADR-027](ADR-027-aplicacao-dentro-de-um-site-alheio.md).
 
 ## O que morre com esta decisão, e uma morte que é boa notícia
 

@@ -35,3 +35,4 @@ mostrar o que se pensava na altura, não em estar sempre certo.
 | [ADR-024](ADR-024-http-sem-certificado.md) | HTTP sem certificado, no nome curto do servidor | Aceite, forma do endereço emendada |
 | [ADR-025](ADR-025-face-de-letra-alojada.md) | Uma face de letra alojada no repositório e servida pela aplicação | Aceite |
 | [ADR-026](ADR-026-onde-vive-a-configuracao.md) | A configuração obrigatória vive no `web.config` versionado | Aceite |
+| [ADR-027](ADR-027-aplicacao-dentro-de-um-site-alheio.md) | Aplicação dentro de um site que outra equipa já usa, com pool próprio | Aceite |
