@@ -150,6 +150,17 @@ domínio que o dá.
 
 **Más.** Quem trabalhe fora da rede corporativa perde o acesso, sem contrapartida.
 
+**Isto deixou de ser raciocínio e passou a ter medição de outra equipa por trás.** O
+documento de instalação do AplicacaoVizinhaB, que corre no mesmo servidor com a mesma
+autenticação, regista um teste feito a 12 de novembro de 2026 contra o site de QA: um
+browser com autenticação ambiente desligada pediu uma página e **o IIS respondeu 401 com
+`WWW-Authenticate: Negotiate, NTLM` antes de o pedido chegar à aplicação**. Não houve pedido
+seguinte, portanto o que recusou foi o servidor e não o código.
+
+A afirmação continua a ser deles e não nossa, lida no documento deles a 18 de novembro de
+2026 e não medida aqui. O que ela acrescenta é que a exclusão escrita acima não é uma
+previsão: já aconteceu, naquela máquina, e com a forma de autenticação que vamos usar.
+
 **E essa exclusão chega à medição do sucesso, que é onde ninguém a vai procurar.** O
 briefing mede o sucesso por percentagem de pessoas que participa. Quem trabalha fora da
 rede deixa de poder participar, e **não é um não participante, é um impedido**. Contado

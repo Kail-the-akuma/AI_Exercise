@@ -92,6 +92,12 @@ Não é preciso decidir qual das duas está certa, e é melhor não tentar. **A 
 sobrevive às duas leituras é não definir estes nomes em mais lado nenhum**, nem no ambiente
 da máquina nem no do pool de aplicações.
 
+**E desde 17 de novembro de 2026 há um quarto sítio, que não existia quando isto foi
+escrito.** A aplicação passou a ser servida dentro de um site que outra equipa já usa,
+conforme o [ADR-027](ADR-027-aplicacao-dentro-de-um-site-alheio.md), e o `web.config` desse
+site é herdado pelo nosso caminho. Se declarar um destes nomes, colide pelo mesmo
+mecanismo.
+
 Importa porque a avaria não se parece com a causa: o arranque falha a queixar se de uma
 cadeia de ligação, e o caminho que aparece na mensagem é um que ninguém escreveu, porque é
 a concatenação de dois.

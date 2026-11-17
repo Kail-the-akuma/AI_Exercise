@@ -75,7 +75,18 @@ public class DisplayNameGateMiddleware
         // A redirect and not a 403. The person has done nothing wrong and there is
         // something they can do about it, which is exactly what a redirect says and what a
         // refusal does not.
-        context.Response.Redirect(RegistrationPath);
+        //
+        // The path base goes in front, and leaving it out is not a cosmetic slip. Deciding
+        // is done on Request.Path, which excludes the path base, and that is correct. The
+        // Location header is the opposite: it is literal, and whatever is written here is
+        // where the browser is sent. Measured, by removing this and watching the two tests
+        // under a path base go red: Response.Redirect adds nothing of its own.
+        //
+        // Served as an application inside an existing site, at /IdeaBoard, a bare "/nome"
+        // sends the person to the root of that server, which is another application
+        // entirely. The people this gate exists for, the ones with no name recorded yet,
+        // would be the only ones to land there, and it is everybody on a first visit.
+        context.Response.Redirect(context.Request.PathBase + RegistrationPath);
     }
 
 

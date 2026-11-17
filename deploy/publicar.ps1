@@ -59,19 +59,108 @@ param(
     [ValidateSet("Publish", "Copy", "All")]
     [string] $Action = "All",
 
-    [string] $RepositoryRoot = (Split-Path -Parent $PSScriptRoot),
+    # Left empty here and worked out in the body, never in this default.
+    #
+    # THE CONDITION IS AN ADVANCED SCRIPT STARTED WITH -file, AND IT TAKES BOTH. In a
+    # parameter default of an advanced script, $PSScriptRoot is EMPTY when the script is
+    # started as a new process with powershell.exe -file. A plain script resolves it
+    # correctly with -file, and an advanced one resolves it correctly when called from a
+    # session that is already open. Measured, all four ways.
+    #
+    # What makes a script advanced is [CmdletBinding()] OR a single [Parameter()] attribute
+    # on any parameter, and this file has both. Naming only -file would be worse than
+    # saying nothing: somebody with a plain script would work around a problem they do not
+    # have, and somebody with an advanced one would try it from an open console, watch it
+    # resolve, and conclude they were safe. It is somebody else's double click that breaks.
+    #
+    # Which is why it mattered here: -file is exactly how Windows starts a .ps1 from the
+    # shell, the registry command behind "Executar com o PowerShell" being
+    # "powershell.exe" "-file" " %1 ". So computing it here killed the script inside its own
+    # parameter block, before one line of the report, in the very way of starting it that
+    # the pause at the end exists to serve.
+    [string] $RepositoryRoot = "",
 
     [Parameter(Mandatory = $true)]
     [string] $ArtefactPath,
 
     [string] $DestinationPath = "C:\inetpub\IdeaBoard",
 
-    [string] $PoolName = "",
+    # The pool this application runs in, stopped for the copy and started again after,
+    # and never any other. The default is the SERVIDOR-APP installation's, like the
+    # destination above it. Another server passes its own.
+    [string] $PoolName = "IdeaBoardPool",
 
-    [string] $DataRoot = "C:\IdeaBoard"
+    [string] $DataRoot = "C:\IdeaBoard",
+
+    # Skips the pause at the end, for running this from another script.
+    [switch] $NoPause
 )
 
 $ErrorActionPreference = "Stop"
+
+# Here and not in the parameter default, for the reason written there: in the default of an
+# advanced script started with -file it comes out empty. In the body it holds the script's
+# own folder whatever the script is and however it was started.
+if ($RepositoryRoot -eq "")
+{
+    $RepositoryRoot = Split-Path -Parent $PSScriptRoot
+}
+
+#region Closing
+
+function Wait-ForKey
+{
+    <#
+        The last thing the script does, after the report is printed and after the exit code
+        is already decided. It reads a key and nothing else, so it cannot change what the
+        script is about to exit with.
+
+        It exists because of how these are started. Opened by double click or by "Executar
+        com o PowerShell", the console belongs to the script and closes with it, taking the
+        report off the screen before anybody has read it.
+    #>
+
+    if ($script:NoPause)
+    {
+        return
+    }
+
+    # A pause needs a console with a person in front of it. Started from another script,
+    # from a build, or with its input redirected, there is nobody to press a key and this
+    # would hang for ever. The -NoPause switch only helps whoever remembered to pass it,
+    # and the one who gets this wrong is precisely the one who did not know to pass it.
+    if ([System.Console]::IsInputRedirected)
+    {
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Carregue numa tecla para fechar esta janela." -ForegroundColor Cyan
+
+    try
+    {
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+    catch
+    {
+        # Not every host has a raw key reader, the ISE among them. Falling back rather than
+        # turning a finished run into a failure on its very last line.
+        $null = Read-Host
+    }
+}
+
+
+# Covers the ending nobody plans for. An unexpected terminating error would otherwise end
+# the script, and close the window, with the error still on screen and unread. Break
+# re-throws after the pause, so the script still ends the way it was going to end.
+trap
+{
+    Wait-ForKey
+
+    break
+}
+
+#endregion
 
 
 #region Output
@@ -100,6 +189,8 @@ function Stop-WithReason
     Write-Host ""
     Write-Host "PARADO. $Text" -ForegroundColor Red
     Write-Host ""
+
+    Wait-ForKey
 
     exit 1
 }
@@ -382,7 +473,47 @@ function Invoke-Copy
         Stop-WithReason "O robocopy saiu com codigo $robocopyExit, que e falha. O pool ficou parado de proposito, para nao arrancar sobre uma copia a meio."
     }
 
-    Write-Done "Copia concluida, codigo do robocopy $robocopyExit"
+    Write-Done "Robocopy terminou com codigo $robocopyExit"
+
+    <#
+        The exit code is not enough, and this is measured and not feared.
+
+        With a file in the destination held open by something else, robocopy could not
+        delete it, wrote ERROR 32 in its own log, counted FAILED as ZERO, and exited 3,
+        which is "files copied" plus "extras detected" and is below the failure threshold.
+        The script above then said the copy was done and exited 0. A leftover from an
+        earlier version survived a publication that reported success, and nobody was told.
+
+        That is the exact shape of the in-process trap: w3wp can hold a file from the
+        previous version for a moment after the pool stops, and a delete that fails is not
+        counted as a failure by robocopy the way a copy that fails is.
+
+        So the destination is compared with the artefact afterwards, which answers the
+        question that actually matters, "is the destination now what we published", without
+        depending on how robocopy chose to encode what happened.
+    #>
+    Write-Step "A comparar o destino com o artefacto, em vez de confiar no codigo de saida"
+
+    $resolvedDestination = [System.IO.Path]::GetFullPath($DestinationPath)
+
+    $leftOver = New-Object System.Collections.ArrayList
+
+    foreach ($file in (Get-ChildItem -LiteralPath $resolvedDestination -Recurse -File -Force))
+    {
+        $relative = $file.FullName.Substring($resolvedDestination.Length).TrimStart("\", "/")
+
+        if (-not (Test-Path -LiteralPath (Join-Path $ArtefactPath $relative)))
+        {
+            [void] $leftOver.Add($relative)
+        }
+    }
+
+    if ($leftOver.Count -gt 0)
+    {
+        Stop-WithReason ("O destino ficou com " + $leftOver.Count + " ficheiro(s) que nao estao no artefacto, portanto a copia espelhada nao espelhou: " + ($leftOver -join ", ") + ". A causa habitual e um ficheiro ainda aberto pela aplicacao a correr. Parar o pool desta aplicacao e repetir a copia. O pool fica parado de proposito, para nao arrancar sobre uma mistura de versoes.")
+    }
+
+    Write-Done "O destino tem exactamente o que o artefacto tem"
 
     if ($poolExists -and $poolWasRunning)
     {
@@ -441,3 +572,8 @@ if ($Action -eq "Publish")
 Write-Host ""
 
 #endregion
+
+
+# The last line of the script, on purpose. Everything above has already decided what this
+# run means, and this only holds the window open so it can be read.
+Wait-ForKey

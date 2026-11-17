@@ -28,9 +28,68 @@
 #>
 
 [CmdletBinding()]
-param()
+param(
+    # Skips the pause at the end, for running this from another script.
+    [switch] $NoPause
+)
 
 $ErrorActionPreference = "Continue"
+
+#region Closing
+
+function Wait-ForKey
+{
+    <#
+        The last thing the script does, after the report is printed and after the exit code
+        is already decided. It reads a key and nothing else, so it cannot change what the
+        script is about to exit with.
+
+        It exists because of how these are started. Opened by double click or by "Executar
+        com o PowerShell", the console belongs to the script and closes with it, taking the
+        report off the screen before anybody has read it.
+    #>
+
+    if ($script:NoPause)
+    {
+        return
+    }
+
+    # A pause needs a console with a person in front of it. Started from another script,
+    # from a build, or with its input redirected, there is nobody to press a key and this
+    # would hang for ever. The -NoPause switch only helps whoever remembered to pass it,
+    # and the one who gets this wrong is precisely the one who did not know to pass it.
+    if ([System.Console]::IsInputRedirected)
+    {
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Carregue numa tecla para fechar esta janela." -ForegroundColor Cyan
+
+    try
+    {
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+    catch
+    {
+        # Not every host has a raw key reader, the ISE among them. Falling back rather than
+        # turning a finished run into a failure on its very last line.
+        $null = Read-Host
+    }
+}
+
+
+# Covers the ending nobody plans for. An unexpected terminating error would otherwise end
+# the script, and close the window, with the error still on screen and unread. Break
+# re-throws after the pause, so the script still ends the way it was going to end.
+trap
+{
+    Wait-ForKey
+
+    break
+}
+
+#endregion
 
 
 #region Report
@@ -322,6 +381,42 @@ else
                 Write-Note ("{0}  [{1}]  pool: {2}" -f $site.Name, $site.State, $site.applicationPool)
                 Write-Note ("    bindings: {0}" -f $bindings)
                 Write-Note ("    caminho:  {0}" -f $site.physicalPath)
+
+                <#
+                    The applications inside each site, which the list of sites alone does
+                    not show. Knowing who owns port 80 answers one question; knowing which
+                    virtual paths are taken inside that site answers the one that decides
+                    whether an application can be created at /IdeaBoard, and which
+                    application is serving the site's own root.
+
+                    Without this it is only the provisioning script that finds out, by
+                    refusing, already on the server, on a trip that this would have saved.
+                #>
+                try
+                {
+                    $applications = Get-WebApplication -Site $site.Name -ErrorAction Stop
+
+                    if ($null -eq $applications -or @($applications).Count -eq 0)
+                    {
+                        Write-Note "    aplicacoes: nenhuma alem da raiz do site"
+                    }
+                    else
+                    {
+                        Write-Note ("    aplicacoes: {0}" -f @($applications).Count)
+
+                        foreach ($application in $applications)
+                        {
+                            Write-Note ("      {0}  pool: {1}" -f $application.path, $application.applicationPool)
+                            Write-Note ("        caminho: {0}" -f $application.PhysicalPath)
+                        }
+                    }
+                }
+                catch
+                {
+                    # Counted as unanswered rather than as "none", because the two are not
+                    # the same thing and this script exists to keep them apart.
+                    Write-Finding ("Aplicacoes de " + $site.Name) "Nao foi possivel ler" "desconhecido"
+                }
             }
         }
     }
@@ -471,3 +566,8 @@ Write-Host "  Nada foi alterado nesta maquina por este script." -ForegroundColor
 Write-Host ""
 
 #endregion
+
+
+# The last line of the script, on purpose. Everything above has already decided what this
+# run means, and this only holds the window open so it can be read.
+Wait-ForKey

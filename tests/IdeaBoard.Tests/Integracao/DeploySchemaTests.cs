@@ -24,7 +24,7 @@ public class DeploySchemaTests
     [Fact]
     public void TheDeployScriptBuildsTheSameSchemaAsTheMigrations()
     {
-        string script = ReadDeployScript("migracao.sql");
+        string script = DeployFiles.Read("migracao.sql");
 
         using TemporarySqliteDatabase byMigrations = new TemporarySqliteDatabase();
         using TemporarySqliteDatabase byScript = TemporarySqliteDatabase.BuiltByScript(script);
@@ -39,7 +39,7 @@ public class DeploySchemaTests
     [Fact]
     public void TheDeployScriptRecordsTheSameMigrationsAsTheMigrationsDo()
     {
-        string script = ReadDeployScript("migracao.sql");
+        string script = DeployFiles.Read("migracao.sql");
 
         using TemporarySqliteDatabase byMigrations = new TemporarySqliteDatabase();
         using TemporarySqliteDatabase byScript = TemporarySqliteDatabase.BuiltByScript(script);
@@ -50,42 +50,6 @@ public class DeploySchemaTests
         Assert.Equal(
             SqliteSchema.ReadAppliedMigrations(byMigrations.ConnectionString),
             SqliteSchema.ReadAppliedMigrations(byScript.ConnectionString));
-    }
-
-    #endregion
-
-
-    #region Files
-
-    /// <summary>
-    /// Reads a file from the deploy folder, found by walking up from the test assembly.
-    ///
-    /// The file is read where it lives rather than copied into the output folder next to
-    /// the tests. A copy is refreshed by the build, which is almost always, and the one
-    /// time it is not the test passes against a script nobody is going to run.
-    /// </summary>
-    private static string ReadDeployScript(string fileName)
-    {
-        DirectoryInfo? folder = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (folder is not null && !File.Exists(Path.Combine(folder.FullName, "IdeaBoard.sln")))
-        {
-            folder = folder.Parent;
-        }
-
-        if (folder is null)
-        {
-            throw new InvalidOperationException("The solution root could not be found.");
-        }
-
-        string path = Path.Combine(folder.FullName, "deploy", fileName);
-
-        if (!File.Exists(path))
-        {
-            throw new InvalidOperationException("The deploy script was not found at " + path + ".");
-        }
-
-        return File.ReadAllText(path);
     }
 
     #endregion

@@ -20,13 +20,20 @@ maior probabilidade de atrasar o resto, e deve começar antes de tudo o resto.
 | Identificador de código decidido | Equipa | Fase 1 | Fechado em `IdeaBoard` |
 | Nome de produto em prosa decidido | Equipa | Lançamento | **Em aberto** |
 | Servidor interno com IIS e ASP.NET Core Module v2 | Infraestrutura | Fase 5 | Por fazer |
-| Endereço do site decidido | Equipa | Fases 1 e 5 | Decidido na forma, **valor por preencher** |
+| Endereço decidido | Equipa | Fases 1 e 5 | Fechado em `http://servidor-app.dominio.interno/IdeaBoard` |
 | Pasta de dados e de chaves criadas, com permissões | Infraestrutura | Fase 5 | Por fazer |
 | Valores alvo dos critérios de sucesso fixados | Equipa | Lançamento | **Em aberto** |
 | Repositório git com remoto e `.gitignore` de .NET | Equipa de desenvolvimento | Fase 1 | Fechado |
 
-O **endereço é o nome curto do servidor com porta**, e não o nome qualificado. A forma
-está decidida e o valor concreto ainda não, porque o servidor ainda não está escolhido.
+O endereço é **`http://servidor-app.dominio.interno/IdeaBoard`**, nome **qualificado** e sem
+porta, por a aplicação ir dentro de um site que já serve na porta 80.
+
+**A forma mudou três vezes, e as três datas interessam mais do que o valor final.** A 13
+de novembro de 2026 era nome curto com porta. A 17 passou a nome curto sem porta, com a
+entrada no site alheio. A 18, **no dia da publicação**, passou a nome qualificado, porque
+o nome curto foi tentado no servidor e pede credenciais. Ver
+[ADR-024](ADR/ADR-024-http-sem-certificado.md), emendado em cada uma, e
+[ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md).
 
 > **Os pré requisitos de identidade saíram desta tabela por deixarem de existir.**
 > A 13 de novembro de 2026 a autenticação mudou de Microsoft Entra ID para autenticação
@@ -76,19 +83,43 @@ e o certificado de substituição. Não há certificado e não há registo de ap
 
 **A razão que sobrevive é o início de sessão automático.** A forma do endereço determina
 em que zona de segurança o browser coloca o site, e a zona determina se a autenticação
-integrada acontece sem pedir credenciais. Um nome sem pontos é colocado na zona de
-intranet local por omissão. Isso aplica se quando o parque não tem lista de servidores
-de autenticação definida por política, e havendo lista é ela que governa, passando a
-decidir o nome constar dela.
+integrada acontece sem pedir credenciais.
 
-O endereço decidido é o **nome curto do servidor com porta**, que é a forma favorável a
-esta zona. O valor concreto fica por preencher.
+**E esta é a parte que foi medida e saiu ao contrário do que estava escrito aqui.** Até 18
+de novembro de 2026 este plano dizia que um nome sem pontos entra na zona de intranet
+local por omissão, e por isso o endereço decidido era o nome curto. No dia da publicação,
+no servidor e no browser de quem o usa:
+
+| Endereço | O que o browser faz |
+|---|---|
+| `http://SERVIDOR-APP/IdeaBoard` | **Pede credenciais** |
+| `http://servidor-app.dominio.interno/IdeaBoard` | **Entra sozinho** |
+
+O endereço decidido é portanto o **nome qualificado**, e a razão por que é ele está no
+[ADR-024](ADR/ADR-024-http-sem-certificado.md), para onde aponto em vez de a repetir aqui.
+O resumo que basta a um plano: **não é o número de pontos no nome que decide**, é a lista
+de excepções do proxy, porque uma das regras por omissão daquela zona é incluir os sítios
+que não passam pelo proxy.
+
+**O que isto ensina a este plano, e que fica em vez de ser apagado.** A razão antiga não
+era um palpite: estava escrita, fundamentada e tinha sobrevivido a duas revisões. Era
+sobre o mecanismo certo, a zona de segurança, e errada sobre o que alimenta esse mecanismo
+naquele parque. **Uma razão coerente sobre o mecanismo certo é exactamente o que não se
+distingue de uma razão verdadeira, até alguém abrir um browser naquela máquina.**
 
 Mudar o endereço depois obriga a mudar a comunicação de lançamento, os atalhos e os
 marcadores de toda a gente, o que é razão bastante por si só.
 
 O registo de DNS, se for preciso, continua a depender da infraestrutura, porque não é a
 equipa de desenvolvimento que o cria.
+
+**E é ele a saída da convivência no site alheio**, que é a razão por que esta dependência
+futura fica escrita num plano e não só num registo. A aplicação vive dentro de um site de
+outra equipa, com o que isso traz de herança de configuração e de gente que a pode partir
+sem lhe tocar, conforme [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md). Se
+essa convivência vier a custar mais do que o que está lá escrito, o caminho de saída é um
+nome próprio na porta 80, e o que ele custa é um registo de DNS e uma comunicação à
+equipa, e não mudança de arquitetura nenhuma.
 
 ---
 
@@ -179,7 +210,7 @@ em que abre.
 
 - Publicação em IIS conforme [06](06-Operacao-e-Publicacao.md), com autenticação Windows
   ativada no site e o acesso anónimo desligado.
-- Endereço fixado no valor concreto, com a forma já decidida em
+- Endereço a responder em `http://servidor-app.dominio.interno/IdeaBoard`, com a forma decidida em
   [ADR-024](ADR/ADR-024-http-sem-certificado.md).
 - Migração aplicada por script, com backup prévio.
 - Suite completa verde.

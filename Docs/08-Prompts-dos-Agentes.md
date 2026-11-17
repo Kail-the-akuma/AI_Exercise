@@ -153,6 +153,30 @@ E evita o erro na direção contrária. "Nenhum autor apanha o seu" lê se como 
 trabalho não se pode fazer sozinho", o que é falso, e desencorajador para quem o faça sem
 cinco papéis à volta.
 
+### Dois comandos que imprimem a mesma palavra podem provar coisas diferentes
+
+Observação do papel de verificação, a 18 de novembro de 2026, e é a pergunta aplicada ao
+caso mais escorregadio: quando a prova não falha por estar errada, falha por ter sido
+feita no momento errado ou contra a coisa errada.
+
+`PRAGMA journal_mode = WAL` e `PRAGMA journal_mode` imprimem os dois `wal`. O primeiro
+imprime o por ter sido executado agora, naquele processo e naquele ficheiro. O segundo
+imprime o por ser verdade no ficheiro que a aplicação vai abrir.
+
+**Nenhum dos dois é um eco**, e essa parte foi medida: numa base em memória, onde o WAL
+não é permitido, o comando de escrita responde `memory`. Quem o descartasse como "só diz
+o que lhe pediram" estaria a deitar fora uma prova verdadeira.
+
+E mesmo assim o item precisa do segundo, por uma razão estreita que não é a validade do
+primeiro: é corrido **depois**, por **outro processo**, contra o ficheiro no **caminho
+final**. É isso que apanha a base provisionada noutro sítio e copiada, o restauro, o modo
+mudado depois, e a pessoa a olhar para um ficheiro diferente daquele que a aplicação
+abre.
+
+**A lição não é sobre o WAL.** É que a pergunta "isto prova o que diz provar" tem uma
+segunda metade que se esquece: não basta perguntar o que o comando responde, é preciso
+perguntar **quando e contra o quê** foi corrido.
+
 ### Uma razão para os cinco papéis que ninguém tinha escrito
 
 Os papéis foram desenhados para separar responsabilidade sobre ficheiros, que é o que a
@@ -594,6 +618,19 @@ verificas por ti:
 
 Uma pesquisa que não devolve nada é prova fraca. Antes de escreveres que algo não
 existe, confirmas de segunda maneira, com outro termo ou lendo o ficheiro.
+
+E UMA QUE DEVOLVE TAMBÉM É PROVA FRACA, PELA MESMA RAZÃO AO CONTRÁRIO
+Um resultado pode estar num comentário, num exemplo, numa mensagem de erro ou numa
+frase que diz que aquilo NÃO existe. Antes de escreveres que algo existe, vais ver a
+linha e confirmas que é código a correr e não prosa a falar dele.
+
+Medido a 18 de novembro de 2026: procurar `iisreset` nos scripts de publicação acerta
+duas vezes, e as duas ocorrências são comentários a dizer que não há nenhum. A mesma
+procura sobre o código com os comentários removidos não devolve nada.
+
+A assimetria é tua e não de quem procura. Um falso negativo faz te escrever uma frase
+errada. Um falso positivo faz te mandar alguém corrigir o que está certo, e essa pessoa
+mexe em código que funcionava.
 
 QUANDO OS RELATÓRIOS SE CONTRADIZEM
 Não fazes média entre eles e não escolhes o que soa mais prudente.
