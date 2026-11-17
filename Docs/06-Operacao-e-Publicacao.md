@@ -185,6 +185,41 @@ O sintoma de uma colisão é um 500.19 a falar de uma secção duplicada, ou uma
 que arranca e se comporta de maneira que o `web.config` dela não explica. **A cura
 habitual mexe no ficheiro do vizinho**, e nenhum destes scripts lhe toca, de propósito.
 
+> **O nosso `web.config` parece proteger disto e não protege.** Abre com
+> `<location path="." inheritInChildApplications="false">`, que é o que o SDK põe em
+> qualquer aplicação publicada. Esse atributo impede que o que nós declaramos desça para
+> aplicações debaixo de nós, e **nós não temos nenhuma**. A herança vem de cima e ele não
+> lhe toca.
+>
+> Fica escrito porque quem abrir o ficheiro à procura desta resposta encontra uma frase
+> que parece dá la. O raciocínio completo está no
+> [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md).
+
+#### A colisão de handlers, e o sintoma que faz perder a tarde
+
+Uma colecção de configuração **funde se** com a do pai em vez de a substituir. Se o site
+que nos recebe for também ASP.NET Core e o ficheiro dele não trouxer aquele atributo, o
+`aspNetCore` dele chega até nós e choca com o nosso por chave duplicada.
+
+O sintoma é o que o torna caro, e não a causa:
+
+| O que se vê | |
+|---|---|
+| No browser | 500.19 |
+| No registo de aplicação | Nada |
+| No log do site pai | Criado, e com funcionamento normal |
+| No log da nossa aplicação | **Nunca chega a existir** |
+
+Lê se como a nossa aplicação a não arrancar, e ela **nem foi chamada**. É a diferença
+entre procurar durante uma tarde no sítio errado e olhar para o ficheiro do lado.
+
+Os dois remédios documentados são um `<remove name="aspNetCore" />` antes do nosso
+`<add>`, ou o ficheiro do pai trazer o atributo da herança, que não está nas nossas mãos.
+**Hoje o nosso ficheiro tem `<add>` e não tem `<remove>`**, e se isso é ou não um
+problema depende de um ficheiro que ainda não foi lido. Fica em aberto no
+[ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md) e não aqui, porque é decisão
+e não operação.
+
 #### O caminho base, e o que ele obriga a escrever
 
 Servida em `/IdeaBoard`, a aplicação recebe esse prefixo do IIS como caminho base. Não há
@@ -292,6 +327,14 @@ aplicação de arrancar.
 Portanto não definir estes dois nomes na máquina nem no pool de aplicações. Se forem
 definidos nos dois sítios, a avaria chega com o aspecto de uma cadeia de ligação errada,
 e o caminho que aparece na mensagem é um que ninguém escreveu.
+
+**São quatro sítios e não três, desde que a aplicação passou a viver dentro de um site
+alheio.** O quarto é o `web.config` do site que a recebe, que esta equipa não escreve e
+não controla. Ver [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md).
+
+A avaria é a mesma e chega com o mesmo disfarce, e é por isso que o quarto é o pior: os
+outros três estão todos ao alcance de quem procura, e este está num ficheiro que quem
+procura não tem razão nenhuma para abrir.
 
 ## Ligação à base de dados
 
@@ -787,6 +830,37 @@ tratado como correção manual, pelo procedimento acima, depois de confirmado co
 trata de privacidade na organização.
 
 ## Diagnóstico
+
+### Antes da tabela: uma avaria que aparece sem nada nosso ter mudado
+
+**Passou a existir quem nos parta sem tocar neste repositório.** Uma publicação do
+vizinho, uma alteração ao `web.config` dele, uma mudança de autenticação ou de ligações ao
+nível do site: qualquer uma muda o comportamento desta aplicação sem que uma linha daqui
+mude.
+
+E há uma assimetria que decide quanto isso custa. **O sintoma aparece no nosso endereço,
+com o nosso nome em cima**, e o primeiro sítio onde alguém vai procurar é este
+repositório, onde não mudou nada.
+
+Portanto, perante uma avaria sem alteração nossa, e **antes** de procurar uma regressão no
+código:
+
+1. Ver a **data do `web.config` do site que nos recebe**, e a configuração do site.
+2. Confirmar que as duas secções de autenticação continuam destrancadas e que o papel
+   `Web-Windows-Auth` continua instalado.
+
+O segundo ponto tem uma razão que não é óbvia e que está no
+[ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md): **nenhuma das duas coisas
+foi feita por nós nem para nós.** Foram feitas por outra equipa, por outra razão, meses
+antes deste projeto existir, e quem as fez não tem razão nenhuma para saber que
+dependemos delas. Voltar a trancar as secções, ou remover o papel, parte nos sem tocar em
+nada que seja nosso.
+
+São trinta segundos de verificação que só ocorrem a quem souber que existe um vizinho, e
+daqui a um ano isso não vai estar na cabeça de ninguém. É por isso que está escrito como
+primeiro passo e não como nota.
+
+### A tabela
 
 Os sintomas que esta configuração produz quando está errada, e o que procurar primeiro.
 
