@@ -90,6 +90,28 @@ São **dois** pré requisitos na máquina, e falhar qualquer um deles dá o mesm
 **ASP.NET Core Hosting Bundle** correspondente ao .NET 10, que instala o ASP.NET Core
 Module v2.
 
+#### Não se presume o runtime por a máquina já servir ASP.NET Core
+
+**Medido a 18 de novembro de 2026**, e custou uma paragem. Aquele servidor servia ASP.NET
+Core havia meses e tinha apenas o runtime **8.0.34**, porque as duas aplicações vizinhas
+são publicadas **auto contidas**: levam o runtime dentro do artefacto e não precisam de
+nenhum instalado na máquina.
+
+**O IdeaBoard é publicado dependente do framework**, portanto o runtime da versão maior
+com que foi construído é requisito **nosso** e não uma coisa que se herde do estado da
+máquina. Foi preciso instalar o Hosting Bundle do 10.
+
+A forma disto é a que interessa guardar. "A máquina já serve ASP.NET Core" é verdade e
+**não responde à pergunta**, que é se serve a versão de que precisamos e no modelo de
+publicação que usamos. Sem a verificação, o provisionamento teria terminado bem, o site
+teria sido criado, e a aplicação falharia depois com um `500.30` ou um `502.5`, **nenhum
+dos quais diz uma palavra sobre versões de runtime** e ambos mandam quem os lê procurar
+noutro sítio.
+
+O `deploy/provisionar.ps1` passou a exigi lo, e lê as pastas do framework partilhado em
+vez de correr o `dotnet`, porque num servidor o `dotnet` muitas vezes não está no
+caminho.
+
 #### Não se pergunta ao disco se o módulo está instalado, pergunta se ao IIS
 
 **O ficheiro do módulo vive em sítios diferentes consoante a instalação**, e os dois
@@ -211,10 +233,40 @@ se lê como avaria da aplicação e não é.
 
 | | |
 |---|---|
-| Site | O que já existe na máquina, e que não é tocado |
+| Site | `Default Web Site`, que já existe e não é tocado |
 | Caminho virtual | `/IdeaBoard` |
 | Pool de aplicações | Próprio, `IdeaBoardPool`, e não o do site |
 | Pasta física | `C:\inetpub\IdeaBoard` |
+
+#### O mapa daquele servidor, medido e já não suposto
+
+Durante dois dias este documento e o [ADR-027](ADR/ADR-027-aplicacao-dentro-de-um-site-alheio.md)
+descreveram o site que nos recebe como um site de que se sabia a porta e não se sabia o
+conteúdo. **Ficou medido a 17 de novembro de 2026.**
+
+O `Default Web Site` tem `physicalPath` igual a `C:\AplicacaoVizinhaA`. Ou seja, **o site
+da porta 80 é a aplicação vizinha**, e não um site vazio por omissão. O IdeaBoard é uma
+aplicação filha dentro dela.
+
+| Camada | O que é |
+|---|---|
+| Servidor | `SERVIDOR-APP`, partilhado com duas aplicações de outra equipa |
+| Site da porta 80 | `Default Web Site`, servido a partir de `C:\AplicacaoVizinhaA` |
+| Aplicação vizinha | ASP.NET Core, alojada em processo, com pool próprio |
+| **O IdeaBoard** | Aplicação em `/IdeaBoard`, pasta `C:\inetpub\IdeaBoard`, pool `IdeaBoardPool` |
+
+**Isto muda a gravidade de uma coisa e não muda a decisão de nenhuma.** A colisão de
+handlers descrita abaixo era o cenário remoto enquanto o pai podia ser um site vazio.
+Sendo o pai uma aplicação ASP.NET Core alojada em processo, somos exactamente o caso que a
+documentação da Microsoft trata por nome, e o cenário passa a ser o provável.
+
+O que salva hoje é uma propriedade do ficheiro deles e não nossa: **o `web.config` da
+aplicação vizinha traz `inheritInChildApplications="false"`**, portanto o que eles
+declaram não desce até nós. É uma propriedade que ninguém se comprometeu a manter, e que
+desaparece no dia em que eles republicarem com um ficheiro diferente.
+
+**Fica escrito aqui e não só no registo de decisão** porque é o mapa que falta a quem
+chega ao servidor para diagnosticar e encontra duas aplicações que não conhece.
 
 **O pool é próprio e isso não é detalhe.** Um pool por aplicação é o que mantém o limite
 de um processo de trabalho, que o SQLite exige, sem o impor ao vizinho que partilha o
