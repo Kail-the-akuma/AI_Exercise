@@ -130,8 +130,19 @@ em [07](07-Plano-de-Verificacao.md).
 
 ### Site
 
-HTTP, no nome curto do servidor com porta. O `web.config` é gerado pela publicação e não
-deve ser editado à mão no servidor, porque a publicação seguinte sobrepõe o.
+HTTP, no nome curto do servidor com porta.
+
+**O `web.config` não é gerado pela publicação.** Está versionado em
+`src/IdeaBoard.Web/web.config`, escrito à mão, e a publicação transforma o e leva o no
+artefacto. É código fonte e muda como tudo o resto, por alteração ao ficheiro versionado.
+
+Dizer que era gerado lia se como "isto não é código fonte", que é o contrário da decisão
+tomada. A outra metade da frase continua verdadeira e fica mais forte: **não editar à mão
+no servidor**, porque a publicação seguinte sobrepõe o e a alteração desaparece sem deixar
+rasto no repositório.
+
+É nele que vivem as duas variáveis sem as quais a aplicação recusa arrancar, e é por isso
+que o `publicar.ps1` confere que lá estão e que não estão vazias antes de copiar.
 
 | Definição de autenticação | Valor |
 |---|---|
@@ -237,7 +248,111 @@ arranque da aplicação.
 Dá leituras concorrentes com uma escrita em curso, que é exatamente o padrão desta
 aplicação: muita gente a ler o ranking, uma pessoa de vez em quando a votar.
 
+#### Nenhum script o liga, e a aplicação recusa arrancar sem ele
+
+Este passo é à mão e **não está dentro de nenhum dos scripts de `deploy`**, nem dos de SQL
+nem dos de PowerShell. Quem provisiona uma base e salta esta linha vê o site não arrancar.
+
+A razão não é esquecimento. Os scripts de SQL são gerados pelo EF Core a partir das
+migrações, e uma base criada pelas ferramentas do EF Core já vem em WAL, portanto um
+script gerado nunca traz este comando. Não é que falte nos três que existem hoje, é que
+não pode aparecer em nenhum que seja gerado da mesma maneira.
+
+Medido, e por dois caminhos que concordam. Não há instrução `PRAGMA` nenhuma nos três
+ficheiros de `deploy`, de nenhum tipo, e uma base construída de raiz a partir do
+`migracao.sql` responde `delete` a `PRAGMA journal_mode`.
+
+Do outro lado, o `SqliteJournalModeVerifier` lê o modo no arranque e **recusa arrancar**
+se não for WAL, nomeando o modo que encontrou. A mensagem dele diz qual é o comando que
+falta e manda tratar o caso como rastilho e não como a avaria em si, porque uma base que
+chegou ali sem WAL é uma base cujo provisionamento foi saltado, e vale a pena ver o que
+mais foi saltado com ele. **Esse texto e esta secção têm de continuar a dizer o mesmo.**
+O texto da mensagem vive no código e não aqui, portanto uma mudança de um lado pede a
+mudança do outro.
+
 ## Publicação
+
+### Os três scripts de `deploy`, e a ordem por que correm
+
+A instalação é feita à mão, por uma pessoa, numa consola do PowerShell como
+administrador. Os três scripts não a automatizam, dão lhe guardas.
+
+| Script | O que faz | Escreve? |
+|---|---|---|
+| `verificar-servidor.ps1` | Lê o que a máquina já tem e imprime um relatório | Não, nada |
+| `provisionar.ps1` | Cria as pastas, o pool, o site e a origem do Event Log | Sim, só o que não existia |
+| `publicar.ps1` | Produz o artefacto, confere o que lá está, e copia para o servidor | Sim, na pasta da aplicação |
+
+A ordem completa de uma instalação de raiz:
+
+1. **`verificar-servidor.ps1`.** Resolver o que ele apontar antes de continuar.
+2. **`provisionar.ps1`.** Pool, site, pastas, permissões e autenticação.
+3. **Criar a base de dados**, com o script da secção das migrações.
+4. **Ligar o modo WAL**, uma vez, conforme a secção acima. Este passo não está em script
+   nenhum e é o mais fácil de saltar.
+5. **`publicar.ps1`.** Produz o artefacto e copia o, parando e arrancando o pool.
+6. **Verificação manual de [07](07-Plano-de-Verificacao.md)**, que é a parte que nenhum
+   teste automático cobre.
+
+O `publicar.ps1` arranca o pool no fim, se tiver sido ele a pará lo, portanto não há um
+passo separado para arrancar. O site é criado já a correr pelo `provisionar.ps1`, e entre
+o passo 2 e o passo 5 serve erros, por ainda não ter aplicação nenhuma na pasta.
+
+### Quando um deles pára
+
+**Param a dizer porquê, e não continuam.** É a forma deles e não acidente: o
+`provisionar.ps1` recusa em vez de reparar, e nada do que ele já fez é desfeito.
+
+| Pára a dizer | O que aconteceu, e o que fazer |
+|---|---|
+| Que a consola não é de administrador | Faltou elevação. Abrir outra consola, nada foi alterado |
+| Que falta o ASP.NET Core Module v2, ou a Autenticação do Windows | Pré requisito por instalar. As duas causas dão o mesmo 500.19, por isso confirmar as duas |
+| Que já existe um pool ou um site com esse nome | Escolher outro nome, ou apagar o existente à mão depois de confirmar de quem é. O script não reconfigura o que encontra |
+| Que a porta já está ligada a outro site | Dois sites na mesma porta não arrancam os dois, e o que lá está serve pessoas |
+| Que a autenticação não ficou como devia | O script releu o que escreveu e não bateu certo. Verificar à mão antes de continuar |
+| Que o artefacto leva identidade local | É a invariante do `CLAUDE.md`. Não se publica assim, e o problema está na construção e não na publicação |
+| Que o artefacto leva uma base de dados | A base vive em `C:\IdeaBoard\data` e nunca na pasta da aplicação, senão a publicação seguinte apaga a |
+| Que falta uma variável no `web.config`, ou que está vazia | A aplicação recusa arrancar sem elas, e é melhor descobrir isso aqui do que no servidor |
+| Que o destino não parece a pasta desta aplicação | Ver o parágrafo seguinte, antes de forçar seja o que for |
+| Que o `robocopy` saiu com código 8 ou mais | Cópia falhada. O pool fica parado de propósito, para não arrancar sobre uma cópia a meio |
+
+Uma verificação que não conseguiu responder não é uma resposta negativa, e o
+`verificar-servidor.ps1` conta as que ficaram por responder em vez de as dar por
+ausentes. Resolver isso antes de provisionar, em vez de assumir o pior ou o melhor.
+
+### Dois cuidados que este servidor exige e um servidor vazio não exigiria
+
+Esta máquina já serve outra aplicação a pessoas reais, com autenticação integrada. As
+duas coisas a seguir existem por causa disso e não devem ser afrouxadas.
+
+**Nenhum comando global.** Não há `iisreset` em script nenhum, o serviço de publicação
+nunca é parado, e nenhum pool ou site que não tenha sido criado por estes scripts é
+arrancado, parado ou reconfigurado. O `publicar.ps1` pára um pool só, pelo nome, e só
+quando lho dão. Um comando global levaria a outra aplicação abaixo, e quem corresse o
+script não teria motivo para ligar as duas coisas.
+
+**A cópia é espelhada, e por isso o destino é confirmado antes.** O `robocopy` corre com
+`/MIR`, que apaga no destino tudo o que não venha no artefacto. É o que uma pasta de
+publicação precisa, e é um desastre se o caminho estiver errado por um carácter. Antes de
+apagar seja o que for, o `publicar.ps1` recusa um destino dentro de `C:\IdeaBoard`, recusa
+a raiz de uma unidade, e recusa uma pasta que tenha ficheiros mas não tenha o
+`IdeaBoard.Web.dll`. Uma pasta vazia ou inexistente passa, por ser a primeira cópia.
+
+### Um passo que ninguém conseguiu verificar, e fica dito como tal
+
+O `provisionar.ps1` destranca as secções de autenticação ao nível do site, com
+`-Location`, porque o IIS as tranca ao nível do servidor por omissão e um site cujo
+`web.config` as traga responde 500.19 em vez de arrancar.
+
+**Isto não foi verificado numa máquina com IIS.** Fica escrito aqui por isso mesmo, e não
+como afirmação de que funciona.
+
+O sintoma pelo qual se saberá é um **500.19 cuja mensagem fala de uma secção que não pode
+ser usada neste caminho**. Distingue se dos outros 500.19 pela mensagem e não pelo código,
+e é nesse passo do `provisionar.ps1` que se mexe. O script também o diz, a amarelo, no
+momento em que o faz.
+
+### A republicação de uma aplicação já instalada
 
 1. **Backup da base de dados**, pelo procedimento descrito mais abaixo. Antes de
    qualquer outra coisa, incluindo publicações que não mudam o esquema.
@@ -247,6 +362,12 @@ aplicação: muita gente a ler o ranking, uma pessoa de vez em quando a votar.
    sempre com `-bail`, pela razão da secção seguinte.
 5. **Arrancar o site.**
 6. **Verificar** com a lista de verificação de [07](07-Plano-de-Verificacao.md).
+
+> **O passo 2 e o `publicar.ps1` não dizem o mesmo, e a diferença não é minha para
+> resolver.** Esta lista manda parar o site. O `publicar.ps1` pára o pool e deixa o site a
+> responder, o que dá 503 a quem chegar durante a cópia em vez de recusar a ligação. As
+> duas formas libertam os ficheiros para a cópia, portanto nenhuma está avariada, mas
+> quem seguir uma e ler a outra fica sem saber qual conta. Relatado.
 
 ### Migrações
 
@@ -284,14 +405,36 @@ Isto foi medido. Um script com `BEGIN TRANSACTION`, um `ALTER TABLE` válido, um
 
 | Execução | Resultado |
 |---|---|
-| `sqlite3 base.db < migracao.sql` | A coluna fica criada e a linha fica inserida. Trabalho parcial commitado |
-| `sqlite3 -bail base.db < migracao.sql` | Nada fica. A base de dados mantém se como estava |
+| Sem `-bail` | A coluna fica criada e a linha fica inserida. Trabalho parcial commitado |
+| Com `-bail` | Nada fica. A base de dados mantém se como estava |
 
 Sem `-bail`, uma migração que falha a meio deixa o esquema num estado que não é nem o
-anterior nem o seguinte, e que nenhum script sabe reparar. O comando é portanto:
+anterior nem o seguinte, e que nenhum script sabe reparar.
+
+##### O comando, na forma que a consola do servidor aceita
 
 ```
-sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db" < deploy\migracao.sql
+Get-Content deploy\migracao.sql | sqlite3 -bail "C:\IdeaBoard\data\ideaboard.db"
+```
+
+**A forma com `<` não funciona numa consola do PowerShell.** O `<` é um operador reservado
+e o comando nem chega a correr: a consola responde `The '<' operator is reserved for
+future use.` e nada acontece. Medido no Windows PowerShell 5.1, que é o que está nestas
+máquinas, e [07](07-Plano-de-Verificacao.md) já regista que o `pwsh` pode não existir
+nelas.
+
+Isto é fácil de ler como um pormenor e não é. O erro acontece antes de a base ser tocada,
+portanto não estraga nada, mas quem o vê tem o script à frente a dizer `<` e tende a
+procurar o problema no `sqlite3` ou no ficheiro, que estão os dois bem.
+
+A forma acima foi medida: aplica as três migrações a uma base nova, sai com código zero, e
+com `-bail` continua a parar na primeira instrução que falha e a sair com código 1. O BOM
+que os ficheiros gerados trazem no início passa pelo tubo sem estorvar.
+
+Quem preferir a forma com `<` corre a pelo `cmd`, que a aceita, e que também foi medido:
+
+```
+cmd /c "sqlite3 -bail C:\IdeaBoard\data\ideaboard.db < deploy\migracao.sql"
 ```
 
 #### Qual dos três scripts aplicar, e é preciso escolher
@@ -492,6 +635,7 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Sintoma | Causa provável |
 |---|---|
 | Erro de base de dados só de leitura | Falta permissão de escrita **na pasta**, e não no ficheiro |
+| O site não arranca e a mensagem fala de `journal mode` | O modo WAL não foi ligado no provisionamento. Nenhum script o liga, e é o passo 4 da ordem de instalação |
 | Pessoas atiradas para fora da sessão ao acaso, ou erros em submissões | Chaves de Data Protection não persistidas. Ver [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Bloqueios ou tempos limite em escritas | Mais de um processo de trabalho no pool de aplicações |
 | Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado, **ou** o serviço de função Autenticação do Windows do IIS por instalar. As duas causas dão o mesmo código |
