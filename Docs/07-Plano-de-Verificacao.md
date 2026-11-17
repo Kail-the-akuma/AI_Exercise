@@ -305,6 +305,10 @@ por isso confirmam se os dois e não um.
       [06](06-Operacao-e-Publicacao.md): quem segura os ficheiros é o processo de
       trabalho, que pertence ao pool. **Se falhar, a decisão inverte se** e o
       procedimento volta a mandar parar o site.
+- [ ] **Durante essa cópia, um pedido ao site responde 503 e não uma ligação recusada.**
+      É a propriedade que se perdeu ao parar o pool em vez do site, e perdeu se de
+      propósito, conforme [06](06-Operacao-e-Publicacao.md). Confirmar aqui serve para
+      que quem a encontrar daqui a meses saiba que foi decidida e não que escapou.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
 - [ ] Modo WAL ativo no ficheiro da base de dados.
 - [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com

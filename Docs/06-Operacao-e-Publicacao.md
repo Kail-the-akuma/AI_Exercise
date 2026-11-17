@@ -370,11 +370,27 @@ decisão é do orquestrador, tomada a 17 de novembro de 2026.
 
 **O raciocínio é sobre quem segura os ficheiros.** Quem os tem abertos é o processo de
 trabalho, e esse pertence ao pool e não ao site. Parar o site pára o atendimento de
-pedidos e pode deixar o processo vivo, e nesse caso a cópia falha na mesma com ficheiros
-bloqueados, que é o problema que parar servia para evitar.
+pedidos e **não termina o processo de trabalho**, sobretudo se o pool servir mais do que
+um site, portanto os ficheiros continuam bloqueados na mesma e a cópia falha pela razão
+que parar servia para evitar.
 
 Que o 503 durante a cópia se leia melhor do que uma ligação recusada é verdade e não é o
 que decide. É um argumento sobre o sintoma, e o outro é sobre a causa.
+
+##### Uma propriedade perdeu se nesta troca, e a perda foi deliberada
+
+A frase antiga não protegia só os ficheiros. Dizia **parar o site para não entrarem
+pedidos a meio**, que é uma preocupação diferente, e essa deixou de estar coberta. Com o
+pool parado e o site de pé, os pedidos continuam a chegar ao IIS e levam 503 em vez de não
+encontrarem nada.
+
+Numa aplicação interna, durante uma publicação, a diferença entre um 503 e uma ligação
+recusada é indiferente, e é por isso que a decisão se mantém apesar disto.
+
+**Fica escrito porque uma garantia que se fecha em silêncio volta como discussão.** Daqui
+a seis meses, alguém que veja o 503 a aparecer durante as publicações tem duas leituras
+disponíveis: que foi decidido, ou que foi descuido. Sem esta linha, as duas são igualmente
+defensáveis e a segunda é a mais fácil de acreditar.
 
 > **ISTO NÃO FOI MEDIDO, E A DISTINÇÃO É O PONTO.** Nem quem decidiu nem quem escreve isto
 > tem IIS para o confirmar. É um raciocínio sobre como o IIS funciona, e um raciocínio
