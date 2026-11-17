@@ -56,14 +56,15 @@
         <nav class="navegacao" aria-label="Navegação principal">
             <ul class="separadores">
                 <li>
-                    <a asp-page="/Index" aria-current="@rankingCurrent">@UiText.RankingTab</a>
+                    <a asp-page="/Index" aria-current="@rankingCurrent"><partial name="_Icone" model="@("ranking")" /><span class="rotulo">@UiText.RankingTab</span></a>
                 </li>
                 <li>
-                    <a asp-page="/Recentes" aria-current="@recentCurrent">@UiText.RecentTab</a>
+                    <a asp-page="/Recentes" aria-current="@recentCurrent"><partial name="_Icone" model="@("recent")" /><span class="rotulo">@UiText.RecentTab</span></a>
                 </li>
                 <li>
                     <a asp-page="/Pessoal" aria-current="@personalCurrent">
-                        @UiText.PersonalTab
+                        <partial name="_Icone" model="@("person")" />
+                        <span class="rotulo">@UiText.PersonalTab</span>
 
                         @*
                             The notice lives on the way in to the page that clears it, which
@@ -100,7 +101,7 @@
                 too many. The header is the one that gives way: this is the way back to
                 the form from anywhere, not the invitation to use it.
             *@
-            <a class="botao" asp-page="/Nova">@UiText.SubmitIdeaButton</a>
+            <a class="botao" asp-page="/Nova"><partial name="_Icone" model="@("plus")" /><span class="rotulo">@UiText.SubmitIdeaButton</span></a>
 
             @*
                 Who you are signed in as. Only the name is available here, and that is on
