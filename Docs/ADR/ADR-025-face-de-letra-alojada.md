@@ -17,6 +17,39 @@ O motivo é **aproximar o máximo possível do design system da empresa**, nas p
 Hugo. Não estava escrito em parte nenhuma do repositório quando este registo foi
 começado, e foi preciso ir perguntar.
 
+## Decisão
+
+**IdeaBoard Sans**, que são os desenhos da Lato num subconjunto latino feito por outra
+pessoa e renomeado por nós, em dois ficheiros `woff2` em
+`src/IdeaBoard.App/wwwroot/fonts/`:
+
+| ficheiro | peso | bytes |
+|---|---|---|
+| `ideaboard-sans-400-latin.woff2` | 400 | 25 080 |
+| `ideaboard-sans-700-latin.woff2` | 700 | 24 488 |
+
+**O nome não é o da face, e isso não é descuido.** A razão é da licença e está escrita
+duas secções abaixo, em "Os desenhos são da Lato e o nome não é".
+
+Com o `OFL.txt` ao lado. O corpo desse ficheiro foi descarregado da SIL e é byte a byte o
+texto oficial da versão 1.1, de 26 de fevereiro de 2007, com o cabeçalho de direitos da
+Lato por cima e uma frase a dizer que estes ficheiros são um subconjunto renomeado.
+
+Declarados em duas regras `@font-face` com a mesma família e pesos 400 e 700, ambas com
+`font-display: swap`, e com a pilha do sistema declarada a seguir na regra do `body`:
+`"IdeaBoard Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+
+**Não há peso 600, e nove regras pediam um.** Com 400 e 700 na família, o navegador arredonda
+um pedido de 600 para cima e desenha o 700, medido e confirmado. As nove regras passaram a
+dizer 700, que é o que já estava a ir para o ecrã, para a folha deixar de descrever uma
+coisa que nunca acontecia.
+
+**Servida pela própria aplicação e nunca por CDN.**
+
+Por estar na biblioteca de classes Razor, é servida sob o prefixo
+`_content/IdeaBoard.App/`, como o resto dos ficheiros estáticos, com o custo que o
+[ADR-015](ADR-015-estrutura-de-quatro-projetos.md) já regista.
+
 ## O motivo apareceu e não bate certo com a face que está no repositório
 
 O design system da empresa fixa **Lato**, nos pesos 300, 400 e 700. O que está no
@@ -30,13 +63,14 @@ revisão.
 
 **O Hugo decidiu trocar para Lato**, e a troca foi feita com a licença verificada antes,
 que foi o que mordeu à primeira. A secção seguinte é o que essa verificação encontrou, e é
-a razão de a folha de estilos pedir hoje um nome que não existe em lado nenhum.
+a razão de a folha de estilos pedir hoje um nome que não existe fora deste
+repositório.
 
 **Proveniência.** O conteúdo do design system, incluindo a Lato e os três pesos, foi
 verificado pelo ORQ contra o documento da empresa. Esse documento não está neste
 repositório, e a palavra Lato não aparece em ficheiro nenhum dele, confirmado hoje.
 
-## A folha pede um nome que não existe, e isto é porquê
+## Os desenhos são da Lato e o nome não é, e isto é porquê
 
 **Os desenhos são Lato. O nome não é, e não pode ser.**
 
@@ -54,6 +88,13 @@ pontos de código cada um, e **não têm uma única letra polaca**: faltam `ą �
 Um ficheiro que se anuncia como Western+Polish e não tem polaco nenhum é um subconjunto a
 usar o nome do original. Para português não falta nada, portanto o problema nunca foi de
 cobertura.
+
+**Esta contagem não foi refeita por quem escreve esta secção, e não é por descuido.** Abrir
+um `woff2` obriga a descomprimir brotli, e esta máquina não tem o módulo que a ferramenta
+precisa para isso, confirmado ao tentar. O que foi confirmado por comando aqui é a
+assinatura `wOF2` e o comprimento dos dois ficheiros, 25 080 e 24 488, ambos múltiplos de
+quatro. A contagem de glifos fica como medição do papel que fez a renomeação, atribuída e
+não adoptada.
 
 **A consequência é da licença e foi verificada na fonte autoritativa**, o FAQ da SIL em
 `openfontlicense.org/ofl-faq/`, e não de memória. A entrada 2.6 diz que fazer subconjunto
@@ -102,36 +143,6 @@ Quem ler isto a seguir e concluir que o sistema da empresa passou a ser a refer�
 produto está a ler o que aqui não está. A aproximação é de uma coisa, e a decisão de
 adoptar o resto não foi tomada.
 
-## Decisão
-
-**IdeaBoard Sans**, que são os desenhos da Lato num subconjunto latino feito por outra
-pessoa e renomeado por nós, em dois ficheiros `woff2` em
-`src/IdeaBoard.App/wwwroot/fonts/`:
-
-| ficheiro | peso | bytes |
-|---|---|---|
-| `ideaboard-sans-400-latin.woff2` | 400 | 25 080 |
-| `ideaboard-sans-700-latin.woff2` | 700 | 24 488 |
-
-Com o `OFL.txt` ao lado. O corpo desse ficheiro foi descarregado da SIL e é byte a byte o
-texto oficial da versão 1.1, de 26 de fevereiro de 2007, com o cabeçalho de direitos da
-Lato por cima e uma frase a dizer que estes ficheiros são um subconjunto renomeado.
-
-Declarados em duas regras `@font-face` com a mesma família e pesos 400 e 700, ambas com
-`font-display: swap`, e com a pilha do sistema declarada a seguir na regra do `body`:
-`"IdeaBoard Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
-
-**Não há peso 600, e nove regras pediam um.** Com 400 e 700 na família, o navegador arredonda
-um pedido de 600 para cima e desenha o 700, medido e confirmado. As nove regras passaram a
-dizer 700, que é o que já estava a ir para o ecrã, para a folha deixar de descrever uma
-coisa que nunca acontecia.
-
-**Servida pela própria aplicação e nunca por CDN.**
-
-Por estar na biblioteca de classes Razor, é servida sob o prefixo
-`_content/IdeaBoard.App/`, como o resto dos ficheiros estáticos, com o custo que o
-[ADR-015](ADR-015-estrutura-de-quatro-projetos.md) já regista.
-
 ## Porque é que o CDN não é opção, e não é por princípio
 
 São duas razões e falham de maneiras diferentes, o que importa porque uma delas é
@@ -168,11 +179,16 @@ feito evitar. A diferença entre as duas é que desta vez a face não foi rejeit
 renomeada, por decisão do Hugo, porque o motivo que manda nela é aproximar do design system
 da empresa e esse motivo pede estes desenhos e não outros.
 
-**Proveniência das três verificações, porque não são iguais.** A da Public Sans fiz a eu,
-no ficheiro que acompanhava a fonte. A da Source Sans 3 foi feita pelo ORQ no `OFL.txt`
-dessa fonte, e corroborei a por fontes secundárias, incluindo a declaração de empacotamento
-da Debian. Não li esse ficheiro de licença, porque a fonte foi rejeitada e nunca esteve no
-repositório. A da Lato fiz a eu, dentro dos próprios ficheiros e contra o FAQ da SIL.
+**Proveniência das três verificações, porque não são iguais, e porque este ficheiro passou
+a ter mais do que um autor.** A palavra "eu" deixou de servir aqui, por isso cada uma leva
+o papel que a fez.
+
+A da Public Sans foi feita pelo papel de arquitetura, no ficheiro que acompanhava a fonte.
+A da Source Sans 3 foi feita pelo ORQ no `OFL.txt` dessa fonte, e corroborada por fontes
+secundárias, incluindo a declaração de empacotamento da Debian. Esse ficheiro de licença
+nunca foi lido aqui, porque a fonte foi rejeitada e nunca esteve no repositório. A da Lato
+foi feita pelo papel de interface, dentro dos próprios ficheiros e contra o FAQ da SIL, e
+está corroborada acima apenas naquilo que esta máquina consegue medir.
 
 ## O `.gitattributes`, que não é zelo
 
