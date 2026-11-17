@@ -277,6 +277,13 @@ por isso confirmam se os dois e não um.
       não, por isso o antiforgery é o único consumidor das chaves e este é o único item
       que as exercita. Se as chaves não estiverem a ser guardadas, a submissão falha
       com um erro de pedido inválido, e não com qualquer mensagem sobre chaves.
+- [ ] **Parar apenas o pool de aplicações liberta mesmo os ficheiros para a cópia.**
+      Com o site a correr, parar o pool, e confirmar que uma cópia por cima da pasta da
+      aplicação passa sem erro de ficheiro bloqueado. É a confirmação de uma decisão
+      tomada por raciocínio e não por medição, registada em
+      [06](06-Operacao-e-Publicacao.md): quem segura os ficheiros é o processo de
+      trabalho, que pertence ao pool. **Se falhar, a decisão inverte se** e o
+      procedimento volta a mandar parar o site.
 - [ ] Base de dados em `C:\IdeaBoard\data\`, fora da pasta da aplicação.
 - [ ] Modo WAL ativo no ficheiro da base de dados.
 - [ ] Provocar um erro de propósito e confirmar que aparece no log `Application` com
