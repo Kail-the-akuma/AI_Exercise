@@ -1,4 +1,5 @@
-﻿using System.Net;
+using System.Globalization;
+using System.Net;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using IdeaBoard.App.Data;
@@ -151,7 +152,26 @@ public class PathBaseTests
 
             string html = await response.Content.ReadAsStringAsync(Cancellation);
 
-            foreach (string reference in ReferencesIn(html))
+            IReadOnlyList<string> references = ReferencesIn(html);
+
+            // A floor per page, for the same reason the test projects have one on how many
+            // tests must run: without it this passes by finding nothing. An empty list of
+            // offenders is what a clean page looks like AND what a page that rendered no
+            // addresses looks like, AND what a regular expression that stopped matching
+            // looks like. A net that can quietly empty itself is worse than no net, because
+            // it reports calm.
+            //
+            // The floor is per page and not over the total on purpose: a page that stopped
+            // rendering would otherwise hide behind what the other two brought. Five is
+            // generous, because all three render the navigation, the stylesheet and the
+            // script before anything of their own.
+            Assert.True(
+                references.Count >= 5,
+                "The page " + page + " rendered only " + references.Count.ToString(CultureInfo.InvariantCulture)
+                + " addresses, which is too few to be a page this test can say anything about. "
+                + "Either the page stopped rendering or the search for addresses stopped matching.");
+
+            foreach (string reference in references)
             {
                 if (PointsOutsideThePrefix(reference))
                 {

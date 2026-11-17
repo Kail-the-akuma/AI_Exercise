@@ -735,7 +735,7 @@ foreach ($section in @("windowsAuthentication", "anonymousAuthentication"))
         -Metadata "overrideMode" `
         -Value "Allow"
 
-    Write-Done ($section + " destrancada para este alvo")
+    Write-Done ($section + " destrancada para " + $targetDescription)
 }
 
 

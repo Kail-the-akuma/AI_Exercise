@@ -473,7 +473,47 @@ function Invoke-Copy
         Stop-WithReason "O robocopy saiu com codigo $robocopyExit, que e falha. O pool ficou parado de proposito, para nao arrancar sobre uma copia a meio."
     }
 
-    Write-Done "Copia concluida, codigo do robocopy $robocopyExit"
+    Write-Done "Robocopy terminou com codigo $robocopyExit"
+
+    <#
+        The exit code is not enough, and this is measured and not feared.
+
+        With a file in the destination held open by something else, robocopy could not
+        delete it, wrote ERROR 32 in its own log, counted FAILED as ZERO, and exited 3,
+        which is "files copied" plus "extras detected" and is below the failure threshold.
+        The script above then said the copy was done and exited 0. A leftover from an
+        earlier version survived a publication that reported success, and nobody was told.
+
+        That is the exact shape of the in-process trap: w3wp can hold a file from the
+        previous version for a moment after the pool stops, and a delete that fails is not
+        counted as a failure by robocopy the way a copy that fails is.
+
+        So the destination is compared with the artefact afterwards, which answers the
+        question that actually matters, "is the destination now what we published", without
+        depending on how robocopy chose to encode what happened.
+    #>
+    Write-Step "A comparar o destino com o artefacto, em vez de confiar no codigo de saida"
+
+    $resolvedDestination = [System.IO.Path]::GetFullPath($DestinationPath)
+
+    $leftOver = New-Object System.Collections.ArrayList
+
+    foreach ($file in (Get-ChildItem -LiteralPath $resolvedDestination -Recurse -File -Force))
+    {
+        $relative = $file.FullName.Substring($resolvedDestination.Length).TrimStart("\", "/")
+
+        if (-not (Test-Path -LiteralPath (Join-Path $ArtefactPath $relative)))
+        {
+            [void] $leftOver.Add($relative)
+        }
+    }
+
+    if ($leftOver.Count -gt 0)
+    {
+        Stop-WithReason ("O destino ficou com " + $leftOver.Count + " ficheiro(s) que nao estao no artefacto, portanto a copia espelhada nao espelhou: " + ($leftOver -join ", ") + ". A causa habitual e um ficheiro ainda aberto pela aplicacao a correr. Parar o pool desta aplicacao e repetir a copia. O pool fica parado de proposito, para nao arrancar sobre uma mistura de versoes.")
+    }
+
+    Write-Done "O destino tem exactamente o que o artefacto tem"
 
     if ($poolExists -and $poolWasRunning)
     {
