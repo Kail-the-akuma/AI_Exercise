@@ -164,6 +164,17 @@ se falharem.
 | Lista vazia mostra o convite a submeter a primeira ideia | O primeiro ecrã do dia do lançamento |
 | Formulário rejeita título vazio e título acima do limite | Validação no servidor |
 
+**A suite tem mais cenários do que esta tabela**, e a tabela é assim de propósito: promete
+um por funcionalidade do produto mínimo, e é isso que cumpre. O que foi acrescentado
+depois vive ao lado, em `tests/IdeaBoard.E2E/Scenarios/`, num ficheiro por assunto:
+`Arnes`, `Autorizacao`, `Comentarios`, `Pesquisa`, `Ranking`, `Submissao`, `Tipografia` e
+`Voto`.
+
+São nomes de ficheiro e não uma contagem, por uma razão. Um número fica errado no dia em
+que alguém acrescentar um cenário, e uma enumeração completa aqui seria uma segunda cópia
+de uma lista que já existe na pasta, com o mesmo defeito das cópias de listas de exclusões
+que este repositório já viu falhar duas vezes.
+
 ### Browsers
 
 **Chromium apenas.** Aplicação interna, parque de máquinas conhecido, e cobrir três
