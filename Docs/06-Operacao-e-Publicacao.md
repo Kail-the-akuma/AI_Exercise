@@ -57,10 +57,48 @@ A mesma permissão é necessária em `C:\IdeaBoard\keys\`.
 Com identidade de pool por omissão, o principal a usar é
 `IIS AppPool\{nome-do-pool}`.
 
+### A origem do Event Log, criada uma vez por um administrador
+
+Fora de Development, a aplicação escreve para o Event Log do Windows com a origem
+**`IdeaBoard`**, e **não a cria**. Criar uma origem escreve no registo em `HKLM`, e isso
+é permissão que a identidade do pool de aplicações não deve ter. O `Program.cs` diz
+isto, e até agora não havia documento nenhum que mandasse fazer a outra metade.
+
+Numa consola de administrador, uma vez por servidor, antes do primeiro arranque:
+
+```powershell
+New-EventLog -LogName Application -Source "IdeaBoard"
+```
+
+Confirmar que ficou:
+
+```powershell
+[System.Diagnostics.EventLog]::SourceExists("IdeaBoard")
+```
+
+**O sintoma de isto estar por fazer é não haver sintoma nenhum na aplicação.** As páginas
+servem, as pessoas votam, e o registo de erros que o [04](04-Requisitos-Nao-Funcionais-e-Seguranca.md)
+descreve não existe. O gatilho observável é provocar um erro de propósito e **não**
+encontrar nada no log `Application` com origem `IdeaBoard`, que é um item da lista de
+[07](07-Plano-de-Verificacao.md).
+
 ## Configuração do IIS
 
-Pré requisito na máquina: **ASP.NET Core Hosting Bundle** correspondente ao .NET 10,
-que instala o ASP.NET Core Module v2. Sem ele o site responde com erro 500.19 ou 502.
+São **dois** pré requisitos na máquina, e falhar qualquer um deles dá o mesmo erro, o que
+é a razão de estarem os dois escritos aqui.
+
+**ASP.NET Core Hosting Bundle** correspondente ao .NET 10, que instala o ASP.NET Core
+Module v2.
+
+**O serviço de função Autenticação do Windows do IIS**, em Servidor Web, Segurança,
+Autenticação do Windows. Não vem instalado por omissão. Sem ele, o elemento
+`windowsAuthentication` que o `web.config` da aplicação traz não é reconhecido pelo
+servidor, e a autenticação integrada que todo o acesso a esta aplicação depende não
+existe sequer como opção. Está nomeado como requisito pela documentação da Microsoft
+para alojar aplicações ASP.NET Core com autenticação integrada.
+
+Sem o primeiro ou sem o segundo, o site responde com erro 500.19 ou 502. **O código não
+distingue as duas causas**, por isso verificar ambos antes de procurar noutro lado.
 
 ### Pool de aplicações
 
@@ -108,9 +146,66 @@ confiado, o browser termina a ligação sem oferecer forma de prosseguir, e guar
 instrução pelo tempo declarado, portanto desligar o HSTS no servidor não desbloqueia
 quem já a recebeu.
 
+## Onde vive a configuração, que é a pergunta que bloqueia o primeiro arranque
+
+A aplicação **recusa arrancar** sem duas chaves, e di lo com os nomes à frente:
+
+```
+IdeaBoard refused to start because its configuration is incomplete.
+
+  - 'ConnectionStrings:IdeaBoard' is missing or empty.
+  - 'DataProtection:KeysPath' is missing or empty.
+```
+
+O `appsettings.json` publicado traz as duas **vazias de propósito**, para que não haja
+nada em que cair: o host pára e nomeia o que falta, em vez de arrancar errado. Essa
+guarda só serve de alguma coisa se quem publica souber onde pôr os valores, e é por isso
+que esta secção existe.
+
+**Vivem no `web.config`, como variáveis de ambiente do módulo**, e vão versionadas:
+
+```xml
+<aspNetCore processPath="dotnet" arguments=".\IdeaBoard.Web.dll" hostingModel="inprocess">
+  <environmentVariables>
+    <environmentVariable name="ConnectionStrings__IdeaBoard"
+                         value="Data Source=C:\IdeaBoard\data\ideaboard.db;Foreign Keys=True;Default Timeout=30" />
+    <environmentVariable name="DataProtection__KeysPath"
+                         value="C:\IdeaBoard\keys" />
+  </environmentVariables>
+</aspNetCore>
+```
+
+O duplo sublinhado é como se escreve uma secção de configuração numa variável de
+ambiente: `ConnectionStrings__IdeaBoard` é a chave `ConnectionStrings:IdeaBoard` que a
+guarda de arranque pede pelo nome.
+
+Não há aqui credencial nenhuma, e não é preciso haver. A base de dados é um ficheiro e a
+identidade vem do servidor web, portanto o que está escrito são caminhos de um servidor
+interno, que já estão neste documento à vista.
+
+### Porque não um `appsettings.Production.json` ao lado da aplicação
+
+Porque a pasta da aplicação é esvaziada pela publicação seguinte. É a mesma falha que
+este documento já descreve para uma base de dados guardada lá, e o sintoma é pior: o site
+deixa de arrancar, e a mensagem fala de configuração em falta, que não se parece com
+"alguém publicou por cima".
+
+Postas no `web.config`, as duas viajam com o artefacto, sobrevivem a cada publicação e
+mudam por pull request como o resto.
+
+### Cada nome num sítio só
+
+A documentação do módulo avisa que uma variável que **também** exista no ambiente do
+sistema pode ser combinada com a que está aqui, e que o resultado pode impedir a
+aplicação de arrancar.
+
+Portanto não definir estes dois nomes na máquina nem no pool de aplicações. Se forem
+definidos nos dois sítios, a avaria chega com o aspecto de uma cadeia de ligação errada,
+e o caminho que aparece na mensagem é um que ninguém escreveu.
+
 ## Ligação à base de dados
 
-Cadeia de ligação na configuração do servidor, a apontar para o caminho absoluto em
+A cadeia está na secção acima, a apontar para o caminho absoluto em
 `C:\IdeaBoard\data\ideaboard.db`, com as chaves estrangeiras ativadas e um tempo
 limite por omissão folgado, para que uma escrita concorrente espere em vez de falhar.
 
@@ -386,7 +481,10 @@ Os sintomas que esta configuração produz quando está errada, e o que procurar
 | Erro de base de dados só de leitura | Falta permissão de escrita **na pasta**, e não no ficheiro |
 | Pessoas atiradas para fora da sessão ao acaso, ou erros em submissões | Chaves de Data Protection não persistidas. Ver [ADR-009](ADR/ADR-009-publicacao-iis.md) |
 | Bloqueios ou tempos limite em escritas | Mais de um processo de trabalho no pool de aplicações |
-| Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado |
+| Erro 500.19 ou 502 no arranque | Hosting Bundle em falta ou desatualizado, **ou** o serviço de função Autenticação do Windows do IIS por instalar. As duas causas dão o mesmo código |
+| O site não arranca e a mensagem nomeia `ConnectionStrings:IdeaBoard` ou `DataProtection:KeysPath` | As variáveis do `web.config` não chegaram, ou alguém publicou por cima de um `appsettings.Production.json` que as trazia |
+| Caminho de base de dados na mensagem de erro que ninguém escreveu | O mesmo nome de variável definido no `web.config` **e** no ambiente do sistema ou do pool |
+| Nada da aplicação aparece no Event Log, com tudo o resto a funcionar | A origem `IdeaBoard` não foi criada no servidor |
 | Toda a gente recusada no primeiro acesso | Autenticação anónima ligada no site, ou autenticação Windows desligada |
 | O browser pede credenciais em vez de entrar sozinho | O endereço não está na zona de intranet local do browser. Ver [ADR-024](ADR/ADR-024-http-sem-certificado.md) |
 | Ciclo infinito de redirecionamentos para `/nome` | A linha de utilizador existe sem nome, o que não devia acontecer, porque a linha só nasce com nome |
