@@ -9,9 +9,17 @@ O briefing fixa quatro funcionalidades e exclui tudo o resto de forma deliberada
 As exclusões não são omissões nem oportunidades de melhoria.
 
 **Não acrescentar**, mesmo que pareça óbvio, barato ou útil: comentários, categorias,
-etiquetas, pesquisa, filtros, administração, edição ou remoção de ideias, deteção de
-duplicados, estados, triagem, aprovação, notificações, perfis, ou qualquer mecanismo
-de inscrição e acompanhamento de ideias.
+etiquetas, filtros, administração, edição ou remoção de ideias, deteção de duplicados,
+estados, triagem, aprovação, notificações por email, páginas por pessoa, ou qualquer
+mecanismo de inscrição em ideias de outros.
+
+A lista em vigor está no fim de `Docs/02`. Esta é um resumo dela, e em caso de divergência
+vale a de lá.
+
+**A pesquisa e o aviso de votos novos saíram desta lista a 16 de novembro de 2026**, por
+decisão do Hugo tomada com a lista à frente. Que ela tenha encolhido uma vez não a torna
+negociável: cede por decisão explícita de quem é dono do produto, registada com data, e
+não por já existir código que a contraria nem por alguém a achar razoável.
 
 O briefing lista riscos conhecidos destas decisões e diz de forma explícita que nenhum
 deles é motivo para mudar o âmbito. Uma proposta de funcionalidade que resolva um
