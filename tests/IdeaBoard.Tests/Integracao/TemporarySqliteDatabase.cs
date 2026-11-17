@@ -33,6 +33,29 @@ public sealed class TemporarySqliteDatabase : IDisposable
 
     /// <summary>Creates the file and applies every migration to it.</summary>
     public TemporarySqliteDatabase()
+        : this(null)
+    {
+    }
+
+
+    /// <summary>
+    /// Creates the file and builds its schema by running the given script instead of by
+    /// applying the migrations.
+    ///
+    /// It exists so that the script the provisioning procedure runs can be held against
+    /// what the migrations produce. Nothing in the application applies migrations at
+    /// startup, so on a real server the script is the only thing that ever builds the
+    /// schema, and nothing else compares the two.
+    /// </summary>
+    public static TemporarySqliteDatabase BuiltByScript(string script)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(script);
+
+        return new TemporarySqliteDatabase(script);
+    }
+
+
+    private TemporarySqliteDatabase(string? script)
     {
         databasePath = Path.Combine(
             Path.GetTempPath(),
@@ -46,8 +69,20 @@ public sealed class TemporarySqliteDatabase : IDisposable
 
         connectionString = connectionBuilder.ToString();
 
-        using IdeaBoardDbContext context = CreateContext();
-        context.Database.Migrate();
+        if (script is null)
+        {
+            using IdeaBoardDbContext context = CreateContext();
+            context.Database.Migrate();
+
+            return;
+        }
+
+        // The two ways of building leave the file in different journal modes, because since
+        // Entity Framework Core 7 a database Entity Framework creates is put into
+        // write-ahead logging mode and one created by opening a connection is not. That is
+        // a property of the journal and not of the schema, so it does not reach anything
+        // the two are compared on.
+        ExecuteNonQuery(script);
     }
 
     #endregion

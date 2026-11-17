@@ -38,9 +38,9 @@ Um de cada vez, por fase do [plano de entrega](05-Plano-de-Entrega.md).
 1. **ARQ** decide o que estiver por decidir na fase, e escreve o ADR de cada decisão
    com consequências. Decide antes de se construir, porque um ADR escrito depois é uma
    justificação e não uma decisão.
-2. **DEV** constrói a fase num ramo próprio, corre a compilação e os testes de unidade
-   e de integração, comita e relata o que fez.
-3. **QA** vai a esse ramo, escreve os cenários ponta a ponta da fase, corre a suite
+2. **DEV** constrói a fase, corre a compilação e os testes de unidade e de integração,
+   comita, empurra e relata o que fez e se empurrou.
+3. **QA** vai ao que ele empurrou, escreve os cenários ponta a ponta da fase, corre a suite
    toda, percorre os itens manuais aplicáveis, e **relata sem corrigir**.
 4. **DEV** corrige o que o QA encontrou. **QA** volta a verificar.
 5. **ARQ** escreve o ADR das decisões que o DEV tomou durante a construção por não
@@ -49,14 +49,72 @@ Um de cada vez, por fase do [plano de entrega](05-Plano-de-Entrega.md).
 7. **ORQ** fecha a fase: confirma os relatórios por verificação própria, procura o que
    caiu entre os quatro, e ou devolve trabalho ou declara a fase pronta para revisão
    humana.
-8. **Uma pessoa** faz o merge. Os agentes abrem o pull request e param aí.
+8. **Uma pessoa** faz a passagem a `main`, pela regra da secção seguinte.
 
 Enquanto um trabalha, os outros estão parados. É mais lento do que trabalhar em
 paralelo e evita por completo a classe de problemas em que um agente revê código que
 entretanto já mudou.
 
-Cada agente trabalha na sua própria árvore de trabalho do git, criada a partir de
-`main`, e não na árvore onde a aplicação está a correr.
+---
+
+## Ramos
+
+**Decisão do Hugo, tomada a 17 de novembro de 2026.** Nas palavras dele, o `dev` é o ramo
+dominante durante o desenvolvimento. Podem criar se mais ramos quando for preciso, e esses
+saem do `dev` e voltam ao `dev`, com a mesma regra. O `main` só recebe quando estiver tudo
+confirmado a funcionar.
+
+| Ramo | Quem lá escreve | Como entra |
+|---|---|---|
+| `dev` | Todos os agentes | Empurrado directamente, sem pull request por peça |
+| Ramos de trabalho | Quem o criou | Saem do `dev` e voltam ao `dev`, também sem pull request |
+| `main` | Ninguém, directamente | Pull request a partir do `dev`, fundido por uma pessoa |
+
+As árvores de trabalho de cada agente passam a ser criadas a partir do `dev`, e não do
+`main`.
+
+**O que isto substitui.** Até aqui cada fase ia a `main` pelo seu próprio pull request. O
+`main` passa a receber trabalho num ponto que valha a pena, já confirmado a funcionar, e
+não peça a peça. A parte que não muda é a última: os agentes abrem o pull request para
+`main` e param aí. O merge é de uma pessoa.
+
+### A consequência que não se vê na regra
+
+O `dev` passa a ser o chão de toda a gente, e **já não há pull request a filtrar o que lá
+entra**. Um `dev` vermelho bloqueia os quatro papéis ao mesmo tempo.
+
+Pior do que isso: não avisa quem o partiu, avisa o seguinte que lá chegar. Essa pessoa vê
+uma suite vermelha sobre trabalho que não é dela, e o primeiro instinto, que é procurar a
+avaria no que acabou de escrever, é o instinto errado.
+
+### Quem empurra diz o que o push levou, e não o que commitou
+
+Num ramo partilhado sem pull request, **"empurrei o meu trabalho" deixou de querer dizer
+"empurrei só o meu trabalho"**. Um push empurra o ramo e não o commit, portanto leva tudo
+o que estiver no ramo, incluindo o que outro agente commitou na árvore partilhada entre a
+tua última busca e o teu commit.
+
+Por isso o que se relata é o intervalo medido, e não o próprio `git log`.
+
+**Engana nos dois sentidos, e o segundo é o que custa a ver.** Num, empurras trabalho de
+outra pessoa sem o saber, e ela não sabe que já lá está. No outro, essa pessoa diz que
+tem trabalho por empurrar quando ele já foi, porque o teu push o levou.
+
+Medido a 17 de novembro de 2026: um push que o DOC deu por empurrar um commit seu levou
+também um commit do ARQ, que tinha ficado por empurrar minutos antes.
+
+Daí as três práticas que acompanham a regra, e que são o preço dela:
+
+- **O ORQ guarda o último commit em que mediu o `dev` verde**, e diz qual é sempre que o
+  mede. É um ponto de comparação e não um certificado.
+- **Quem chegar a um `dev` vermelho mede primeiro se já estava vermelho antes do trabalho
+  dele.** A pergunta não é "o que é que eu parti", é "isto já estava assim".
+- **Quem empurra diz o que o push levou**, pela razão da secção acima.
+
+O commit verde de referência não está escrito aqui de propósito. Ele muda várias vezes por
+dia, e um número gravado num documento envelhece à primeira medição seguinte. Este
+repositório já perdeu duas listas por as ter copiado para um segundo sítio, e um commit
+registado aqui seria a terceira. Vive onde é medido, que é na mensagem de quem o mediu.
 
 ---
 
@@ -262,8 +320,13 @@ COMO TRABALHAS
 Uma fase de cada vez, a que te for indicada, e paras no fim dela. Não avanças para a
 fase seguinte sem indicação, mesmo que pareça óbvio e barato.
 
-Trabalhas num ramo por fase. Mensagens de commit em português europeu. Não fazes merge
-para main nem abres caminho para isso: abres o pull request e paras aí.
+Empurras o teu trabalho para o `dev`, sem pull request por peça. A regra dos ramos está
+na secção Ramos deste documento, e é lá que vale: não a repito aqui, para não ficar com
+duas versões dela. Mensagens de commit em português europeu. Não fazes merge para main
+nem abres caminho para isso.
+
+Dizes sempre, de forma explícita, se empurraste ou não. Sem pull request, é a única forma
+de o ORQ saber onde está o teu trabalho.
 
 O ÂMBITO É A REGRA MAIS IMPORTANTE
 O briefing exclui funcionalidades de forma deliberada. A lista em vigor está no fim de
@@ -515,7 +578,7 @@ Antes de enviares, confirma que a sessão existe e como se chama, em vez de assu
 nome. Se não houver sessão para o papel que precisas, diz lo ao utilizador em vez de
 entregares o encargo ao agente errado.
 
-Dás a cada agente a sua árvore de trabalho, criada a partir de main, e dizes lhe qual é.
+Dás a cada agente a sua árvore de trabalho, criada a partir do `dev`, e dizes lhe qual é.
 Nunca mandas dois agentes trabalhar na mesma árvore, e nunca mandas nenhum trabalhar na
 árvore onde a aplicação está a correr.
 

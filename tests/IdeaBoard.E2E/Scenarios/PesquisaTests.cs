@@ -40,11 +40,9 @@ public class PesquisaTests : ScenarioBase
 
         IPage ana = await OpenAsAsync(People.AnaObjectId);
 
-        await SubmitIdeaAsync(ana, "Sessões de partilha", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Sessões de partilha", "Descricao.");
 
-        await SubmitIdeaAsync(ana, "Bicicletas para todos", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Bicicletas para todos", "Descricao.");
 
         await ana.GotoAsync(Url("/"));
 
@@ -74,11 +72,9 @@ public class PesquisaTests : ScenarioBase
 
         IPage ana = await OpenAsAsync(People.AnaObjectId);
 
-        await SubmitIdeaAsync(ana, "Sessões de partilha", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Sessões de partilha", "Descricao.");
 
-        await SubmitIdeaAsync(ana, "Bicicletas para todos", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Bicicletas para todos", "Descricao.");
 
         IPage plain = await OpenWithoutScriptAsAsync(People.BrunoObjectId);
 
@@ -107,8 +103,7 @@ public class PesquisaTests : ScenarioBase
 
         IPage ana = await OpenAsAsync(People.AnaObjectId);
 
-        await SubmitIdeaAsync(ana, "Bicicletas para todos", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Bicicletas para todos", "Descricao.");
 
         await ana.GotoAsync(Url("/?procura=comboios"));
 
@@ -132,11 +127,9 @@ public class PesquisaTests : ScenarioBase
 
         IPage ana = await OpenAsAsync(People.AnaObjectId);
 
-        await SubmitIdeaAsync(ana, "Sessões de partilha", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Sessões de partilha", "Descricao.");
 
-        await SubmitIdeaAsync(ana, "Bicicletas para todos", "Descricao.");
-        await ana.WaitForURLAsync(url => !url.EndsWith("/nova", StringComparison.Ordinal));
+        await SubmitIdeaAndWaitAsync(ana, "Bicicletas para todos", "Descricao.");
 
         IPage plain = await OpenWithoutScriptAsAsync(People.BrunoObjectId);
 

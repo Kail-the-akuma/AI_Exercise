@@ -67,14 +67,20 @@ public class RankingTests : ScenarioBase
 
         await Expect(ranked).ToHaveCountAsync(3);
 
+        // The counts are read from the element that holds them and compared whole, while
+        // the titles are looked for inside the row. The difference is not a style: a count
+        // asserted as a substring of the whole row passes on the wrong number, because
+        // "1 voto" is contained in "11 votos" and "2 votos" in "12 votos". The row's text
+        // carries the title, the author and the button, so there is plenty for a wrong
+        // count to hide in.
         await Expect(ranked.Nth(0)).ToContainTextAsync("Ideia mais antiga");
-        await Expect(ranked.Nth(0)).ToContainTextAsync(UiText.FormatVoteCount(2));
+        await Expect(VoteCountIn(ranked.Nth(0))).ToHaveTextAsync(UiText.FormatVoteCount(2));
 
         await Expect(ranked.Nth(1)).ToContainTextAsync("Ideia mais recente");
-        await Expect(ranked.Nth(1)).ToContainTextAsync(UiText.FormatVoteCount(1));
+        await Expect(VoteCountIn(ranked.Nth(1))).ToHaveTextAsync(UiText.FormatVoteCount(1));
 
         await Expect(ranked.Nth(2)).ToContainTextAsync("Ideia do meio");
-        await Expect(ranked.Nth(2)).ToContainTextAsync(UiText.FormatVoteCount(1));
+        await Expect(VoteCountIn(ranked.Nth(2))).ToHaveTextAsync(UiText.FormatVoteCount(1));
 
         // The other tab, on the same three ideas, in a different order. Asserted here and
         // not only in its own scenario, because two tabs that agreed would mean the main
@@ -145,6 +151,13 @@ public class RankingTests : ScenarioBase
         // Waited for on purpose. Leaving the page while the request is still on its way
         // would leave the next step racing a vote that may not have been recorded.
         await Expect(page.Locator("[data-vote-button]")).ToHaveTextAsync(UiText.VotedButton);
+    }
+
+
+    /// <summary>The element inside a row that carries the vote count, and nothing else.</summary>
+    private static ILocator VoteCountIn(ILocator row)
+    {
+        return row.Locator("[data-vote-count]");
     }
 
     #endregion
